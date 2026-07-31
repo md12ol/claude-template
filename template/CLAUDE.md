@@ -81,10 +81,12 @@ Session state lives in `.claude/`:
 |---|---|
 | `decisions.md` | append-only: what was chosen and why |
 | `issues.md` | staged for the tracker, for other people |
-| `hotfixes.md` | temporary code in the tree, each with a `Remove when:` |
+| `hotfixes.md` | temporary code in the tree, each with a `Remove when:` and an `Owner:` |
 | `traps.md` | permanent gotchas about this workspace — the things that bite every session |
+| `collab.md` | running agenda between the people who share this repo — anything on one side that conflicts with or overrides the other's work. Mark **Agreed** with a date; never delete. *Delete this row if you work alone* |
 
-Finished tasks land in `.claude/work/archive/<YYYY-MM>_<slug>/`.
+Finished tasks land in `.claude/work/archive/<YYYY-MM>_<slug>/` — **tracked**, so a finished task's
+record reaches everyone. Only `work/current/` is per-person.
 
 ### Keep `plan.md` small — it is a task list, not a record
 
@@ -107,6 +109,56 @@ each of those already has a file that owns it: what happened → `work/current/h
 *program*, not a task — split it, and let each section close on its own gate. The symptom of getting
 this wrong is an empty `archive/` next to a plan and history that no longer fit in context, so every
 session pays to re-read them before doing any work.
+
+## More than one person uses this `.claude/`
+
+<!-- DELETE THIS WHOLE SECTION IF YOU WORK ALONE. Keep it the moment a second person clones the
+     repo and starts running /start and /save on their own machine — every rule below is a bug
+     that has to be fixed anyway once that happens, and three of them are silent. -->
+
+`.claude/` is checked into the repo and used by several people on their own machines. The
+machinery, the skills and the persistent docs are shared; `work/current/` and
+`settings.local.json` are not. Four rules follow, and all four are non-obvious.
+
+**1. The persistent docs merge by union — so stamp every entry with an author.**
+`decisions.md`, `traps.md`, `hotfixes.md`, `issues.md` and `collab.md` are append-only, so
+everyone writes to the tail of the same file — the most conflict-prone shape in git. Put this in
+the repo root `.gitattributes`:
+
+```gitattributes
+.claude/work/*.md merge=union
+```
+
+Both sides' lines then survive with no conflict markers. The catch is that union merge **never
+conflicts**. Measured on two branches each appending one entry:
+
+- Entries with **distinct** text merge **correctly** — both survive whole and in order. The only
+  damage is that the blank line between them is eaten, being common to both sides. Cosmetic.
+- Lines that are **byte-identical** on both sides are **deduplicated**, and the two entries
+  interleave into one block that reads as a single coherent entry and is not. Silent, and the
+  reason boilerplate-only entries are dangerous.
+
+So:
+
+- Every entry's heading or stamp carries `— <author>`: `## <YYYY-MM-DD> — <name> — <title>`. Keep
+  the body distinctive too — a real `**Affects:** path` line is what stops two entries collapsing
+  into each other.
+- After a merge that touched these files, **read the tail**: `git diff HEAD~1 -- .claude/work/`.
+  The merge won't have told you.
+- Editing or deleting *someone else's* entry is a `collab.md` item, not a silent rewrite.
+
+**2. Hook and settings changes go through a PR.** `settings.json` and everything in `hooks/` is
+executable code that runs on everyone else's machine at session start, on their next pull, without
+them reading the diff. This is the one part of `.claude/` where "it's just docs" is false.
+
+**3. `/setup` runs once per project, ever — never on a clone.** It rewrites `CLAUDE.md` from the
+template's FILL IN blocks and would destroy this file. If you have just cloned, `.claude/` is
+already set up: start with `/load`. Personal settings go in `settings.local.json`, which is
+gitignored and exists exactly for that.
+
+**4. Verification is per-machine.** `[x]` means *you* saw it verified, on your machine. Never
+promote someone else's `[~]` to `[x]` because their notes read as finished — re-run the
+`Verify by:` or leave it alone.
 
 ## Workflow
 

@@ -12,11 +12,20 @@ delete those on a tidying pass.
 Group entries under `## <theme>` headings by what unblocks them — that is the axis on which they
 actually get removed, in batches.
 
+**If more than one person uses this repo:** an *uncommitted* hotfix exists on exactly one machine,
+so an entry here does not mean the code is in *your* tree. That is what `Owner:` and `Machine:` are
+for — read them first. Don't delete another owner's entry; raise it in `collab.md`. A **committed**
+hotfix is in everyone's tree and is everybody's problem to remove — say so in `Machine:`.
+*(Drop those two fields if you work alone.)*
+
 ---
 
 ## <theme — e.g. blocked on upstream, blocked on someone's work, ours to fix>
 
 ### <what was hacked>
+- **Owner:** who put it there and who removes it.
+- **Machine:** `owner's working tree, uncommitted` · `committed — in every tree` · `branch <name>`.
+  This is what tells everyone else whether to expect the code locally.
 - **Where:** `path` or symbol name — prefer function names over line numbers, they survive edits.
 - **What it does:** the mechanism, if not obvious from the title. Optional.
 - **Why it's a hotfix:** the problem it papers over, and why the proper fix wasn't done here.
