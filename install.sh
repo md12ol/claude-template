@@ -95,10 +95,15 @@ WARN
     fi
     cat <<EOF
 
-Next:
-  1. Open $DEST/CLAUDE.md and work through the four FILL IN blocks. Delete what doesn't apply.
-  2. Read $DEST/README.md — it explains the loop to you and to teammates.
-  3. Start your first task with  /start
+Next — open Claude Code in this project and run:
+
+    /setup
+
+It inspects the repo, asks what it can't infer, and fills in CLAUDE.md for you. Once, ever.
+Then /start your first task.
+
+(Prefer to do it by hand? Work through the FILL IN blocks in $DEST/CLAUDE.md and delete
+what doesn't apply. $DEST/README.md explains the system.)
 EOF
     ;;
 

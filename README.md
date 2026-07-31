@@ -39,13 +39,24 @@ That creates `~/code/my-project/.claude/` with the skills, a `CLAUDE.md` to fill
 templates, and empty `current/` + `archive/`. It **never overwrites an existing file** — safe to
 re-run.
 
-Then, in the project:
+Then open Claude Code in the project and run:
 
-1. Open `.claude/CLAUDE.md` and work through the four `FILL IN` blocks. Delete what doesn't apply —
-   a single-repo project with no tracker deletes three of them.
-2. Start working: `/start`.
+```
+/setup
+```
 
-That's the whole setup. Expect ~10 minutes on `CLAUDE.md` and nothing else.
+`/setup` reads the repo first — build manifests, submodules, git remote, whether `.claude/` is
+gitignored — then asks only what it can't infer, and writes `CLAUDE.md` for you. It runs **once,
+ever**, and refuses to re-run over rules you've already earned.
+
+The one thing it always asks, because no repo reveals it: **which commands you run yourself and the
+agent must not.** Answer with actual command names and it will offer to enforce them with a hook,
+so the rule holds instead of merely being written down.
+
+Then `/start` your first task. Expect five minutes, most of it clicking through recommended answers.
+
+*Prefer to do it by hand?* Work through the four `FILL IN` blocks in `.claude/CLAUDE.md` and delete
+what doesn't apply — a single-repo project with no tracker deletes three of them.
 
 ### Don't clone it *into* the project
 
@@ -81,6 +92,7 @@ cd ~/.claude-template && git diff && git commit -am "save: sharpen the loose-thr
 ├── settings.json          hooks (backup on by default, three more commented out)
 ├── backup_docs.sh         snapshots to ~/.claude-backups/<project>/<date>/
 ├── skills/
+│   ├── setup/SKILL.md     once per project: inspect the repo, fill in CLAUDE.md
 │   ├── start/SKILL.md     agree the objective, write the plan, before any code
 │   ├── save/SKILL.md      sweep for loose threads, update every doc, write the handoff
 │   ├── load/SKILL.md      read the handoff, verify it against the repo, report, stop
