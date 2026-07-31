@@ -10,7 +10,7 @@ Only log what a cold reader could not re-derive from the code. Skip the obvious.
 
 ---
 
-## <YYYY-MM-DD> — <short title>
+## <YYYY-MM-DD> <HH:MM> — <author> — <short title>
 **Chose:** what we're doing.
 **Why:** the reasoning, in the terms it was actually argued.
 **Rejected:** the alternatives considered, and what ruled them out.

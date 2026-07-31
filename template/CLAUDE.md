@@ -138,11 +138,36 @@ conflicts**. Measured on two branches each appending one entry:
   interleave into one block that reads as a single coherent entry and is not. Silent, and the
   reason boilerplate-only entries are dangerous.
 
-So:
+### Formatting for union merge
 
-- Every entry's heading or stamp carries `— <author>`: `## <YYYY-MM-DD> — <name> — <title>`. Keep
-  the body distinctive too — a real `**Affects:** path` line is what stops two entries collapsing
-  into each other.
+An entry's **first and last lines are the ones a merge treats as shared context**, so those are
+what must be unique. Four rules, all load-bearing:
+
+1. **The heading is unique** and carries the author and a time:
+   `## <YYYY-MM-DD> <HH:MM> — <name> — <title>`, or `### 7. <the item>` in `collab.md`.
+2. **The closing stamp repeats that identity and carries a time** —
+   `*#7 · raised <YYYY-MM-DD> <HH:MM> — <name>.*`. Two independent guards: the item's own number,
+   and the `HH:MM`, which makes a byte-identical stamp essentially impossible even for two entries
+   by the same author on the same day. A bare `*Raised <YYYY-MM-DD> — <name>.*` collides the moment
+   one person raises two items in a day — in the project this template came from, that collision
+   was live nine times over before anyone noticed.
+3. **Never close an entry with a bare `---`.** Headings delimit entries; a repeated horizontal rule
+   is exactly the identical boundary line rule 1 warns about.
+4. **No bare structural labels.** Write `- **Body:** <first sentence>`, not `- **Body:**` alone —
+   a label with nothing after it is byte-identical in every entry that uses it. Same for
+   `- **Added:** <date>`: append the entry's slug.
+
+Keep the body distinctive too — a real `**Affects:** path` line is what stops two entries
+collapsing into each other.
+
+**Audit any of these files**, and do it after every merge:
+
+```bash
+grep -vE '^\s*$' .claude/work/<file>.md | sort | uniq -d
+```
+
+Anything it prints is a line two entries could collapse onto. Fix it before it merges, not after.
+
 - After a merge that touched these files, **read the tail**: `git diff HEAD~1 -- .claude/work/`.
   The merge won't have told you.
 - Editing or deleting *someone else's* entry is a `collab.md` item, not a silent rewrite.

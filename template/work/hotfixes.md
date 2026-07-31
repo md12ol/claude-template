@@ -31,5 +31,5 @@ hotfix is in everyone's tree and is everybody's problem to remove — say so in 
 - **Why it's a hotfix:** the problem it papers over, and why the proper fix wasn't done here.
 - **Real fix:** what would make this unnecessary, and **who owns it** if it's someone else.
 - **Remove when:** the concrete condition that makes it unnecessary.
-- **Added:** <YYYY-MM-DD>
+- **Added:** <YYYY-MM-DD> — <short-slug of this hotfix, so the line is unique>
 - **Last checked:** <YYYY-MM-DD>
