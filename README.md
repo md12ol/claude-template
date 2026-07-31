@@ -1,8 +1,8 @@
 # claude-template
 
-A portable working-docs system for [Claude Code](https://claude.com/claude-code): four slash
-commands (`/start`, `/save`, `/load`, `/done`) and the file layout they maintain, so sessions stop
-losing state between context clears.
+A portable working-docs system for [Claude Code](https://claude.com/claude-code): five slash
+commands (`/setup`, `/start`, `/save`, `/load`, `/done`) and the file layout they maintain, so
+sessions stop losing state between context clears.
 
 Copy it into any project in one command. Nothing in here is language- or framework-specific.
 
@@ -89,7 +89,8 @@ cd ~/.claude-template && git diff && git commit -am "save: sharpen the loose-thr
 .claude/
 ├── CLAUDE.md              rules, loaded into every session  ← you fill this in
 ├── README.md              explains the system to you and teammates
-├── settings.json          hooks (backup on by default, three more commented out)
+├── settings.json          hooks — backup enabled by default
+├── hooks-optional.md      three more hooks to copy in, with the reasoning for each
 ├── backup_docs.sh         snapshots to ~/.claude-backups/<project>/<date>/
 ├── skills/
 │   ├── setup/SKILL.md     once per project: inspect the repo, fill in CLAUDE.md
@@ -104,6 +105,65 @@ cd ~/.claude-template && git diff && git commit -am "save: sharpen the loose-thr
 ├── current/               the active task (empty until /start)
 └── archive/               finished tasks, <YYYY-MM>_<slug>/
 ```
+
+## What belongs to a task, and what belongs to the project
+
+One question decides it: **does this stop being true when the task ends?**
+
+| | | |
+|---|---|---|
+| `current/plan.md` | **task** | the tasks are dead once the objective is met |
+| `current/plan_superseded.md` | **task** | original wording of those same tasks |
+| `current/history.md` | **task** | the session log *of that task* |
+| `current/handoff.md` | **task** | a prompt to resume a task that's over |
+| `decisions.md` | **project** | the choice still constrains the code |
+| `hotfixes.md` | **project** | the band-aid is still *in the tree* |
+| `issues.md` | **project** | the bug doesn't stop existing |
+| `traps.md` | **project** | the workspace still behaves that way |
+| `CLAUDE.md` | **project** | the rules outlive everything |
+
+**Project files: exactly one of each, forever.** Never copied, never archived. `decisions.md` is
+append-only across the project's whole life.
+
+**Task files: one set per task, and only one set live at a time.** `current/` holds exactly one task;
+`/done` moves those four files into `archive/<YYYY-MM>_<slug>/` and leaves `current/` empty, and
+`/start` refuses to run if it isn't.
+
+```
+.claude/
+├── CLAUDE.md decisions.md issues.md hotfixes.md traps.md    ← 1 each, always
+├── current/     ← exactly 1 task, or empty
+└── archive/     ← N finished tasks
+```
+
+`plan_superseded.md` is the one exception to "one per task" — it's created lazily, only when
+something actually gets superseded, so some tasks won't have one.
+
+### The four files that aren't the plan
+
+The plan is a *task list*. Everything that isn't a task has a different home, and the split is by
+**whose problem it is and what makes the entry go away**:
+
+| | Whose | Leaves when |
+|---|---|---|
+| `decisions.md` | ours | never — append-only |
+| `issues.md` | **someone else's** | they fix it |
+| `hotfixes.md` | ours, in our tree | we delete the code |
+| `traps.md` | nobody's — it's just true | it stops being true |
+
+Quick routing:
+
+> Would a new person ask *"why on earth is it like this?"* → `decisions.md`
+> Is there code in the tree I want to delete later? → `hotfixes.md`
+> Is this someone else's to fix? → `issues.md`
+> Will this waste my time again next month, with nothing to fix? → `traps.md`
+> Did something happen this session? → `history.md`
+> Is there work left to do? → `plan.md`
+
+The two that get confused are `hotfixes.md` and `traps.md`. A hotfix is **code you added and want
+gone**; a trap is **how the workspace behaves and always will**. A hardcoded scale factor you'll
+delete is a hotfix. That `grep -r` silently skips symlinked directories is a trap — you didn't cause
+it and you can't remove it.
 
 ## The three task states
 
@@ -138,8 +198,9 @@ daily copy is a weak substitute for version control, and it can't tell you *when
 
 ## Optional hooks
 
-`settings.json` ships four hooks: two backup hooks enabled, three more commented out under
-`_optional_*` keys. Copy any into the `hooks` block and edit the patterns.
+`settings.json` ships with only the two backup hooks enabled. Three more live in
+`.claude/hooks-optional.md`, with copy-paste JSON and the reasoning for each — `/setup` offers the
+ones that match your answers and merges them for you.
 
 | | |
 |---|---|

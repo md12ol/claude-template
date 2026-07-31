@@ -47,7 +47,7 @@ gives you the language, and usually the run/test commands.
 ```bash
 cat .gitmodules 2>/dev/null; find . -name .git -maxdepth 3 -not -path './.git' 2>/dev/null
 ```
-Also check for vendoring manifests (`gitman.yml`, `vendir.yml`, `repo` manifests, `.gitman/`). If
+Also check for vendoring manifests (`gitman.yml`, `vendir.yml`, `repo` manifests). If
 work spans more than one repo, block 2 is mandatory — an agent running `git status` at the root
 would otherwise believe it has seen everything.
 
