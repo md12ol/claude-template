@@ -1,23 +1,23 @@
 ---
 name: start
-description: Start a new task — scaffold .claude/current/ and write .claude/current/plan.md — the agreed objective and task list for the current work — BEFORE writing any code. Use when starting a new piece of work, when the user asks to plan something out, or when the current plan no longer matches what is actually being built.
+description: Start a new task — scaffold .claude/work/current/ and write .claude/work/current/plan.md — the agreed objective and task list for the current work — BEFORE writing any code. Use when starting a new piece of work, when the user asks to plan something out, or when the current plan no longer matches what is actually being built.
 ---
 
 # Start
 
-Write `.claude/current/plan.md`: what we're building, in what order, and how we'll know it worked.
+Write `.claude/work/current/plan.md`: what we're building, in what order, and how we'll know it worked.
 This runs **before** code is written. `/save` updates the statuses afterwards; it does not author the
 plan.
 
-`/done` tears a task down and leaves `current/` empty. `/start` sets the next one up.
+`/done` tears a task down and leaves `work/current/` empty. `/start` sets the next one up.
 
-## 0. Scaffold `current/` if it isn't there
+## 0. Scaffold `work/current/` if it isn't there
 
-`/done` leaves `current/` empty. `/start` is what makes it usable again, so check and create before
+`/done` leaves `work/current/` empty. `/start` is what makes it usable again, so check and create before
 writing anything:
 
-- **`.claude/current/` missing** → create it.
-- **`current/history.md` missing or empty** → seed it with a header block, so `/save` has somewhere
+- **`.claude/work/current/` missing** → create it.
+- **`work/current/history.md` missing or empty** → seed it with a header block, so `/save` has somewhere
   to insert session sections (it appends *after* the header, and an empty file has none):
 
   ```markdown
@@ -29,22 +29,22 @@ writing anything:
   ---
   ```
 
-- **`current/handoff.md`** — do not create it. `/save` writes it at the end of the first session.
-- **`current/plan_superseded.md`** — do not create it. `/save` creates it the first time a task's
+- **`work/current/handoff.md`** — do not create it. `/save` writes it at the end of the first session.
+- **`work/current/plan_superseded.md`** — do not create it. `/save` creates it the first time a task's
   original wording is displaced.
-- **`current/` NOT empty** → there is an unfinished task here. **Stop.** Report what's in it and ask
+- **`work/current/` NOT empty** → there is an unfinished task here. **Stop.** Report what's in it and ask
   whether to continue that task or close it with `/done` first. Never overwrite another task's
   `plan.md` or `history.md`.
 
 ## 1. Read first
 
-- The existing `.claude/current/plan.md`, if any. If the objective is unchanged and you are only
+- The existing `.claude/work/current/plan.md`, if any. If the objective is unchanged and you are only
   adding work, **append** — don't rewrite finished items or lose their status.
-- `.claude/decisions.md` — do not re-litigate a decision already recorded there. If the new plan
+- `.claude/work/decisions.md` — do not re-litigate a decision already recorded there. If the new plan
   contradicts one, that's a decision in its own right: flag it to the user now, and note it so
   `/save` logs the supersession.
-- `.claude/hotfixes.md` — temporary code the plan may need to work around, or clean up.
-- `.claude/traps.md` — workspace gotchas that may invalidate a planned approach before you start.
+- `.claude/work/hotfixes.md` — temporary code the plan may need to work around, or clean up.
+- `.claude/work/traps.md` — workspace gotchas that may invalidate a planned approach before you start.
 
 ## 2. Agree the objective before listing tasks
 
@@ -92,7 +92,7 @@ Status markers, shared with `/save`:
 `[ ]` pending · `[x]` done **and verified** · `[~]` done but **not yet verified**.
 
 Use `[ ]` **only** for work that is genuinely still to be done. Never leave a superseded or
-reference-only item checkboxed — it moves to `current/plan_superseded.md`. A `[ ]` that can never be
+reference-only item checkboxed — it moves to `work/current/plan_superseded.md`. A `[ ]` that can never be
 ticked trains everyone to skim past `[ ]`, and that is how a real pending item gets lost.
 
 ## 4. Confirm before coding

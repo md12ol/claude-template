@@ -16,9 +16,9 @@ This makes the update a command, and puts each kind of fact in exactly one file:
 
 | | |
 |---|---|
-| what happened | `current/history.md` |
+| what happened | `work/current/history.md` |
 | why | `decisions.md` |
-| what's next | `current/plan.md`, `current/handoff.md` |
+| what's next | `work/current/plan.md`, `work/current/handoff.md` |
 | temporary code in the tree | `hotfixes.md` |
 | someone else's problem | `issues.md` |
 | permanent workspace gotchas | `traps.md` |
@@ -36,7 +36,7 @@ git clone https://github.com/<you>/claude-template.git ~/.claude-template
 ```
 
 That creates `~/code/my-project/.claude/` with the skills, a `CLAUDE.md` to fill in, seeded doc
-templates, and empty `current/` + `archive/`. It **never overwrites an existing file** — safe to
+templates, and empty `work/current/` + `archive/`. It **never overwrites an existing file** — safe to
 re-run.
 
 Then open Claude Code in the project and run:
@@ -85,26 +85,39 @@ cd ~/.claude-template && git diff && git commit -am "save: sharpen the loose-thr
 
 ## What you get in a project
 
+The layout separates **what Claude Code owns** from **what you accumulate**:
+
 ```
 .claude/
-├── CLAUDE.md              rules, loaded into every session  ← you fill this in
-├── README.md              explains the system to you and teammates
-├── settings.json          hooks — backup enabled by default
-├── hooks-optional.md      three more hooks to copy in, with the reasoning for each
-├── backup_docs.sh         snapshots to ~/.claude-backups/<project>/<date>/
-├── skills/
-│   ├── setup/SKILL.md     once per project: inspect the repo, fill in CLAUDE.md
-│   ├── start/SKILL.md     agree the objective, write the plan, before any code
-│   ├── save/SKILL.md      sweep for loose threads, update every doc, write the handoff
-│   ├── load/SKILL.md      read the handoff, verify it against the repo, report, stop
-│   └── done/SKILL.md      settle every loose end, then archive
-├── decisions.md           append-only: what was chosen and why
-├── issues.md              work for other people, staged for the tracker
-├── hotfixes.md            temporary code, each with a Remove when:
-├── traps.md               permanent workspace gotchas
-├── current/               the active task (empty until /start)
-└── archive/               finished tasks, <YYYY-MM>_<slug>/
+├── CLAUDE.md            rules, auto-loaded every session   ← you fill this in
+├── README.md            explains the system to teammates
+├── settings.json        hooks — backup enabled by default
+├── settings.local.json  personal overrides (gitignored)
+│
+├── skills/              ── the five commands ──────────────
+│   ├── setup/SKILL.md   once per project: inspect repo, fill in CLAUDE.md
+│   ├── start/SKILL.md   agree the objective, write the plan, before any code
+│   ├── save/SKILL.md    sweep for loose threads, update every doc, write handoff
+│   ├── load/SKILL.md    read the handoff, verify against the repo, report, stop
+│   └── done/SKILL.md    settle every loose end, then archive
+│
+├── hooks/               ── machinery ──────────────────────
+│   ├── README.md        three optional hooks, with the reasoning for each
+│   └── backup_docs.sh   snapshots to ~/.claude-backups/<project>/<date>/
+│
+└── work/                ── everything YOU accumulate ──────
+    ├── decisions.md     append-only: what was chosen and why
+    ├── issues.md        work for other people, staged for the tracker
+    ├── hotfixes.md      temporary code, each with a Remove when:
+    ├── traps.md         permanent workspace gotchas
+    ├── current/         the active task (empty until /start)
+    ├── archive/         finished tasks, <YYYY-MM>_<slug>/
+    └── reference/       project docs that aren't session state
 ```
+
+The top four files are fixed by Claude Code — it reads `.claude/CLAUDE.md`,
+`.claude/settings.json` and `.claude/skills/<name>/SKILL.md` at those exact paths. Everything
+under `work/` is yours; that boundary is the whole point of the split.
 
 ## What belongs to a task, and what belongs to the project
 
@@ -112,10 +125,10 @@ One question decides it: **does this stop being true when the task ends?**
 
 | | | |
 |---|---|---|
-| `current/plan.md` | **task** | the tasks are dead once the objective is met |
-| `current/plan_superseded.md` | **task** | original wording of those same tasks |
-| `current/history.md` | **task** | the session log *of that task* |
-| `current/handoff.md` | **task** | a prompt to resume a task that's over |
+| `work/current/plan.md` | **task** | the tasks are dead once the objective is met |
+| `work/current/plan_superseded.md` | **task** | original wording of those same tasks |
+| `work/current/history.md` | **task** | the session log *of that task* |
+| `work/current/handoff.md` | **task** | a prompt to resume a task that's over |
 | `decisions.md` | **project** | the choice still constrains the code |
 | `hotfixes.md` | **project** | the band-aid is still *in the tree* |
 | `issues.md` | **project** | the bug doesn't stop existing |
@@ -125,13 +138,13 @@ One question decides it: **does this stop being true when the task ends?**
 **Project files: exactly one of each, forever.** Never copied, never archived. `decisions.md` is
 append-only across the project's whole life.
 
-**Task files: one set per task, and only one set live at a time.** `current/` holds exactly one task;
-`/done` moves those four files into `archive/<YYYY-MM>_<slug>/` and leaves `current/` empty, and
+**Task files: one set per task, and only one set live at a time.** `work/current/` holds exactly one task;
+`/done` moves those four files into `archive/<YYYY-MM>_<slug>/` and leaves `work/current/` empty, and
 `/start` refuses to run if it isn't.
 
 ```
-.claude/
-├── CLAUDE.md decisions.md issues.md hotfixes.md traps.md    ← 1 each, always
+.claude/work/
+├── decisions.md  issues.md  hotfixes.md  traps.md    ← 1 each, always
 ├── current/     ← exactly 1 task, or empty
 └── archive/     ← N finished tasks
 ```
@@ -189,8 +202,8 @@ Recommended `.gitignore` — track the machinery, ignore only what's personal or
 
 ```gitignore
 .claude/settings.local.json
-.claude/current/
-.claude/archive/
+.claude/work/current/
+.claude/work/archive/
 ```
 
 If you'd rather keep the whole thing untracked, leave the backup hooks enabled — but a same-disk
@@ -199,7 +212,7 @@ daily copy is a weak substitute for version control, and it can't tell you *when
 ## Optional hooks
 
 `settings.json` ships with only the two backup hooks enabled. Three more live in
-`.claude/hooks-optional.md`, with copy-paste JSON and the reasoning for each — `/setup` offers the
+`.claude/hooks/README.md`, with copy-paste JSON and the reasoning for each — `/setup` offers the
 ones that match your answers and merges them for you.
 
 | | |

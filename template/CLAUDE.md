@@ -66,14 +66,14 @@
 
 Session state lives in `.claude/`:
 
-**Task-scoped** — `.claude/current/`, archived by `/done` when the task ends:
+**Task-scoped** — `.claude/work/current/`, archived by `/done` when the task ends:
 
 | File | |
 |---|---|
-| `current/plan.md` | objective + tasks. `[ ]` pending · `[x]` done **and verified** · `[~]` done, NOT verified. **A task list, not a record** — see the size rules below |
-| `current/plan_superseded.md` | original wording of tasks now done. Reference only, never actionable |
-| `current/history.md` | append-only session log for this task |
-| `current/handoff.md` | prompt for the next session — **read this first** |
+| `work/current/plan.md` | objective + tasks. `[ ]` pending · `[x]` done **and verified** · `[~]` done, NOT verified. **A task list, not a record** — see the size rules below |
+| `work/current/plan_superseded.md` | original wording of tasks now done. Reference only, never actionable |
+| `work/current/history.md` | append-only session log for this task |
+| `work/current/handoff.md` | prompt for the next session — **read this first** |
 
 **Persistent** — these describe the *code*, not the work, so they outlive the task:
 
@@ -84,14 +84,14 @@ Session state lives in `.claude/`:
 | `hotfixes.md` | temporary code in the tree, each with a `Remove when:` |
 | `traps.md` | permanent gotchas about this workspace — the things that bite every session |
 
-Finished tasks land in `.claude/archive/<YYYY-MM>_<slug>/`.
+Finished tasks land in `.claude/work/archive/<YYYY-MM>_<slug>/`.
 
 ### Keep `plan.md` small — it is a task list, not a record
 
 Left alone it grows without bound. In the project this template came from it reached **1432 lines**
 and had to be halved by hand. Evidence, rationale and superseded wording had all piled up in it, and
-each of those already has a file that owns it: what happened → `current/history.md` · why →
-`decisions.md` · original wording of a finished task → `current/plan_superseded.md` · temporary code
+each of those already has a file that owns it: what happened → `work/current/history.md` · why →
+`decisions.md` · original wording of a finished task → `work/current/plan_superseded.md` · temporary code
 → `hotfixes.md` · someone else's work → `issues.md`.
 
 - **Completed item: ≤ 3 lines**, compressed **when you tick it** — what was done, the one piece of
@@ -113,7 +113,7 @@ session pays to re-read them before doing any work.
 **Start the task**
 
 1. New task
-2. `/start` — agree the objective, write `current/plan.md` **before any code**
+2. `/start` — agree the objective, write `work/current/plan.md` **before any code**
 3. Work
 
 **Then loop, once per session** ⟳
@@ -125,7 +125,7 @@ session pays to re-read them before doing any work.
 
 **Finish the task**
 
-8. `/done <slug>` — settle every loose end, then archive `current/` → `archive/<YYYY-MM>_<slug>/`
+8. `/done <slug>` — settle every loose end, then archive `work/current/` → `archive/<YYYY-MM>_<slug>/`
 
 Docs can go stale between sessions. Where the docs and the repo disagree, **the repo wins** —
 report the discrepancy rather than following the stale version.
@@ -213,7 +213,7 @@ report the discrepancy rather than following the stale version.
 
 **Write project state into the file that owns that lifetime**, not into a memory file:
 temporary code → `hotfixes.md` · someone else's work → `issues.md` · why → `decisions.md` ·
-what happened → `current/history.md` · what's next → `current/plan.md` · workspace gotchas →
+what happened → `work/current/history.md` · what's next → `work/current/plan.md` · workspace gotchas →
 `traps.md` · how we work → this file.
 
 The reason is not that memory is useless — it is that a second, auto-loading store of the same facts

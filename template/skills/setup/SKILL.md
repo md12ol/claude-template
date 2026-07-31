@@ -70,21 +70,39 @@ than inventing a competing one.
 Then say what you found, in a few lines, before asking anything. It gives the user something to
 correct instead of something to compose.
 
-## 2. Ask only what you cannot infer
+## 2. Ask — always through `AskUserQuestion`, never as prose
 
-Use `AskUserQuestion`, batched, up to 4 per call. Lead each with your best inference marked
-`(Recommended)` so the common case is one click.
+**Every question in this step MUST go through the `AskUserQuestion` tool.** Do not ask in prose, do
+not present a numbered list and wait, do not bury a question in a paragraph. The user configures a
+project once and should be able to do it by clicking, not by composing answers to an essay.
+
+Batch up to 4 per call, one question per topic, and **repeat the call** until everything is answered.
+Lead every question with your best inference marked `(Recommended)` so the common case is one click,
+and give each option a `description` saying what it actually costs or implies.
 
 **The one question you must always ask — block 1, who runs the environment.** Never infer it. The
 repo shows you *what* the commands are; only the user knows which ones an agent must not run. Ask
 concretely, using the commands you actually found:
 
-> I found `docker compose up`, `make test` and `./deploy.sh`. Which of these should I run myself,
-> and which do you always run?
+> **Question:** I found `docker compose up`, `make test` and `./deploy.sh` in this repo. Which
+> should I run myself, and which do you always run?
+>
+> - *Agent runs tests and builds, never deploy or anything shared* **(Recommended)**
+> - *Agent runs everything*
+> - *Agent runs nothing — hands off every command*
 
-Offer: *agent runs everything* · *agent runs tests/builds but never deploy or anything shared* ·
-*agent runs nothing, hands off commands* · and let them free-type. Get the **command names**, not a
-category — the rule is only enforceable if it names binaries.
+Get the **command names**, not a category — the rule is only enforceable if it names binaries. If
+they pick a middle option, follow up with a second question listing the specific commands you found
+so the boundary is exact.
+
+**The other questions**, asked only when the repo makes them relevant — batch them with the first:
+
+| Ask | Only if | Options |
+|---|---|---|
+| Does the agent file issues for you, and where? | a git remote exists | the detected project · a different one · never files issues |
+| Which paths are off-limits or owned by someone else? | vendored dirs or multiple repos found | the detected paths · none · free-text |
+| Track `.claude/` in git? | `.claude/` is currently ignored | track the machinery, ignore `work/current` + `work/archive` **(Recommended)** · keep it all ignored |
+| Enable the optional hooks? | always | see step 4 — one question per hook that applies |
 
 **Ask about the tracker** only if a remote exists: does the agent file issues on their behalf, and
 to which project? If they say no, delete block 3 outright.
@@ -118,9 +136,29 @@ states and the conventions are the system itself, not project settings.
 
 Replace `<PROJECT>` in the title with the real name.
 
+## 3b. Check the backup wiring
+
+`.claude/hooks/backup_docs.sh` ships with the template and is wired to `Stop` + `SessionEnd` in
+`settings.json`. It derives its destination automatically —
+`~/.claude-backups/<name-of-the-directory-containing-.claude>/<date>/` — so there is normally
+nothing to configure. **Verify it rather than assume it:**
+
+```bash
+.claude/hooks/backup_docs.sh --force
+```
+
+It should print the destination. Confirm the project name in that path is the one you expect — it
+comes from the directory name, so a checkout called `src` or `repo` produces a useless bucket. If it
+is wrong, set `CLAUDE_DOCS_BACKUP_DIR` in `settings.local.json` under `env`, and say so in the
+report.
+
+If the user chose to **track `.claude/` in git**, tell them the backup is now belt-and-braces and
+they may delete the two hooks from `settings.json`. Don't delete them unasked.
+
 ## 4. Offer the optional hooks
 
-Read `.claude/hooks-optional.md` and offer only the ones that now apply:
+Read `.claude/hooks/README.md` and offer only the ones that now apply. **Ask about each
+through `AskUserQuestion`** — one question per hook, not a prose list:
 
 - **Block dangerous commands** — offer this whenever the answer to block 1 was anything other than
   "run everything", and **build the regex from the commands they named**. This is the difference
@@ -146,8 +184,8 @@ fix it is now, before there's history to lose:
 > version control, no recovery, and teammates never see them. Recommended instead:
 > ```gitignore
 > .claude/settings.local.json
-> .claude/current/
-> .claude/archive/
+> .claude/work/current/
+> .claude/work/archive/
 > ```
 
 **Ask before editing `.gitignore`** — it's a tracked file and this is their call. If they decline,
@@ -164,7 +202,7 @@ version-control disposition. Then:
 > Setup is done — `CLAUDE.md` is now this project's rules. Start your first piece of work with
 > `/start`.
 
-Don't create `current/plan.md`. `/setup` configures the project; `/start` opens the task, and it
+Don't create `work/current/plan.md`. `/setup` configures the project; `/start` opens the task, and it
 needs an objective agreed with the user that `/setup` has no way to know.
 
 ## Constraints

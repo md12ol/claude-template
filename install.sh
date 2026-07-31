@@ -2,7 +2,7 @@
 # Install / update / export the .claude working-docs system.
 #
 #   install.sh <project-dir>            seed a new .claude/ (never clobbers existing files)
-#   install.sh --update <project-dir>   refresh skills/ + backup_docs.sh only
+#   install.sh --update <project-dir>   refresh skills/ + hooks/ only
 #   install.sh --export <project-dir>   pull that project's skills back into this template
 #   install.sh --diff   <project-dir>   show what differs, change nothing
 #
@@ -15,13 +15,14 @@ set -euo pipefail
 TEMPLATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC="$TEMPLATE_DIR/template"
 
-# Files the template owns and may refresh. Everything else in a project's .claude/ is that
+# Machinery the template owns and may refresh. Everything else in a project's .claude/ is that
 # project's own content and is never touched by --update.
-MACHINERY=(backup_docs.sh)
-MACHINERY_DIRS=(skills)
+MACHINERY_DIRS=(skills hooks)
 
 # Written once at install, never overwritten afterwards — these accumulate project content.
-SEEDED=(CLAUDE.md README.md hooks-optional.md settings.json decisions.md issues.md hotfixes.md traps.md)
+# Paths are relative to .claude/.
+SEEDED=(CLAUDE.md README.md settings.json
+        work/decisions.md work/issues.md work/hotfixes.md work/traps.md)
 
 die() { echo "error: $*" >&2; exit 1; }
 
@@ -44,7 +45,7 @@ case "$MODE" in
 
 install)
     echo "installing .claude/ into $TARGET_PROJECT"
-    mkdir -p "$DEST"/{current,archive,skills}
+    mkdir -p "$DEST"/work/{current,archive,reference} "$DEST"/{skills,hooks}
 
     skipped=0 written=0
     for f in "${SEEDED[@]}"; do
@@ -58,16 +59,11 @@ install)
         fi
     done
 
-    for f in "${MACHINERY[@]}"; do
-        cp "$SRC/$f" "$DEST/$f"; chmod +x "$DEST/$f"
-        echo "  write    $f"
-        written=$((written + 1))
-    done
-
     for d in "${MACHINERY_DIRS[@]}"; do
         mkdir -p "$DEST/$d"
         cp -r "$SRC/$d/." "$DEST/$d/"
-        echo "  write    $d/  ($(find "$SRC/$d" -name SKILL.md | wc -l) skills)"
+        chmod +x "$DEST/$d"/*.sh 2>/dev/null || true
+        echo "  write    $d/"
     done
 
     # settings.local.json is personal; seed an empty one and make sure git ignores it.
@@ -87,8 +83,8 @@ install)
    Recommended .gitignore instead — track the machinery, ignore only what is personal:
 
        .claude/settings.local.json
-       .claude/current/
-       .claude/archive/
+       .claude/work/current/
+       .claude/work/archive/
 
    If you keep .claude/ ignored, leave the backup hooks in settings.json enabled.
 WARN
@@ -110,11 +106,10 @@ EOF
 update)
     [[ -d "$DEST" ]] || die "no .claude/ in $TARGET_PROJECT — run install first"
     echo "refreshing machinery in $DEST (CLAUDE.md and all project content left alone)"
-    for f in "${MACHINERY[@]}"; do
-        cp "$SRC/$f" "$DEST/$f"; chmod +x "$DEST/$f"; echo "  update   $f"
-    done
     for d in "${MACHINERY_DIRS[@]}"; do
-        cp -r "$SRC/$d/." "$DEST/$d/"; echo "  update   $d/"
+        cp -r "$SRC/$d/." "$DEST/$d/"
+        chmod +x "$DEST/$d"/*.sh 2>/dev/null || true
+        echo "  update   $d/"
     done
     echo "done. Project content untouched: ${SEEDED[*]}"
     ;;
@@ -122,9 +117,6 @@ update)
 export)
     [[ -d "$DEST" ]] || die "no .claude/ in $TARGET_PROJECT"
     echo "pulling machinery from $DEST back into the template"
-    for f in "${MACHINERY[@]}"; do
-        [[ -e "$DEST/$f" ]] && { cp "$DEST/$f" "$SRC/$f"; echo "  export   $f"; }
-    done
     for d in "${MACHINERY_DIRS[@]}"; do
         [[ -d "$DEST/$d" ]] && { cp -r "$DEST/$d/." "$SRC/$d/"; echo "  export   $d/"; }
     done
@@ -135,9 +127,6 @@ export)
 
 diff)
     [[ -d "$DEST" ]] || die "no .claude/ in $TARGET_PROJECT"
-    for f in "${MACHINERY[@]}"; do
-        diff -u "$SRC/$f" "$DEST/$f" || true
-    done
     for d in "${MACHINERY_DIRS[@]}"; do
         diff -ru "$SRC/$d" "$DEST/$d" || true
     done

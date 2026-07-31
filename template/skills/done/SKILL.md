@@ -1,6 +1,6 @@
 ---
 name: done
-description: Close out the finished task — run a final save, then archive .claude/current/ to .claude/archive/<YYYY-MM>_<slug>/ and start a clean current/. Use when the user says a task is done, finished, wrapped up, or wants to start a new task.
+description: Close out the finished task — run a final save, then archive .claude/work/current/ to .claude/work/archive/<YYYY-MM>_<slug>/ and start a clean current/. Use when the user says a task is done, finished, wrapped up, or wants to start a new task.
 ---
 
 # Done
@@ -8,7 +8,7 @@ description: Close out the finished task — run a final save, then archive .cla
 Close out the current task. `/save` checkpoints work *within* a task; `/done` ends one and clears
 the desk for the next.
 
-**This should fire regularly.** An empty `archive/` next to a long-running `current/` means tasks are
+**This should fire regularly.** An empty `archive/` next to a long-running `work/current/` means tasks are
 being merged into a program that never closes — the plan and history then grow past the point where
 they fit in context, and every session pays to re-read them. If the objective has grown to the point
 that `/done` can never pass its gate, the right move is to close the part that *is* finished and
@@ -17,7 +17,7 @@ that `/done` can never pass its gate, the right move is to close the part that *
 ## The argument
 
 The argument is normally the **archive slug** — the name that follows `<YYYY-MM>_` in the archive
-directory. `/done api-migration` → `.claude/archive/2026-07_api-migration/`.
+directory. `/done api-migration` → `.claude/work/archive/2026-07_api-migration/`.
 
 Normalize it: lowercase, spaces and underscores to hyphens, strip anything that isn't
 `[a-z0-9-]`. `/done "API Migration"` → `api-migration`.
@@ -30,7 +30,7 @@ Normalize it: lowercase, spaces and underscores to hyphens, strip anything that 
 - A sentence or an instruction (`just the teardown work`, `don't archive yet, only save`) → that's
   scope or a directive, not a name. Follow the instruction, and derive the slug from `plan.md`'s
   objective instead.
-- Empty → derive the slug from the `# Plan —` objective line in `current/plan.md`, and **show it to
+- Empty → derive the slug from the `# Plan —` objective line in `work/current/plan.md`, and **show it to
   the user for confirmation before creating the directory.**
 
 When in doubt, say what slug you're about to use and why, then proceed.
@@ -47,7 +47,7 @@ The test is: does the file describe **the work** or **the code**?
 | `issues.md` | unfiled work doesn't stop existing |
 | `traps.md` | the workspace still behaves that way |
 
-| Archives with the task (`current/`) | Why |
+| Archives with the task (`work/current/`) | Why |
 |---|---|
 | `plan.md` | tasks for one objective, dead once met |
 | `plan_superseded.md` | the original wording of those tasks |
@@ -59,7 +59,7 @@ The test is: does the file describe **the work** or **the code**?
 **1. Run `/save` first.** Full save, no shortcuts — this is the last chance to capture rationale
 from the live conversation. Everything below assumes the docs are current.
 
-**2. Check the task is actually finished.** Read `current/plan.md`:
+**2. Check the task is actually finished.** Read `work/current/plan.md`:
 
 - Any `[ ]` pending or `[~]` unverified items? **Stop and list them.** Ask whether they are done,
   abandoned, or moving to the next task. Do not archive over unfinished work — `[~]` especially,
@@ -90,7 +90,7 @@ from the live conversation. Everything below assumes the docs are current.
 **4. GATE — do not archive until everything outstanding is dispositioned.**
 
 This is a hard stop. `/done` is the last moment anyone looks at this task's loose ends; once
-`current/` is archived, unfiled issues and undocumented hotfixes are effectively lost.
+`work/current/` is archived, unfiled issues and undocumented hotfixes are effectively lost.
 
 Collect everything outstanding and present it as a numbered list the user answers:
 
@@ -114,18 +114,18 @@ could ever close while an upstream fix is pending.
 the list, stop there — a partial `/done` that saved but didn't archive is fine and recoverable; an
 archive that swallowed unresolved work is not. Never disposition an item on the user's behalf.
 
-**5. Archive.** Create `.claude/archive/<YYYY-MM>_<slug>/` using **today's** year-month. If the
-directory exists, do not overwrite — append `-2`, or ask. Then plain `mv` of `current/plan.md`,
-`current/plan_superseded.md`, `current/history.md`, `current/handoff.md` into it.
+**5. Archive.** Create `.claude/work/archive/<YYYY-MM>_<slug>/` using **today's** year-month. If the
+directory exists, do not overwrite — append `-2`, or ask. Then plain `mv` of `work/current/plan.md`,
+`work/current/plan_superseded.md`, `work/current/history.md`, `work/current/handoff.md` into it.
 ⚠ **`plan_superseded.md` is easy to miss** — it is created lazily by `/save`, so it is absent from
 some tasks and present in others. Leaving it behind blocks the next `/start`, which refuses to run
-while `current/` is non-empty.
+while `work/current/` is non-empty.
 
 Write a short `README.md` in the archive directory: the objective, dates spanned (first and last
 session in `history.md`), the outcome in 2–3 sentences, and any hotfixes or issues left behind that
 outlived the task.
 
-**6. Leave `current/` empty.** Do **not** write a stub `plan.md` or seed `history.md` — `/start`
+**6. Leave `work/current/` empty.** Do **not** write a stub `plan.md` or seed `history.md` — `/start`
 scaffolds the next task, and an empty directory makes it obvious there isn't one.
 
 **7. Report.** Say what was archived and where, the disposition of every item from the gate,

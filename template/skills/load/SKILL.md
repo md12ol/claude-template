@@ -1,6 +1,6 @@
 ---
 name: load
-description: Start a session on the current task — read .claude/current/handoff.md, plan.md, decisions.md and hotfixes.md, verify them against the actual repo state, and report where things stand before doing any work. Use at the start of a session, when resuming a task, or when the user asks where things are.
+description: Start a session on the current task — read .claude/work/current/handoff.md, plan.md, decisions.md and hotfixes.md, verify them against the actual repo state, and report where things stand before doing any work. Use at the start of a session, when resuming a task, or when the user asks where things are.
 ---
 
 # Load
@@ -16,25 +16,25 @@ Pick up the current task. This is step 5 of the loop:
 7. Finished? → step 8. Not finished? → step 4.
 8. `/done <slug>`
 
-`/save` wrote `current/handoff.md` for you. Your job is to consume it, **check it is still true**,
+`/save` wrote `work/current/handoff.md` for you. Your job is to consume it, **check it is still true**,
 and report — then stop and wait. Do not start work as part of `/load`.
 
 ## 1. Read, in this order
 
-1. `.claude/current/handoff.md` — the instruction from the last session. This is the primary input.
-2. `.claude/current/plan.md` — the objective and task status.
-3. `.claude/decisions.md` — read at least the most recent entries. **Do not re-litigate anything
+1. `.claude/work/current/handoff.md` — the instruction from the last session. This is the primary input.
+2. `.claude/work/current/plan.md` — the objective and task status.
+3. `.claude/work/decisions.md` — read at least the most recent entries. **Do not re-litigate anything
    recorded here.** If you think a past decision is wrong, say so explicitly rather than quietly
    doing something else.
-4. `.claude/hotfixes.md` — temporary code you might otherwise mistake for a bug, or delete.
-5. `.claude/traps.md` — the workspace gotchas. Cheap to read, and each one is there because it
+4. `.claude/work/hotfixes.md` — temporary code you might otherwise mistake for a bug, or delete.
+5. `.claude/work/traps.md` — the workspace gotchas. Cheap to read, and each one is there because it
    already cost someone a session.
-6. `.claude/issues.md` — only to notice what's already logged, so you don't re-report it.
+6. `.claude/work/issues.md` — only to notice what's already logged, so you don't re-report it.
 
-`current/plan_superseded.md` is reference only. Don't read it on load, and never action anything in
+`work/current/plan_superseded.md` is reference only. Don't read it on load, and never action anything in
 it — it holds the original wording of tasks that are already done.
 
-If `current/` is empty or has no `plan.md`, there is **no active task**. Say so and point at
+If `work/current/` is empty or has no `plan.md`, there is **no active task**. Say so and point at
 `/start`. Do not invent one.
 
 ## 2. Verify the handoff against reality
