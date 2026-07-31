@@ -1,16 +1,25 @@
 #!/usr/bin/env bash
-# PreToolUse(Edit|Write) — surface hotfixes.md when touching another team's component.
+# PreToolUse(Edit|Write) — warn at the moment of the edit, not an hour after CLAUDE.md was read.
 #
-# CLAUDE.md's "files outside your scope" section names paths that carry deliberate working-tree
-# edits. This shows hotfixes.md at the moment of the edit rather than relying on it having been read
-# an hour earlier.
+# Two cases:
 #
-# EDIT THE PATH PATTERN BELOW BEFORE ENABLING — the default is an example.
+#   1. Files outside your scope. CLAUDE.md's "files outside your scope" section names paths that
+#      carry deliberate working-tree edits. The disposition is per-file — only hotfixes.md knows
+#      which. EDIT THE PATH PATTERN BELOW BEFORE ENABLING; the default is an example.
 #
-# Never blocks — exit 0 always. It only prints, because the edits themselves are legitimate.
+#   2. The .claude/ machinery itself. settings.json and hooks/*.sh execute on everyone ELSE's
+#      machine, at session start, on their next pull, without them reading the diff. Those changes
+#      go through a PR. This branch needs no configuring and is worth keeping even solo — it is
+#      what stops a broken hook shipping to a teammate.
+#
+# Never blocks — exit 0 always. Both kinds of edit are legitimate; they just need to be deliberate.
+#
+# Per-machine override: set CLAUDE_SCOPED_PATHS (an ERE) in .claude/settings.local.json to narrow
+# case 1 to the files someone else is actually working on right now.
 #
 # Test:
-#   echo '{"tool_input":{"file_path":"vendor/x.py"}}' | .claude/hooks/show_hotfixes.sh
+#   echo '{"tool_input":{"file_path":"vendor/x.py"}}'                    | .claude/hooks/show_hotfixes.sh
+#   echo '{"tool_input":{"file_path":".claude/hooks/session_brief.sh"}}' | .claude/hooks/show_hotfixes.sh
 
 set -uo pipefail
 
@@ -25,22 +34,48 @@ except Exception:
 
 [[ -z "$FILE" ]] && exit 0
 
-# Components owned by other teams that carry deliberate working-tree edits.
-if grep -qE '(^|/)(vendor|third_party)/' <<<"$FILE"; then
+# ── 1. Files outside your scope ───────────────────────────────────────────────────────────────
+# EDIT THIS — components owned by other people that carry deliberate working-tree edits. An
+# out-of-date pattern that never fires is the same as no hook, so revisit it when ownership moves.
+SCOPED="${CLAUDE_SCOPED_PATHS:-(^|/)(vendor|third_party)/}"
+
+if grep -qE "$SCOPED" <<<"$FILE"; then
     cat <<EOF
 
-⚠  $FILE is in another team's component.
+⚠  $FILE is outside your scope — someone else may have live work in it.
 
-CLAUDE.md: read hotfixes.md BEFORE editing, staging or reverting anything here. The rules are
-usually NOT uniform — one file may have to be committed and another must never be, and only
-the hotfix entry knows which.
+CLAUDE.md: read hotfixes.md BEFORE editing, staging or reverting here, and check the Owner: line.
+A hotfix owned by someone else is NOT in your working tree. The rules are not uniform — one file
+may have to be committed and another must never be, and only the entry knows which.
 
-Matching hotfixes.md entries:
+hotfixes.md entries (heading · owner · where · remove-when):
 EOF
-    # Print the entry headings plus their Remove-when lines, not the whole file.
-    grep -nE '^### |^- \*\*(Where|Remove when):' "$DIR/work/hotfixes.md" 2>/dev/null \
+    grep -nE '^### |^- \*\*(Owner|Machine|Where|Remove when):' "$DIR/work/hotfixes.md" 2>/dev/null \
         | sed 's/^/  /' | head -60
+
+    if [[ -f "$DIR/work/collab.md" ]]; then
+        echo
+        echo "Open collab.md items — settle a conflict there rather than overwriting their work:"
+        awk '/^## Open/{f=1;next} /^## /{f=0} f&&/^### /' "$DIR/work/collab.md" 2>/dev/null \
+            | sed 's/^/  /' | head -20
+    fi
     echo
+fi
+
+# ── 2. The .claude/ machinery ─────────────────────────────────────────────────────────────────
+if grep -qE '(^|/)\.claude/(settings\.json|hooks/)' <<<"$FILE"; then
+    cat <<EOF
+
+⚠  $FILE runs on everyone else's machine.
+
+settings.json and hooks/*.sh are executable code that fires at THEIR session start on their next
+pull, without them reading it. CLAUDE.md: these changes go through a PR — never straight to main.
+Say in the PR what the hook now does.
+
+(settings.local.json is the per-machine escape hatch and is gitignored — use it for anything
+personal, and nothing here applies.)
+
+EOF
 fi
 
 exit 0

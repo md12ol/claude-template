@@ -57,10 +57,14 @@ You don't have to read the rest of this file to use it. The short version:
 |---|---|
 | `decisions.md` | append-only: what was chosen and why, including reversals |
 | `issues.md` | work belonging to other people, staged for the tracker |
-| `hotfixes.md` | temporary code in the tree, each with a `Remove when:` |
+| `hotfixes.md` | temporary code in the tree, each with a `Remove when:` and an `Owner:` |
 | `traps.md` | permanent workspace gotchas |
+| `collab.md` | cross-owner decisions, when more than one person shares the repo. Delete if you work alone |
 
 `CLAUDE.md` holds the rules themselves and is loaded into every session automatically.
+
+Everything above is tracked, along with `work/archive/`. Only `work/current/` and
+`settings.local.json` are per-person — see "More than one person" below.
 
 ## The three task states
 
@@ -83,6 +87,21 @@ naming what would prove it.
 - **One home per fact.** What happened → `history.md` · why → `decisions.md` · temporary code →
   `hotfixes.md` · someone else's problem → `issues.md` · workspace gotcha → `traps.md`. Duplication
   across files is how half of them go quietly wrong.
+
+## More than one person
+
+If someone else clones this repo and runs `/start` on their own machine, read the "More than one
+person uses this `.claude/`" section of `CLAUDE.md` first. The short version:
+
+- **`/setup` runs once per project, ever — never on a clone.** It would overwrite `CLAUDE.md`.
+  Start with `/load` instead. Personal settings go in `settings.local.json` (gitignored).
+- **Stamp every entry with an author.** The persistent docs merge with `merge=union`, so appends
+  never conflict — but union merge never conflicts about *anything*, including two edits to the
+  same entry. The stamp is what makes a silent duplicate visible. Read the tail after a merge.
+- **Check `Owner:` in `hotfixes.md`.** Someone else's uncommitted hotfix is not in your tree.
+- **Hook and `settings.json` changes go through a PR**, both ways. They execute on the other
+  person's machine at session start, without them reading the diff.
+- **`[x]` is per-machine.** Never promote someone else's `[~]` because their notes read as done.
 
 ## Backups
 

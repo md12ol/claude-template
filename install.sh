@@ -22,7 +22,7 @@ MACHINERY_DIRS=(skills hooks)
 # Written once at install, never overwritten afterwards — these accumulate project content.
 # Paths are relative to .claude/.
 SEEDED=(CLAUDE.md README.md settings.json
-        work/decisions.md work/issues.md work/hotfixes.md work/traps.md)
+        work/decisions.md work/issues.md work/hotfixes.md work/traps.md work/collab.md)
 
 die() { echo "error: $*" >&2; exit 1; }
 
@@ -84,9 +84,29 @@ install)
 
        .claude/settings.local.json
        .claude/work/current/
-       .claude/work/archive/
+
+   work/current/ is the ONE thing to keep per-person: two people cannot hold one live plan.
+   work/archive/ is deliberately NOT ignored — a finished task's record is shared history, and
+   ignoring it strands every /done on one laptop.
 
    If you keep .claude/ ignored, leave the backup hooks in settings.json enabled.
+WARN
+    fi
+
+    # Shared repo? The append-only docs need a union merge driver or they conflict constantly.
+    if [[ -d "$TARGET_PROJECT/.git" ]] \
+       && ! grep -qs 'claude/work/\*\.md' "$TARGET_PROJECT/.gitattributes"; then
+        cat <<'WARN'
+
+ℹ  If more than one person will use this .claude/, add to the repo root .gitattributes:
+
+       .claude/work/*.md merge=union
+
+   decisions.md, traps.md, hotfixes.md, issues.md and collab.md are append-only, so everyone
+   writes to the tail of the same file — without this, every concurrent session ends in a merge
+   conflict. The trade: union merge NEVER conflicts, so a real collision on the same entry merges
+   silently. Stamp every entry with an author so a duplicate is visible. See CLAUDE.md,
+   "More than one person uses this .claude/".
 WARN
     fi
     cat <<EOF

@@ -63,6 +63,7 @@ The split is **what Claude Code owns** vs **what you accumulate**:
     ├── issues.md        work for other people, staged for the tracker
     ├── hotfixes.md      temporary code, each with a Remove when:
     ├── traps.md         permanent workspace gotchas
+    ├── collab.md        cross-owner decisions (delete if solo)
     ├── current/         the active task
     ├── archive/         finished tasks, <YYYY-MM>_<slug>/
     └── reference/       project docs that aren't session state
@@ -85,6 +86,7 @@ One question decides where something goes: **does it stop being true when the ta
 | `hotfixes.md` | **project** | the band-aid is still in the tree |
 | `issues.md` | **project** | the bug doesn't stop existing |
 | `traps.md` | **project** | the workspace still behaves that way |
+| `collab.md` | **project** | coordination outlives any one task |
 
 Project files: **one of each, forever.** Task files: **one set live at a time** — `current/` holds
 exactly one task, `/done` moves it to `archive/`, `/start` refuses to run until it's empty.
@@ -97,6 +99,7 @@ exactly one task, `/done` moves it to `archive/`, `/start` refuses to run until 
 | Is there code in the tree I want to delete later? | `hotfixes.md` |
 | Is this someone else's to fix? | `issues.md` |
 | Will this waste my time again, with nothing to fix? | `traps.md` |
+| Does this override what someone else is building? | `collab.md` |
 | Did something happen this session? | `history.md` |
 | Is there work left to do? | `plan.md` |
 
@@ -143,11 +146,41 @@ the explanation.
 ```gitignore
 .claude/settings.local.json
 .claude/work/current/
-.claude/work/archive/
 ```
+
+`work/current/` is the one thing to keep per-person — two people cannot hold one live plan.
+`work/archive/` is deliberately *not* ignored: a finished task's record is shared history, and
+ignoring it strands every `/done` on one laptop.
 
 If you'd rather keep it untracked, leave the backup hooks on — but a same-disk daily copy can't tell
 you *when* a doc went stale.
+
+## More than one person
+
+The moment a second person clones the repo and runs `/start` on their own machine, four things
+change. `CLAUDE.md` ships a section stating all four; delete it if you work alone.
+
+**Add a union merge driver**, or every concurrent session ends in a conflict:
+
+```gitattributes
+.claude/work/*.md merge=union
+```
+
+`decisions.md`, `traps.md`, `hotfixes.md`, `issues.md` and `collab.md` are append-only, so everyone
+writes to the tail of the same file — the most conflict-prone shape in git. Union merge keeps both
+sides. **The trade is that it never conflicts.** Measured: entries with distinct text merge
+correctly (only the blank line between them is eaten), but byte-identical lines are deduplicated
+and the two entries interleave into one block that reads as coherent and is not. Stamp every entry
+`— <author>` and keep an `Affects:` line on it, so entries stay textually distinct — then read the
+tail after a merge.
+
+The other three: **`collab.md`** holds cross-owner decisions (it is deliberately not named after a
+person — "to discuss with <name>" reads as self-referential on that person's machine);
+**`hotfixes.md` entries carry `Owner:` and `Machine:`**, because an uncommitted hotfix exists on
+exactly one machine; and **hook/settings changes go through a PR**, because they execute on
+everyone else's machine at session start without them reading the diff.
+
+`/setup` runs once per *project*, never on a clone — it would overwrite a configured `CLAUDE.md`.
 
 ## Hooks
 
@@ -158,7 +191,7 @@ rest and wires them up.
 |---|---|
 | `backup_docs.sh` | snapshots to `~/.claude-backups/<project>/<date>/`. **On by default** |
 | `block_env_commands.sh` | refuses commands you reserve for yourself. Prose rules get violated; exit 2 doesn't |
-| `show_hotfixes.sh` | prints `hotfixes.md` when editing a file that carries deliberate edits |
+| `show_hotfixes.sh` | prints `hotfixes.md` when editing a file that carries deliberate edits, and warns when editing the `.claude/` machinery itself |
 | `session_brief.sh` | handoff + counts at session start, in case you forget `/load` |
 
 ## Design notes
