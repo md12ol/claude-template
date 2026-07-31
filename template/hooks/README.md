@@ -46,7 +46,7 @@ matters, rather than relying on the agent having read it an hour ago.
     "hooks": [
       {
         "type": "command",
-        "command": "grep -qE 'path/to/owned/area' <<<\"$CLAUDE_TOOL_INPUT\" && cat \"$CLAUDE_PROJECT_DIR/.claude/hotfixes.md\" || true"
+        "command": "grep -qE 'path/to/owned/area' <<<\"$CLAUDE_TOOL_INPUT\" && cat \"$CLAUDE_PROJECT_DIR/.claude/work/hotfixes.md\" || true"
       }
     ]
   }

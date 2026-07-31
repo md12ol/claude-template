@@ -30,8 +30,8 @@ You don't have to read the rest of this file to use it. The short version:
   commands you run yourself and the agent must not* — and turns the template's `FILL IN` blocks into
   this project's rules. If `CLAUDE.md` has no `FILL IN` blocks left, it's already done.
 
-- **`/start`** agrees the objective and writes `current/plan.md` **before any code**. It refuses to
-  run if there's an unfinished task in `current/`.
+- **`/start`** agrees the objective and writes `work/current/plan.md` **before any code**. It refuses to
+  run if there's an unfinished task in `work/current/`.
 - **`/save`** is the important one. It re-reads the session for things that were *discussed but
   never landed* — agreed then diverted, noticed in passing, asked and unanswered — and asks you
   about the ones it can't settle. Then it updates every doc and writes the next-session prompt.
@@ -42,14 +42,14 @@ You don't have to read the rest of this file to use it. The short version:
 
 ## The files
 
-**Task-scoped** — `current/`, archived by `/done`:
+**Task-scoped** — `work/current/`, archived by `/done`:
 
 | | |
 |---|---|
-| `current/plan.md` | objective + task list. **A task list, not a record** — kept under ~600 lines |
-| `current/plan_superseded.md` | original wording of finished tasks. Reference only |
-| `current/history.md` | append-only session log for this task |
-| `current/handoff.md` | the next-session prompt. Overwritten every save |
+| `work/current/plan.md` | objective + task list. **A task list, not a record** — kept under ~600 lines |
+| `work/current/plan_superseded.md` | original wording of finished tasks. Reference only |
+| `work/current/history.md` | append-only session log for this task |
+| `work/current/handoff.md` | the next-session prompt. Overwritten every save |
 
 **Persistent** — these describe the *code*, so they outlive any one task:
 

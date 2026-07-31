@@ -5,37 +5,33 @@
 # (recommended — see .claude/README.md), this is belt-and-braces and you can drop the hooks that
 # call it.
 #
-# Snapshots land in ~/.claude-backups/<project-name>/<YYYY-MM-DD>/ — one directory per day,
-# overwritten within the day, pruned beyond RETAIN_DAYS.
+# Snapshots land in ~/.claude-backups/<project>/<YYYY-MM-DD>/ — one directory per day, overwritten
+# within the day, pruned beyond RETAIN_DAYS. The project name is derived from the directory that
+# contains .claude/, so nothing needs configuring per project.
 #
-#   ./backup_docs.sh            # throttled; safe to call from a Stop hook after every turn
-#   ./backup_docs.sh --force    # copy regardless of throttle (use for SessionEnd)
+#   .claude/hooks/backup_docs.sh            # throttled; safe from a Stop hook after every turn
+#   .claude/hooks/backup_docs.sh --force    # copy regardless of throttle (use for SessionEnd)
 
 set -euo pipefail
 
-SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT="$(basename "$(dirname "$SRC")")"
+# This script lives in .claude/hooks/ — CLAUDE_DIR is one level up.
+CLAUDE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT="$(basename "$(dirname "$CLAUDE_DIR")")"
 DEST_ROOT="${CLAUDE_DOCS_BACKUP_DIR:-$HOME/.claude-backups/$PROJECT}"
 RETAIN_DAYS="${CLAUDE_DOCS_BACKUP_RETAIN:-14}"
 
-# Everything that is not a directory. Add project-specific files here — anything living in
-# .claude/ that you would not want to lose. The default list is the full working-doc set plus the
-# settings, because settings.json holds the hooks that run this script.
+# Loose files at the .claude/ root. settings*.json are included deliberately — settings.json holds
+# the hooks that run this script, so without it a restore cannot restore its own trigger.
 DOCS=(
     CLAUDE.md
     README.md
-    hooks-optional.md
-    backup_docs.sh
-    decisions.md
-    issues.md
-    hotfixes.md
-    traps.md
     settings.json
     settings.local.json
 )
 
-# Directories copied whole: the active task, every archived task, and the skills themselves.
-DIRS=(current archive skills)
+# Directories copied whole. work/ is all the accumulated project state — the actual point of the
+# backup. skills/ and hooks/ are machinery: cheap to include, annoying to rebuild by hand.
+DIRS=(work skills hooks)
 
 DEST="$DEST_ROOT/$(date +%F)"
 
@@ -53,16 +49,16 @@ mkdir -p "$DEST"
 
 copied=0
 for f in "${DOCS[@]}"; do
-    if [[ -s "$SRC/$f" ]]; then
-        cp -p "$SRC/$f" "$DEST/$f"
+    if [[ -s "$CLAUDE_DIR/$f" ]]; then
+        cp -p "$CLAUDE_DIR/$f" "$DEST/$f"
         copied=$((copied + 1))
     fi
 done
 
 for d in "${DIRS[@]}"; do
-    if [[ -d "$SRC/$d" ]]; then
+    if [[ -d "$CLAUDE_DIR/$d" ]]; then
         rm -rf "${DEST:?}/$d"
-        cp -rp "$SRC/$d" "$DEST/$d"
+        cp -rp "$CLAUDE_DIR/$d" "$DEST/$d"
     fi
 done
 
@@ -71,4 +67,4 @@ if [[ -d "$DEST_ROOT" ]]; then
     find "$DEST_ROOT" -mindepth 1 -maxdepth 1 -type d -mtime "+$RETAIN_DAYS" -exec rm -rf {} + 2>/dev/null || true
 fi
 
-echo "backed up $copied docs + $(printf '%s ' "${DIRS[@]}")to $DEST"
+echo "backed up $copied files + $(printf '%s ' "${DIRS[@]}")to $DEST"
