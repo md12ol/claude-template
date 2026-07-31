@@ -254,6 +254,10 @@ the wrong thing, paths that aren't what they look like, files that a routine com
 These belong here rather than in `handoff.md`. `handoff.md` is overwritten every save, so anything
 durable parked there is deleted the moment it stops being top-of-mind.
 
+**Verify a trap before recording it.** Traps are stated as fact and get trusted for months. Run the
+reproducer and put it in the entry — in the project this came from, a `grep` trap was carried in
+`handoff.md` for days with the wrong mechanism before anyone re-tested it.
+
 ## 8. `work/current/history.md` — append a session entry
 
 Insert `## Session <YYYY-MM-DD>: <one-line headline>` at the **top** of the session log —
