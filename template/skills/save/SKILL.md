@@ -120,8 +120,37 @@ default, you settle yourself and mention in the closing brief.
   anything the step-2 sweep turned up.
 - Strike items that were abandoned, with a one-line reason (and a matching `decisions.md` entry).
 - Do not restructure or rewrite the plan's existing items.
-- **Check the length.** Over ~600 lines, compress the biggest completed items before appending
-  anything new.
+
+### Keep the plan a TASK LIST, not a record — enforce this every save
+
+Left unenforced, `plan.md` grows without bound. In the project this template came from it reached
+**1432 lines** and had to be cut in half by hand. It grew because evidence, rationale and superseded
+text all accumulated in it. Every one of those belongs somewhere else, and each has a file that owns
+it:
+
+| What | Where it goes | NOT in the plan |
+|---|---|---|
+| What happened, measurements, tables | `current/history.md` | ✗ |
+| Why we chose it, what was rejected | `decisions.md` | ✗ |
+| Original wording of a task now done | `current/plan_superseded.md` | ✗ |
+| Temporary code | `hotfixes.md` | ✗ |
+| Someone else's work | `issues.md` | ✗ |
+
+**Budgets — check them at every save, and fix on the spot:**
+
+- **A completed item is ≤ 3 lines.** Compress it **when you tick it**, not later: what was done, the
+  single piece of evidence that verifies it, and where the detail lives. Do not paste the evidence.
+- **An open item is ≤ 20 lines.** What to do, the verify-by, and any constraint that would cause harm
+  if forgotten. If it needs more, the reasoning goes in `decisions.md` and the plan links to it.
+- **Never keep "(original text, kept for the reasoning)" blocks in the plan.** Move them to
+  `current/plan_superseded.md` the moment the task is done, and **never leave one wearing a `[ ]`** —
+  an item that can never be ticked teaches everyone to skim past `[ ]`, and then a real pending item
+  gets lost.
+- **Soft cap ~600 lines.** If `plan.md` is over it, compress the biggest completed items *before*
+  appending new ones. `wc -l current/plan.md` — do this check as part of the save.
+
+**Amalgamate.** If two items describe the same work (a task and its "verification" twin, an item and
+its rewrite), merge them into one and keep the number that is referenced elsewhere.
 
 ## 4. `decisions.md` — append what was chosen and why
 
