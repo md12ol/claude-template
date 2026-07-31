@@ -7,6 +7,7 @@ maintain it.
 You don't have to read the rest of this file to use it. The short version:
 
 ```
+/setup   once per project, right after install — fills in CLAUDE.md
 /start   at the beginning of a piece of work
 /save    last thing before you stop, every session
 /load    first thing when you come back
@@ -16,12 +17,18 @@ You don't have to read the rest of this file to use it. The short version:
 ## The loop
 
 ```
+  /setup  ── once per project ──┐
+                                ▼
   new task ──▶ /start ──▶ work ──▶ /save ──┐
                             ▲              │
                             └── /load ◀────┘   (once per session)
                                   │
                             finished? ──▶ /done <slug> ──▶ archive/
 ```
+
+- **`/setup`** runs once, ever. It inspects the repo, asks what it can't infer — above all *which
+  commands you run yourself and the agent must not* — and turns the template's `FILL IN` blocks into
+  this project's rules. If `CLAUDE.md` has no `FILL IN` blocks left, it's already done.
 
 - **`/start`** agrees the objective and writes `current/plan.md` **before any code**. It refuses to
   run if there's an unfinished task in `current/`.
