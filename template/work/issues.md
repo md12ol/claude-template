@@ -26,5 +26,6 @@ same session; this file must not become a private fork of it.
 - **Project:** the tracker project it belongs to
 - **Filed:** not yet
 - **Component:** `path:line`
-- **Body:**
+- **Body:** <open with a sentence on this line — a bare label is byte-identical in every entry,
+  which is what union merge folds together>
   What's wrong, the mechanism with `path:line`, evidence, how to reproduce, candidate fixes.

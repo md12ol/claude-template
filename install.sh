@@ -104,9 +104,19 @@ WARN
 
    decisions.md, traps.md, hotfixes.md, issues.md and collab.md are append-only, so everyone
    writes to the tail of the same file — without this, every concurrent session ends in a merge
-   conflict. The trade: union merge NEVER conflicts, so a real collision on the same entry merges
-   silently. Stamp every entry with an author so a duplicate is visible. See CLAUDE.md,
-   "More than one person uses this .claude/".
+   conflict. The trade: union merge NEVER conflicts, so a real collision merges silently: lines
+   byte-identical on both sides are folded together as shared context, interleaving two entries
+   into one block that reads as coherent and is not.
+
+   The defence is that an entry's FIRST and LAST lines are unique. Stamp every entry with an
+   author AND a time — "*#7 · raised 2026-07-31 15:42 — Ada.*" — never a bare
+   "*Raised 2026-07-31 — Ada.*", which collides the moment one person raises two items in a day.
+   Audit any of these files with:
+
+       grep -vE '^[[:space:]]*$' .claude/work/<file>.md | sort | uniq -d
+
+   Anything it prints is a line two entries could collapse onto. See CLAUDE.md,
+   "More than one person uses this .claude/" -> "Formatting for union merge".
 WARN
     fi
     cat <<EOF

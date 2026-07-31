@@ -14,4 +14,4 @@ Read by `/load` and `/start`. Entries leave only when no longer true.
 - **Bites when:** the action that triggers it.
 - **Do this instead:** the correct form.
 - **Why:** the mechanism, one line.
-- **Added:** <YYYY-MM-DD>
+- **Added:** <YYYY-MM-DD> — <short-slug of this trap, so the line is unique>
