@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# Install / update / export the .claude working-docs system.
+#
+#   install.sh <project-dir>            seed a new .claude/ (never clobbers existing files)
+#   install.sh --update <project-dir>   refresh skills/ + backup_docs.sh only
+#   install.sh --export <project-dir>   pull that project's skills back into this template
+#   install.sh --diff   <project-dir>   show what differs, change nothing
+#
+# The template is a SOURCE you copy from, not a repo you check out into a project. That keeps the
+# project's .claude/ as plain files versioned by the project's own git, with no nested repo and no
+# project state leaking into this template's history.
+
+set -euo pipefail
+
+TEMPLATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SRC="$TEMPLATE_DIR/template"
+
+# Files the template owns and may refresh. Everything else in a project's .claude/ is that
+# project's own content and is never touched by --update.
+MACHINERY=(backup_docs.sh)
+MACHINERY_DIRS=(skills)
+
+# Written once at install, never overwritten afterwards — these accumulate project content.
+SEEDED=(CLAUDE.md README.md hooks-optional.md settings.json decisions.md issues.md hotfixes.md traps.md)
+
+die() { echo "error: $*" >&2; exit 1; }
+
+MODE=install
+case "${1:-}" in
+    --update) MODE=update; shift ;;
+    --export) MODE=export; shift ;;
+    --diff)   MODE=diff;   shift ;;
+    -h|--help|"") sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*) die "unknown flag: $1" ;;
+esac
+
+TARGET_PROJECT="${1:-}"
+[[ -n "$TARGET_PROJECT" ]] || die "no project directory given"
+[[ -d "$TARGET_PROJECT" ]] || die "not a directory: $TARGET_PROJECT"
+TARGET_PROJECT="$(cd "$TARGET_PROJECT" && pwd)"
+DEST="$TARGET_PROJECT/.claude"
+
+case "$MODE" in
+
+install)
+    echo "installing .claude/ into $TARGET_PROJECT"
+    mkdir -p "$DEST"/{current,archive,skills}
+
+    skipped=0 written=0
+    for f in "${SEEDED[@]}"; do
+        if [[ -e "$DEST/$f" ]]; then
+            echo "  skip     $f (already exists)"
+            skipped=$((skipped + 1))
+        else
+            cp "$SRC/$f" "$DEST/$f"
+            echo "  write    $f"
+            written=$((written + 1))
+        fi
+    done
+
+    for f in "${MACHINERY[@]}"; do
+        cp "$SRC/$f" "$DEST/$f"; chmod +x "$DEST/$f"
+        echo "  write    $f"
+        written=$((written + 1))
+    done
+
+    for d in "${MACHINERY_DIRS[@]}"; do
+        mkdir -p "$DEST/$d"
+        cp -r "$SRC/$d/." "$DEST/$d/"
+        echo "  write    $d/  ($(find "$SRC/$d" -name SKILL.md | wc -l) skills)"
+    done
+
+    # settings.local.json is personal; seed an empty one and make sure git ignores it.
+    [[ -e "$DEST/settings.local.json" ]] || echo '{}' > "$DEST/settings.local.json"
+
+    # Recommend tracking .claude/ in the project's git, but never edit .gitignore silently.
+    echo
+    echo "wrote $written, skipped $skipped."
+    if [[ -d "$TARGET_PROJECT/.git" ]] && git -C "$TARGET_PROJECT" check-ignore -q .claude 2>/dev/null; then
+        cat <<'WARN'
+
+⚠  .claude/ is gitignored in this project.
+
+   That is the single biggest fragility in this system: CLAUDE.md, the skills, hotfixes.md and
+   decisions.md then have no version control and no recovery path, and teammates never see them.
+
+   Recommended .gitignore instead — track the machinery, ignore only what is personal:
+
+       .claude/settings.local.json
+       .claude/current/
+       .claude/archive/
+
+   If you keep .claude/ ignored, leave the backup hooks in settings.json enabled.
+WARN
+    fi
+    cat <<EOF
+
+Next:
+  1. Open $DEST/CLAUDE.md and work through the four FILL IN blocks. Delete what doesn't apply.
+  2. Read $DEST/README.md — it explains the loop to you and to teammates.
+  3. Start your first task with  /start
+EOF
+    ;;
+
+update)
+    [[ -d "$DEST" ]] || die "no .claude/ in $TARGET_PROJECT — run install first"
+    echo "refreshing machinery in $DEST (CLAUDE.md and all project content left alone)"
+    for f in "${MACHINERY[@]}"; do
+        cp "$SRC/$f" "$DEST/$f"; chmod +x "$DEST/$f"; echo "  update   $f"
+    done
+    for d in "${MACHINERY_DIRS[@]}"; do
+        cp -r "$SRC/$d/." "$DEST/$d/"; echo "  update   $d/"
+    done
+    echo "done. Project content untouched: ${SEEDED[*]}"
+    ;;
+
+export)
+    [[ -d "$DEST" ]] || die "no .claude/ in $TARGET_PROJECT"
+    echo "pulling machinery from $DEST back into the template"
+    for f in "${MACHINERY[@]}"; do
+        [[ -e "$DEST/$f" ]] && { cp "$DEST/$f" "$SRC/$f"; echo "  export   $f"; }
+    done
+    for d in "${MACHINERY_DIRS[@]}"; do
+        [[ -d "$DEST/$d" ]] && { cp -r "$DEST/$d/." "$SRC/$d/"; echo "  export   $d/"; }
+    done
+    echo
+    echo "Review and commit in the template repo:"
+    echo "  cd $TEMPLATE_DIR && git diff && git commit -am 'skills: <what changed>'"
+    ;;
+
+diff)
+    [[ -d "$DEST" ]] || die "no .claude/ in $TARGET_PROJECT"
+    for f in "${MACHINERY[@]}"; do
+        diff -u "$SRC/$f" "$DEST/$f" || true
+    done
+    for d in "${MACHINERY_DIRS[@]}"; do
+        diff -ru "$SRC/$d" "$DEST/$d" || true
+    done
+    ;;
+esac
