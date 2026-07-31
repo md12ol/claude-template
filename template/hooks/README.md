@@ -1,74 +1,79 @@
-# Optional hooks
+# Hooks
 
-`settings.json` ships with only the two backup hooks enabled. The three below turn `CLAUDE.md` rules
-from prose into enforcement — worth adding, because prose rules do get violated.
+`settings.json` enables only the two **backup** hooks (`Stop`, `SessionEnd`). Three more ship here as
+ready scripts, disabled by default. They turn `CLAUDE.md` rules from prose into enforcement.
 
-To use one: copy its `"hooks"` contents into the `"hooks"` block in `settings.json`, merging by event
-name, and edit the patterns. **Don't paste these headings or prose into `settings.json`** — it is
-validated as strict JSON and unknown keys may be rejected.
+`/setup` offers the ones that apply and wires them up. To do it by hand: edit the script's pattern,
+add its JSON to `settings.json`, then check the file still parses —
 
-Project-wide hooks belong in `settings.json` (tracked). Personal ones go in `settings.local.json`.
+```bash
+python3 -m json.tool .claude/settings.json > /dev/null && echo OK
+```
+
+A malformed settings file disables **every** hook in it, silently.
+
+| Script | Event | Blocks? |
+|---|---|---|
+| `backup_docs.sh` | `Stop`, `SessionEnd` | no — **enabled by default** |
+| `block_env_commands.sh` | `PreToolUse(Bash)` | **yes**, exit 2 |
+| `show_hotfixes.sh` | `PreToolUse(Edit\|Write)` | no |
+| `session_brief.sh` | `SessionStart` | no |
+
+Each is testable without a session:
+
+```bash
+echo '{"tool_input":{"command":"make deploy"}}' | .claude/hooks/block_env_commands.sh; echo "rc=$?"
+echo '{"tool_input":{"file_path":"vendor/x.py"}}' | .claude/hooks/show_hotfixes.sh
+.claude/hooks/session_brief.sh
+```
 
 ---
 
-## 1. Block commands you run yourself
+## 1. `block_env_commands.sh` — the one that matters
 
-Enforces `CLAUDE.md` section 1 — "who runs the environment". Exit code `2` blocks the tool call and
-shows the message to the agent, so it can adapt instead of failing blind.
+Enforces `CLAUDE.md`'s "who runs the environment" rule. Without it that rule is a sentence an agent
+may or may not honour; with it the tool call fails and the agent is told what to do instead.
 
-**Edit the regex to match your commands.**
+⚠ **Edit `BLOCK` and `ALLOW` in the script before enabling.** The defaults (`make deploy`,
+`docker compose up`, `./deploy.sh`) are examples. `ALLOW` exists for read-only commands that resemble
+blocked ones — analysis scripts that only read already-generated output.
 
-```json
-"PreToolUse": [
-  {
-    "matcher": "Bash",
-    "hooks": [
-      {
-        "type": "command",
-        "command": "grep -qE '(docker compose up|make deploy|\\./run\\.sh)' <<<\"$CLAUDE_TOOL_INPUT\" && { echo 'Blocked by .claude/settings.json: the user runs this, not you. Hand off the exact command and the log markers for success/failure instead.' >&2; exit 2; } || exit 0"
-      }
-    ]
-  }
-]
-```
-
-## 2. Show `hotfixes.md` before editing someone else's file
-
-`CLAUDE.md` says "read `hotfixes.md` before touching these paths". This shows it at the moment it
-matters, rather than relying on the agent having read it an hour ago.
-
-**Edit the path pattern** to the directories that carry deliberate working-tree edits.
+Patterns are word-boundaried, so `echo deploying` does not match `deploy`. Test both directions
+before trusting it.
 
 ```json
 "PreToolUse": [
-  {
-    "matcher": "Edit|Write",
-    "hooks": [
-      {
-        "type": "command",
-        "command": "grep -qE 'path/to/owned/area' <<<\"$CLAUDE_TOOL_INPUT\" && cat \"$CLAUDE_PROJECT_DIR/.claude/work/hotfixes.md\" || true"
-      }
-    ]
-  }
+  { "matcher": "Bash",
+    "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/block_env_commands.sh\"" } ] }
 ]
 ```
 
-## 3. Session-start brief
+## 2. `show_hotfixes.sh` — before editing someone else's file
 
-Prints the top of the handoff plus counts of open / unverified / unfiled items, so orientation
-happens even when you forget to type `/load`. Cheap, and it makes a rotting `[~]` or an unfiled issue
-visible without asking.
+Prints matching `work/hotfixes.md` entries when an edit targets a path carrying deliberate
+working-tree changes. Never blocks — those edits are legitimate; the risk is making them *unaware*,
+because the rules are usually not uniform across files.
+
+⚠ **Edit the path pattern** (default: `vendor|third_party`).
+
+```json
+"PreToolUse": [
+  { "matcher": "Edit|Write",
+    "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/show_hotfixes.sh\"" } ] }
+]
+```
+
+## 3. `session_brief.sh` — orientation without `/load`
+
+Prints the handoff's *Start here* plus counts of open `[ ]`, unverified `[~]`, unfiled issues and
+traps. No editing needed.
+
+It does **not** replace `/load`, which verifies the handoff against the repo — a hook can't. It makes
+a rotting item visible at zero cost.
 
 ```json
 "SessionStart": [
-  {
-    "hooks": [
-      {
-        "type": "command",
-        "command": "cd \"$CLAUDE_PROJECT_DIR/.claude\" && [ -f current/handoff.md ] && { head -20 current/handoff.md; echo; echo \"open: $(grep -c '^- \\[ \\]' current/plan.md 2>/dev/null || echo 0)  unverified: $(grep -c '^- \\[~\\]' current/plan.md 2>/dev/null || echo 0)  unfiled issues: $(grep -c 'Filed:.*not yet' issues.md 2>/dev/null || echo 0)\"; } || true"
-      }
-    ]
-  }
+  { "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/session_brief.sh\"" } ] }
 ]
 ```
 
@@ -76,22 +81,18 @@ visible without asking.
 
 ## Merging more than one
 
-They share the `PreToolUse` event, so combine them into one array rather than repeating the key:
+`PreToolUse` is shared by hooks 1 and 2 — combine them into one array rather than repeating the key:
 
 ```json
 "hooks": {
   "PreToolUse": [
-    { "matcher": "Bash",       "hooks": [ { "type": "command", "command": "…hook 1…" } ] },
-    { "matcher": "Edit|Write", "hooks": [ { "type": "command", "command": "…hook 2…" } ] }
+    { "matcher": "Bash",       "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/block_env_commands.sh\"" } ] },
+    { "matcher": "Edit|Write", "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/show_hotfixes.sh\"" } ] }
   ],
-  "SessionStart": [ … ],
-  "SessionEnd":   [ … ],
-  "Stop":         [ … ]
+  "SessionStart": [ { "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/session_brief.sh\"" } ] } ],
+  "SessionEnd":   [ … keep the backup hook … ],
+  "Stop":         [ … keep the backup hook … ]
 }
 ```
 
-After editing, check it parses — a malformed `settings.json` disables every hook in it silently:
-
-```bash
-python3 -m json.tool .claude/settings.json > /dev/null && echo OK
-```
+Project-wide hooks go in `settings.json` (tracked). Personal ones go in `settings.local.json`.

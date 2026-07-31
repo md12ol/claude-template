@@ -1,91 +1,54 @@
 # claude-template
 
-A portable working-docs system for [Claude Code](https://claude.com/claude-code): five slash
-commands (`/setup`, `/start`, `/save`, `/load`, `/done`) and the file layout they maintain, so
-sessions stop losing state between context clears.
+A portable working-docs system for [Claude Code](https://claude.com/claude-code). Five slash commands
+and a file layout that stop sessions losing state between context clears.
 
-Copy it into any project in one command. Nothing in here is language- or framework-specific.
+Drop it into any project in one command. Nothing here is language- or framework-specific.
 
-## The problem it solves
+```
+/setup   once per project — inspects the repo, writes CLAUDE.md
+/start   opens a task: objective + plan, before any code
+/save    last thing before you stop, every session
+/load    first thing when you come back
+/done    settles loose ends, archives the task
+```
 
-Claude Code sessions are stateless. Without something durable, every context clear costs you the
-reasoning behind the last three days of work, and the failure is silent — the next session confidently
-resumes from a stale understanding. The usual patch is a `NOTES.md` that nobody updates.
+## Why
 
-This makes the update a command, and puts each kind of fact in exactly one file:
+Claude Code sessions are stateless, so every context clear costs you the reasoning behind the last
+few days of work — silently. The next session resumes from a stale understanding and sounds confident
+doing it. The usual patch is a `NOTES.md` nobody updates.
 
-| | |
-|---|---|
-| what happened | `work/current/history.md` |
-| why | `decisions.md` |
-| what's next | `work/current/plan.md`, `work/current/handoff.md` |
-| temporary code in the tree | `hotfixes.md` |
-| someone else's problem | `issues.md` |
-| permanent workspace gotchas | `traps.md` |
+This makes the update a command, and gives each kind of fact exactly one home.
 
-The most valuable single behaviour is `/save`'s **loose-thread sweep**: before writing anything, it
-re-reads the session for things that were discussed but never landed — agreed-then-diverted,
-noticed-in-passing, asked-and-unanswered — and asks you about the ones it can't settle itself. Those
-are the items that evaporate on `/clear`.
+The highest-value behaviour is `/save`'s **loose-thread sweep**: before writing anything it re-reads
+the session for things discussed but never landed — agreed-then-diverted, noticed-in-passing,
+asked-and-unanswered — and asks about what it can't settle. Those are the items that evaporate on
+`/clear`.
 
 ## Install
 
 ```bash
-git clone https://github.com/<you>/claude-template.git ~/.claude-template
-~/.claude-template/install.sh ~/code/my-project
+git clone https://github.com/<you>/claude-template.git ~/.claude-template   # once per machine
+~/.claude-template/install.sh ~/code/my-project                             # once per project
 ```
 
-That creates `~/code/my-project/.claude/` with the skills, a `CLAUDE.md` to fill in, seeded doc
-templates, and empty `work/current/` + `archive/`. It **never overwrites an existing file** — safe to
-re-run.
+Then open Claude Code in that project and run `/setup`. It reads the repo, asks two or three
+questions with recommended answers pre-selected, writes `CLAUDE.md`, and offers the optional hooks.
+It runs once, and refuses to re-run over rules you've already earned.
 
-Then open Claude Code in the project and run:
+The one question it always asks, because no repo reveals it: **which commands do you run yourself,
+that the agent must not?** Name real commands and it wires up a hook that enforces them.
 
-```
-/setup
-```
+Then `/start` your first task.
 
-`/setup` reads the repo first — build manifests, submodules, git remote, whether `.claude/` is
-gitignored — then asks only what it can't infer, and writes `CLAUDE.md` for you. It runs **once,
-ever**, and refuses to re-run over rules you've already earned.
+> **Don't clone it *into* a project.** That makes `.claude/` a nested git repo, and a
+> branch-per-project puts every project's `plan.md` into this shared history. `install.sh` copies
+> plain files; the project's own git versions them.
 
-The one thing it always asks, because no repo reveals it: **which commands you run yourself and the
-agent must not.** Answer with actual command names and it will offer to enforce them with a hook,
-so the rule holds instead of merely being written down.
+## Layout
 
-Then `/start` your first task. Expect five minutes, most of it clicking through recommended answers.
-
-*Prefer to do it by hand?* Work through the four `FILL IN` blocks in `.claude/CLAUDE.md` and delete
-what doesn't apply — a single-repo project with no tracker deletes three of them.
-
-### Don't clone it *into* the project
-
-The template is a **source you copy from**, not a repo you check out. Cloning it into a project makes
-`.claude/` a nested git repo, and a branch-per-project means every project's `plan.md` and
-`history.md` end up committed to this shared repo — so pulling a skill improvement into project B
-becomes a merge across unrelated content. `install.sh` copies plain files instead; the project's own
-git versions them.
-
-## Commands
-
-| | |
-|---|---|
-| `install.sh <project>` | seed a new `.claude/`. Never clobbers existing files |
-| `install.sh --update <project>` | refresh `skills/` + `backup_docs.sh` only. Leaves `CLAUDE.md` and all project content alone |
-| `install.sh --export <project>` | pull that project's improved skills **back** into this template, ready to commit |
-| `install.sh --diff <project>` | show what differs between template and project. Changes nothing |
-
-The `--export` direction matters: you will improve a skill while working in some project, and
-without it that improvement stays stranded there.
-
-```bash
-~/.claude-template/install.sh --export ~/code/my-project
-cd ~/.claude-template && git diff && git commit -am "save: sharpen the loose-thread sweep"
-```
-
-## What you get in a project
-
-The layout separates **what Claude Code owns** from **what you accumulate**:
+The split is **what Claude Code owns** vs **what you accumulate**:
 
 ```
 .claude/
@@ -93,92 +56,55 @@ The layout separates **what Claude Code owns** from **what you accumulate**:
 ├── README.md            explains the system to teammates
 ├── settings.json        hooks — backup enabled by default
 ├── settings.local.json  personal overrides (gitignored)
-│
-├── skills/              ── the five commands ──────────────
-│   ├── setup/SKILL.md   once per project: inspect repo, fill in CLAUDE.md
-│   ├── start/SKILL.md   agree the objective, write the plan, before any code
-│   ├── save/SKILL.md    sweep for loose threads, update every doc, write handoff
-│   ├── load/SKILL.md    read the handoff, verify against the repo, report, stop
-│   └── done/SKILL.md    settle every loose end, then archive
-│
-├── hooks/               ── machinery ──────────────────────
-│   ├── README.md        three optional hooks, with the reasoning for each
-│   └── backup_docs.sh   snapshots to ~/.claude-backups/<project>/<date>/
-│
-└── work/                ── everything YOU accumulate ──────
+├── skills/              setup · start · save · load · done
+├── hooks/               backup_docs.sh + 3 optional enforcement scripts
+└── work/                ── everything YOU accumulate ──
     ├── decisions.md     append-only: what was chosen and why
     ├── issues.md        work for other people, staged for the tracker
     ├── hotfixes.md      temporary code, each with a Remove when:
     ├── traps.md         permanent workspace gotchas
-    ├── current/         the active task (empty until /start)
+    ├── current/         the active task
     ├── archive/         finished tasks, <YYYY-MM>_<slug>/
     └── reference/       project docs that aren't session state
 ```
 
-The top four files are fixed by Claude Code — it reads `.claude/CLAUDE.md`,
-`.claude/settings.json` and `.claude/skills/<name>/SKILL.md` at those exact paths. Everything
-under `work/` is yours; that boundary is the whole point of the split.
+Claude Code reads `CLAUDE.md`, `settings*.json` and `skills/*/SKILL.md` at those exact paths — they
+can't move. Everything under `work/` is yours.
 
-## What belongs to a task, and what belongs to the project
+## Task vs project
 
-One question decides it: **does this stop being true when the task ends?**
+One question decides where something goes: **does it stop being true when the task ends?**
 
 | | | |
 |---|---|---|
-| `work/current/plan.md` | **task** | the tasks are dead once the objective is met |
-| `work/current/plan_superseded.md` | **task** | original wording of those same tasks |
-| `work/current/history.md` | **task** | the session log *of that task* |
-| `work/current/handoff.md` | **task** | a prompt to resume a task that's over |
+| `work/current/plan.md` | task | dead once the objective is met |
+| `work/current/plan_superseded.md` | task | original wording of those tasks |
+| `work/current/history.md` | task | the session log *of that task* |
+| `work/current/handoff.md` | task | a prompt to resume a task that's over |
 | `decisions.md` | **project** | the choice still constrains the code |
-| `hotfixes.md` | **project** | the band-aid is still *in the tree* |
+| `hotfixes.md` | **project** | the band-aid is still in the tree |
 | `issues.md` | **project** | the bug doesn't stop existing |
 | `traps.md` | **project** | the workspace still behaves that way |
-| `CLAUDE.md` | **project** | the rules outlive everything |
 
-**Project files: exactly one of each, forever.** Never copied, never archived. `decisions.md` is
-append-only across the project's whole life.
+Project files: **one of each, forever.** Task files: **one set live at a time** — `current/` holds
+exactly one task, `/done` moves it to `archive/`, `/start` refuses to run until it's empty.
 
-**Task files: one set per task, and only one set live at a time.** `work/current/` holds exactly one task;
-`/done` moves those four files into `archive/<YYYY-MM>_<slug>/` and leaves `work/current/` empty, and
-`/start` refuses to run if it isn't.
+### Routing
 
-```
-.claude/work/
-├── decisions.md  issues.md  hotfixes.md  traps.md    ← 1 each, always
-├── current/     ← exactly 1 task, or empty
-└── archive/     ← N finished tasks
-```
+| Question | File |
+|---|---|
+| Would a newcomer ask *"why is it like this?"* | `decisions.md` |
+| Is there code in the tree I want to delete later? | `hotfixes.md` |
+| Is this someone else's to fix? | `issues.md` |
+| Will this waste my time again, with nothing to fix? | `traps.md` |
+| Did something happen this session? | `history.md` |
+| Is there work left to do? | `plan.md` |
 
-`plan_superseded.md` is the one exception to "one per task" — it's created lazily, only when
-something actually gets superseded, so some tasks won't have one.
+The confusable pair is `hotfixes` vs `traps`. A hotfix is **code you added and want gone**; a trap is
+**how the workspace behaves and always will**. A hardcoded scale factor is a hotfix. `grep -r`
+silently skipping symlinked directories is a trap.
 
-### The four files that aren't the plan
-
-The plan is a *task list*. Everything that isn't a task has a different home, and the split is by
-**whose problem it is and what makes the entry go away**:
-
-| | Whose | Leaves when |
-|---|---|---|
-| `decisions.md` | ours | never — append-only |
-| `issues.md` | **someone else's** | they fix it |
-| `hotfixes.md` | ours, in our tree | we delete the code |
-| `traps.md` | nobody's — it's just true | it stops being true |
-
-Quick routing:
-
-> Would a new person ask *"why on earth is it like this?"* → `decisions.md`
-> Is there code in the tree I want to delete later? → `hotfixes.md`
-> Is this someone else's to fix? → `issues.md`
-> Will this waste my time again next month, with nothing to fix? → `traps.md`
-> Did something happen this session? → `history.md`
-> Is there work left to do? → `plan.md`
-
-The two that get confused are `hotfixes.md` and `traps.md`. A hotfix is **code you added and want
-gone**; a trap is **how the workspace behaves and always will**. A hardcoded scale factor you'll
-delete is a hotfix. That `grep -r` silently skips symlinked directories is a trap — you didn't cause
-it and you can't remove it.
-
-## The three task states
+## Task states
 
 ```
 [ ]  pending
@@ -186,19 +112,33 @@ it and you can't remove it.
 [x]  done AND verified
 ```
 
-`[~]` exists because "it compiles" and "it works" are different claims. Nothing is promoted to `[x]`
-on inference — only on evidence, or on you saying you ran it. Every task carries a `Verify by:` line
-naming what would prove it, and `/save` stamps each `[~]` with the date it went unverified so a stale
-one is visible as stale.
+`[~]` exists because "it compiles" and "it works" are different claims. Nothing reaches `[x]` on
+inference — only on evidence, or on you saying you ran it. Every task carries a `Verify by:` line, and
+`/save` stamps each `[~]` with the date it went unverified so a stale one looks stale.
+
+## Commands
+
+| | |
+|---|---|
+| `install.sh <project>` | seed a new `.claude/`. Never clobbers existing files |
+| `install.sh --update <project>` | refresh `skills/` + `hooks/` only; leaves your content alone |
+| `install.sh --export <project>` | pull a project's improved skills **back** here, ready to commit |
+| `install.sh --diff <project>` | show what differs. Changes nothing |
+
+`--export` matters: you'll improve a skill while working in some project, and without it that
+improvement stays stranded there.
+
+```bash
+~/.claude-template/install.sh --export ~/code/my-project
+cd ~/.claude-template && git diff && git commit -am "save: sharpen the sweep"
+```
 
 ## Track `.claude/` in your project's git
 
-`install.sh` warns if `.claude/` is gitignored, because that is this system's biggest fragility:
-`CLAUDE.md`, the skills, `hotfixes.md` and `decisions.md` then have no version control, no recovery,
-no history — and teammates never see them. `hotfixes.md` in particular documents deliberate edits to
-other people's files; anyone who checks out the branch gets those edits and none of the explanation.
-
-Recommended `.gitignore` — track the machinery, ignore only what's personal or ephemeral:
+`install.sh` warns if it's gitignored, because that's this system's biggest fragility — no version
+control, no recovery, no history, and teammates never see it. `hotfixes.md` especially documents
+deliberate edits to other people's files; anyone checking out the branch gets the edits and none of
+the explanation.
 
 ```gitignore
 .claude/settings.local.json
@@ -206,37 +146,34 @@ Recommended `.gitignore` — track the machinery, ignore only what's personal or
 .claude/work/archive/
 ```
 
-If you'd rather keep the whole thing untracked, leave the backup hooks enabled — but a same-disk
-daily copy is a weak substitute for version control, and it can't tell you *when* a doc went stale.
+If you'd rather keep it untracked, leave the backup hooks on — but a same-disk daily copy can't tell
+you *when* a doc went stale.
 
-## Optional hooks
+## Hooks
 
-`settings.json` ships with only the two backup hooks enabled. Three more live in
-`.claude/hooks/README.md`, with copy-paste JSON and the reasoning for each — `/setup` offers the
-ones that match your answers and merges them for you.
+`hooks/` ships four scripts; only the backup is enabled. See `hooks/README.md` — `/setup` offers the
+rest and wires them up.
 
 | | |
 |---|---|
-| **Block dangerous commands** | Enforces `CLAUDE.md`'s "who runs the environment" rule at the tool call, instead of hoping prose is obeyed. Prose rules do get violated |
-| **Show hotfixes before editing owned files** | Prints `hotfixes.md` when the agent is about to edit a file carrying a deliberate working-tree edit |
-| **Session-start brief** | Prints the handoff plus counts of open / unverified / unfiled items, so orientation happens even if you forget `/load` |
+| `backup_docs.sh` | snapshots to `~/.claude-backups/<project>/<date>/`. **On by default** |
+| `block_env_commands.sh` | refuses commands you reserve for yourself. Prose rules get violated; exit 2 doesn't |
+| `show_hotfixes.sh` | prints `hotfixes.md` when editing a file that carries deliberate edits |
+| `session_brief.sh` | handoff + counts at session start, in case you forget `/load` |
 
 ## Design notes
 
-A few rules here exist because their absence caused a specific, expensive failure:
+Rules that exist because their absence cost something specific:
 
-- **`plan.md` has a soft cap of ~600 lines**, and completed items are compressed to ≤ 3 lines *when
-  ticked*. In the project this came from, the plan reached 1432 lines and had to be halved by hand;
-  evidence and rationale had piled into a file that owns neither.
-- **Never leave a superseded item wearing a `[ ]`.** Nine permanently-unticked "kept for the
-  reasoning" items taught everyone to skim past `[ ]` — which is how a real pending item gets lost.
-  Superseded wording moves to `plan_superseded.md`.
+- **`plan.md` soft-caps at ~600 lines**, completed items compressed to ≤3 lines *when ticked*. The
+  source project's plan hit 1432 lines and had to be halved by hand.
+- **Never leave a superseded item wearing `[ ]`.** Nine permanently-unticked "kept for the reasoning"
+  entries taught everyone to skim past `[ ]` — which is how a real pending item gets lost.
 - **`traps.md` exists** because durable warnings kept being parked in `handoff.md`, which `/save`
-  overwrites every session. They were deleted the moment they stopped being top-of-mind.
-- **`/done` should fire regularly.** One "task" that ran 13 sessions produced a 1345-line plan, a
-  3263-line history, an empty `archive/`, and a `/load` that cost real context before any work
-  started.
+  overwrites every session. One had gone silently wrong before anyone re-tested it.
+- **`/done` should fire regularly.** One "task" ran 13 sessions and produced a 1345-line plan, a
+  3263-line history, and an empty `archive/`.
 
 ## Licence
 
-MIT. Do what you like with it.
+MIT.
