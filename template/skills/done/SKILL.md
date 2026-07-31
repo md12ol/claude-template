@@ -117,6 +117,9 @@ archive that swallowed unresolved work is not. Never disposition an item on the 
 **5. Archive.** Create `.claude/archive/<YYYY-MM>_<slug>/` using **today's** year-month. If the
 directory exists, do not overwrite — append `-2`, or ask. Then plain `mv` of `current/plan.md`,
 `current/plan_superseded.md`, `current/history.md`, `current/handoff.md` into it.
+⚠ **`plan_superseded.md` is easy to miss** — it is created lazily by `/save`, so it is absent from
+some tasks and present in others. Leaving it behind blocks the next `/start`, which refuses to run
+while `current/` is non-empty.
 
 Write a short `README.md` in the archive directory: the objective, dates spanned (first and last
 session in `history.md`), the outcome in 2–3 sentences, and any hotfixes or issues left behind that
