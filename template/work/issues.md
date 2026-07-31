@@ -17,7 +17,6 @@ same session; this file must not become a private fork of it.
 - **Impact:** why it matters — who or what it breaks.
 - **Noticed:** <YYYY-MM-DD>, in <what you were doing when you hit it>
 
----
 
 ## Ready to file — root-caused and evidenced
 
