@@ -102,8 +102,39 @@ so the boundary is exact.
 | Does the agent file issues for you, and where? | a git remote exists | the detected project · a different one · never files issues |
 | Which paths are off-limits or owned by someone else? | vendored dirs or multiple repos found | the detected paths · none · free-text |
 | Track `.claude/` in git? | `.claude/` is currently ignored | track the machinery, ignore only `work/current` **(Recommended)** · keep it all ignored |
-| Will anyone else use this `.claude/`? | a git remote exists | yes — add `merge=union` + keep the collab section **(Recommended if a remote has other contributors)** · no, solo |
 | Enable the optional hooks? | always | see step 4 — one question per hook that applies |
+
+### The two shape questions — always ask both, never infer either
+
+These write `PEOPLE` and `MACHINES` into `project.conf`, and between them they decide what the rest
+of this skill wires up. **They are separate questions because they gate different things**, and the
+second is true far more often than people expect.
+
+> **Question 1:** Will anyone other than you write to these working docs?
+>
+> - *Just me* **(Recommended when the remote has one contributor)**
+> - *Yes — a team shares this directory*
+
+`shared` turns on: the union merge driver, `collab_settled.md`, per-owner live task directories
+(`work/<owner>/current/`), and the owner table in `work/owners.txt`. `solo` keeps live tasks at
+`work/current/` with no owner segment and no table to maintain.
+
+> **Question 2:** Will you use this project from more than one machine — a second computer, or a
+> cloud container?
+>
+> - *Yes* **(Recommended — most people are, and a wrong "no" here fails silently)**
+> - *Just this one machine*
+
+`multi` turns on: `pull_main.sh` at session start, the `Machine:` stamp `/save` writes into
+`handoff.md`, and `/load`'s divergence check. **Do not fold this into question 1.** A solo developer
+with a laptop and a desktop has the full staleness problem and no teammate; a co-located pair on one
+shared machine has the opposite. Inferring one from the other is wrong in both directions.
+
+**If they say `shared`, follow up for the owner table**: each person's git email and a short
+directory name for them. Write those into `work/owners.txt`, one line per address — a person with a
+work address, a personal one and a host `noreply` one gets three lines pointing at one directory.
+An address missing from that file stops that person's session dead, which is the intended behaviour
+and worth saying out loud when you ask.
 
 **Ask about the tracker** only if a remote exists: does the agent file issues on their behalf, and
 to which project? If they say no, delete block 3 outright.
@@ -112,6 +143,33 @@ to which project? If they say no, delete block 3 outright.
 
 Don't ask about anything you can settle by reading the repo. Don't ask four questions when the
 project is a single repo with no tracker and the answer to three of them is "delete that block".
+
+## 2.5. Write `.claude/project.conf` — before CLAUDE.md, because everything reads it
+
+Fill in every value from what you detected and what was answered. Nothing else in `.claude/` should
+ever hardcode any of it.
+
+```bash
+PROJECT_NAME="<the project directory's name>"
+DOCS_REPO_NAME="<name>-claude"          # fork layout only; leave the default on the copy layout
+DOCS_REPO_URL="<clone URL>"             # fork layout only — paste the one the host actually gives
+DOCS_BRANCH="main"
+HOST="github|gitlab|other"              # from `git remote -v`
+TRACKER_CLI="gh|glab|none"              # NEVER inferred from HOST — ask
+TRACKER_REPO="<owner/repo>"
+PEOPLE="solo|shared"                    # question 1
+MACHINES="single|multi"                 # question 2
+```
+
+**Detect the layout rather than asking about it:**
+
+```bash
+[[ -d .claude/.git ]] && echo "fork layout" || echo "copy layout"
+```
+
+On the **copy layout** leave `DOCS_REPO_URL` empty: there is nothing to clone, and a URL there
+would send someone to a repository that does not hold these files. Everything that reads it already
+handles empty.
 
 ## 3. Write `.claude/CLAUDE.md`
 
@@ -167,6 +225,12 @@ through `AskUserQuestion`** — one question per hook, not a prose list:
 - **Show hotfixes before editing owned files** — offer only if block 4 was filled in, with their
   paths in the pattern.
 - **Session-start brief** — offer always. It's cheap and makes stale `[~]` items visible.
+- **`pull_main.sh`** — offer **only when `MACHINES="multi"`**, and wire it to run *before* the brief
+  so the brief reflects what the other machine pushed. On a single-machine install it is a network
+  call at every session start that can never find anything, so do not offer it at all.
+- **The cloud pair** — mention `hooks/cloud_setup.sh` and `checks/cloud_ready.sh` when
+  `MACHINES="multi"`. Neither is a hook and neither is wired into `settings.json`: they are run by
+  hand on a fresh container. Say what they do and move on.
 
 Merge accepted hooks into `.claude/settings.json`, preserving the two backup hooks, then verify:
 
@@ -176,49 +240,121 @@ python3 -m json.tool .claude/settings.json > /dev/null && echo OK
 
 A malformed `settings.json` disables every hook in it silently, so don't skip that check.
 
+## 4b. Offer the meeting loop — only when `PEOPLE="shared"`
+
+`/make-agenda`, `/start-meeting` and `/end-meeting` turn `collab.md` into a dated agenda, a
+read-only research desk during the sitting, and an executor afterwards. They ship in
+`skills-optional/` and are not active until moved:
+
+```bash
+for s in make-agenda start-meeting end-meeting; do mv .claude/skills-optional/$s .claude/skills/; done
+mkdir -p .claude/work/meetings
+```
+
+**Offer them only if the team actually sits down together on a schedule.** Ask; do not assume from
+`PEOPLE="shared"`. Two people who review each other's pull requests and never meet get three
+commands they will never run, and an unused command in the list makes the used ones harder to find.
+
+If they decline, leave `skills-optional/` where it is and say it can be moved later. Also leave
+`work/pipeline_backlog.md` in place either way — it is a useful list on its own, and the meeting
+skills are what *process* it, not what justify it.
+
 ## 5. Settle version control
 
-If `.claude/` is gitignored, raise it once — it's the system's biggest fragility, and the moment to
-fix it is now, before there's history to lose:
+**Branch on the layout first — the answers are different, not just differently worded.**
+
+### Fork layout (`.claude/.git` exists)
+
+The working docs are already versioned, in their own repository. Two things to check:
+
+```bash
+git -C . check-ignore -q .claude || echo "add .claude/ to the PROJECT's .gitignore"
+```
+
+The project must **not** also track `.claude/`, or every commit touches two repositories and the
+clone stops being independent. And confirm the docs repo has a remote it can actually reach —
+`git -C .claude remote -v` — because `/save`'s push step is the whole reason the live task
+directory is tracked.
+
+Nothing else here applies: there is no question about ignoring `work/current/`, because it lives in
+a repository whose entire purpose is holding it.
+
+### Copy layout
+
+If `.claude/` is gitignored, raise it once — it is the system's biggest fragility on this layout,
+and the moment to fix it is now, before there is history to lose:
 
 > `.claude/` is gitignored here, so `CLAUDE.md`, the skills, `hotfixes.md` and `decisions.md` get no
 > version control, no recovery, and teammates never see them. Recommended instead:
 > ```gitignore
 > .claude/settings.local.json
-> .claude/work/current/
 > ```
 
-`work/current/` is the only per-person thing — two people cannot hold one live plan. **Do not
-ignore `work/archive/`**: a finished task's record is shared history, and ignoring it strands every
-`/done` on one laptop.
+**Whether to also ignore the live task directory depends on the switches:**
 
-### If more than one person will use this `.claude/`
+| | Ignore the live task directory? |
+|---|---|
+| `PEOPLE=solo` · `MACHINES=single` | **yes** — nobody else reads it and nothing else writes it |
+| `MACHINES=multi` (either `PEOPLE`) | **no** — tracking it is the only way a task resumes on the other machine, and `/save` pushes it |
+| `PEOPLE=shared` | **no** — per-owner paths already prevent the collision that ignoring it used to prevent |
 
-Then also offer to add to the repo root `.gitattributes`:
+**Do not ignore `work/archive/` on any setting.** A finished task's record is shared history, and
+ignoring it strands every `/done` on one laptop.
 
-> ```gitattributes
-> .claude/work/*.md merge=union
-> ```
+### If `PEOPLE="shared"` — the merge driver
 
-`decisions.md`, `traps.md`, `hotfixes.md`, `issues.md` and `collab.md` are append-only, so everyone
-writes to the tail of the same file — the most conflict-prone shape in git. Without this, every
-concurrent session ends in a merge conflict.
+Install the shipped file rather than pasting a line, because its paths depend on which repository
+holds `work/`:
+
+```bash
+# fork layout: the docs repo's own root
+cp .claude/gitattributes.shared .claude/.gitattributes
+# copy layout: the project root, with every pattern prefixed by .claude/
+sed 's|^work/|.claude/work/|' .claude/gitattributes.shared >> .gitattributes
+```
+
+Then **verify it, because getting this wrong is silent** — git reads `.gitattributes` only from the
+repository containing the file, so patterns naming untracked paths simply never match:
+
+```bash
+git check-attr merge -- work/decisions.md work/traps.md
+# expect: decisions.md -> union, traps.md -> unspecified
+```
 
 State the trade when you offer it, because it is real: **union merge never conflicts**, so a genuine
-collision on the same entry merges silently and interleaved. The mitigation is an author stamp on
-every entry, which the "More than one person uses this `.claude/`" section of `CLAUDE.md` mandates —
-keep that section, and keep `work/collab.md`. If they say they work alone, delete both.
+collision on the same entry merges silently and interleaved. That is why it covers only the three
+append-only docs and not the churn lists, and why every entry needs a unique heading and a unique
+timestamped stamp — the "Formatting for union merge" section of `CLAUDE.md` mandates both. Keep that
+section and `work/collab.md`; if they work alone, delete both.
 
-**Ask before editing `.gitignore`** — it's a tracked file and this is their call. If they decline,
-leave the backup hooks enabled and say why they now matter more.
+### If `PEOPLE="shared"` and the host supports it — reviewers
 
-If they accept and `.claude/` is untracked, offer to `git add` it — but **do not commit** unless they
-ask.
+A pull request needs the right reviewer on it, and doing that from memory is the step people skip.
+
+- **Where CODEOWNERS works**, a single line covering everything is symmetric and needs no
+  maintenance: the host requests every listed owner *except* the author.
+- **Where it does not, say so in `CLAUDE.md` rather than shipping a file that does nothing.**
+  CODEOWNERS is a paid feature on private repositories on several hosts, including GitHub's free
+  plan — the file sits there and is silently ignored. On those, reviewers are named at pull-request
+  creation time instead, by whoever or whatever opens it.
+
+Check which case applies before recommending either. A CODEOWNERS that does nothing is worse than
+no CODEOWNERS, because everyone believes it is working.
+
+**Ask before editing `.gitignore` or `.gitattributes`** — they are tracked files and this is the
+user's call. If they decline, leave the backup hooks enabled and say why they now matter more.
 
 ## 6. Report, then hand off to `/start`
 
 Short. What each block says now, which blocks you deleted and why, which hooks are live, and the
-version-control disposition. Then:
+version-control disposition. **Always state the two switches explicitly** — `PEOPLE` and `MACHINES`,
+each with the one consequence the user will notice — because they are the settings that silently
+change what every later session does, and the moment to correct a wrong answer is now:
+
+> `PEOPLE=shared` — live tasks go in `work/<you>/current/`, and the append-only docs union-merge.
+> `MACHINES=multi` — `/save` stamps the machine and pushes; `/load` stops if the two diverge.
+
+Then:
 
 > Setup is done — `CLAUDE.md` is now this project's rules. Start your first piece of work with
 > `/start`.
