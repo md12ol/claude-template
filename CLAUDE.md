@@ -1,5 +1,10 @@
 # <PROJECT> — working rules
 
+**The rules for working on this project, loaded automatically at the start of every session.** It
+says how work is tracked, which file owns which kind of fact, and what must never be done without
+asking. Where this file and the repository disagree, the repository wins — report it, don't follow
+the stale version.
+
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
      FILL IN — 1. WHO RUNS THE ENVIRONMENT
 

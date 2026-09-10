@@ -1,5 +1,8 @@
 <!--
-COPY THIS TO THE PROJECT'S ROOT as CLAUDE.md, on the FORK layout only.
+WHAT THIS FILE IS: a starting point for the PROJECT's own root CLAUDE.md — the signpost that
+points at .claude/ and survives its absence. It is not used from here; copy it out.
+
+COPY THIS TO THE PROJECT'S ROOT as CLAUDE.md.
 
 It is the one file that still loads when `.claude/` is missing entirely — which is the single
 failure this system cannot otherwise catch. A SessionStart hook cannot report it, because
