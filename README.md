@@ -30,6 +30,22 @@ the session for things discussed but never landed — agreed-then-diverted, noti
 asked-and-unanswered — and asks about what it can't settle. Those are the items that evaporate on
 `/clear`.
 
+## Your copy is yours
+
+**The template seeds a project and then gets out of the way.** Once installed, a project's
+`.claude/` is self-contained and diverges freely: rewrite a skill, delete one, change a rule,
+rename a file. Nothing here needs to know, and nothing you do there is expected to come back.
+
+That is a deliberate constraint, not an omission. A template that expects changes to flow back
+becomes a dependency — every local improvement carries a nagging obligation, every divergence
+reads as drift to be corrected, and the projects that most need to adapt it are the ones that feel
+worst about doing so. The projects differ; that is the normal case, not a problem to manage.
+
+**So nothing in an installed `.claude/` reaches back to this repository.** No hook checks for
+updates, no skill references the template, and nothing breaks or goes stale because the template
+moved on. If you ever do want something from a newer version, it is a manual merge you choose to
+run, and there is no mechanism pushing you toward it.
+
 ## Two layouts — pick one
 
 ### Fork (recommended)
@@ -49,11 +65,6 @@ cd ~/code/myproj
 git clone <your-fork-url> .claude
 echo '.claude/' >> .gitignore          # the project must not track it as well
 ```
-
-**A fork keeps its upstream link, and that is the point.** Improvements you make while working flow
-back here as a pull request against upstream, and this template's improvements come to you with
-`git fetch upstream && git merge upstream/main`. Copying files over the top loses authorship and
-review; a fork does not.
 
 `--promote` refuses to run while `origin` still points at this template, which is the mistake that
 would push one project's working docs into the shared template's history.
@@ -106,6 +117,7 @@ The split is **what Claude Code owns** vs **what you accumulate**:
 ├── hooks/               lib.sh + backup + 4 optional scripts
 ├── checks/              cloud_ready.sh — read-only PASS/FAIL
 ├── codex/               optional bridge: same workflows, no forked copies
+├── reference/           notes on a dependency or toolchain — NOT session state
 └── work/                ── everything YOU accumulate ──
     ├── owners.txt       the ONLY email→directory table
     ├── decisions.md     append-only: what was chosen and why
@@ -168,8 +180,12 @@ and `/save` stamps each `[~]` with the date it went unverified so a stale one lo
 | `install.sh --diff <project>` | show what differs. Changes nothing |
 | `install.sh --with-meetings <project>` | also install the three meeting skills |
 
-On the fork layout, `--update` and `--export` are the wrong tools and say so: pull from upstream, and
-open a pull request back to it.
+`--update` and `--export` exist for the copy layout and are entirely optional. `--update` refreshes
+the machinery *if* you want a newer version; `--export` is there for the rare case where you want
+to lift something back. Neither is part of any workflow, and a project that never runs either is
+working exactly as intended.
+
+On the fork layout both are unavailable, and that is fine: the fork is a full copy already.
 
 ## Hooks
 
@@ -196,6 +212,21 @@ skills, never forked, so a change to a workflow reaches both hosts at once:
 .claude/codex/install.sh      # once per clone; .ps1 for native Windows
 .claude/codex/check_bridge.sh # after adding, removing or renaming a skill
 ```
+
+## Tests
+
+```bash
+./test.sh        # 106 checks
+./test.sh -v     # list every one
+```
+
+Both layouts, all four switch combinations, the park/unpark round trip, the three command tiers,
+the merge-driver narrowing, the Codex bridge and the cloud pair. CI runs it on push for GitHub and
+GitLab both, because the template must not assume a host.
+
+**Every case corresponds to a defect that was actually found, or to a claim this README makes.**
+When you fix a bug, add the case that would have caught it — and check the case fails before the
+fix, since a check that cannot fail is worse than no check.
 
 ## Design notes
 
