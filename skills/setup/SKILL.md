@@ -241,7 +241,45 @@ python3 -m json.tool .claude/settings.json > /dev/null && echo OK
 
 A malformed `settings.json` disables every hook in it silently, so don't skip that check.
 
-## 4b. Offer the meeting loop — only when `PEOPLE="shared"`
+## 4a. Offer the response style
+
+`.claude/output-styles/concise.md` ships with every install and nothing else mentions it, so ask
+once rather than leaving it to be found by accident:
+
+> **Question:** Use the concise response style? It caps explanation at about six lines, skips
+> narration of what is about to happen, and asks you to flag risks in one line each.
+>
+> - *No, keep the default* **(Recommended — try it later once you know what you want)**
+> - *Yes, enable it*
+
+If yes, set `outputStyle` in `settings.local.json` — **not** `settings.json`. It is a personal
+preference on one machine, and `settings.json` is shared with everyone else on the project.
+
+## 4b. Ask whether this project uses Codex
+
+`codex/` bridges the same workflows to Codex without forking any skill body. It is inert unless
+`codex/install.sh` is run, but an inert directory nobody recognises is still something a reader has
+to rule out.
+
+> **Question:** Will anyone run Codex on this project?
+>
+> - *No* **(Recommended unless you already know otherwise)**
+> - *Yes, keep the bridge*
+
+If no:
+
+```bash
+git -C .claude rm -qr codex
+```
+
+Restorable from that commit exactly like the solo removals, and `/add-person` is not needed for it —
+`git checkout <sha>^ -- codex` is the whole job. Say so in the report rather than leaving it to be
+rediscovered.
+
+If yes, tell them the bridge is installed per clone per machine with `.claude/codex/install.sh`, and
+that `check_bridge.sh` must run after any skill is added, removed or renamed.
+
+## 4c. Offer the meeting loop — only when `PEOPLE="shared"`
 
 `/make-agenda`, `/start-meeting` and `/end-meeting` turn `collab.md` into a dated agenda, a
 read-only research desk during the sitting, and an executor afterwards. They ship in
@@ -280,6 +318,28 @@ experience than a clear statement of what changed, and a project that tracks `.c
 broken in a way that surfaces later and confusingly.
 
 **If `.gitignore` does not exist, create it** with just that entry.
+
+### Write the project's own root `CLAUDE.md`
+
+`.claude/root_CLAUDE.md.example` is the **only file that still loads when `.claude/` is missing
+entirely** — a machine that never cloned it. No hook can report that case, because `settings.json`
+and the hooks are inside the directory that is not there. Shipping the example without placing it
+means the guard does not exist.
+
+```bash
+sed -e "s|<PROJECT>|$PROJECT_NAME|" -e "s|<DOCS_REPO_URL>|$DOCS_REPO_URL|" \
+    .claude/root_CLAUDE.md.example > CLAUDE.md
+```
+
+Strip the leading `<!-- ... -->` explanation block as you write it — it is instructions to you, not
+content for the file.
+
+**If the project already has a root `CLAUDE.md`, do not overwrite it.** Show the user the short
+pointer block and ask where to add it, or append it under a new heading. Their existing rules are
+theirs; this adds a signpost, it does not replace anything.
+
+Keep it short. It is a signpost, not a second copy of the rules — anything duplicated there drifts
+from `.claude/CLAUDE.md` and then contradicts it, which is worse than the gap it was filling.
 
 ### The docs repo needs a reachable remote
 

@@ -2,7 +2,7 @@
 
 Claude Code sessions are stateless. This directory is the memory: what we're building, what was
 decided, what's temporarily hacked, and where the last session stopped. Six slash commands
-maintain it.
+maintain it, plus one for the day a second person joins.
 
 **This directory is its own git repository**, cloned into a project that gitignores it. It is where
 this project's *work* is recorded, separately from the code — so it never enters the project's
@@ -17,6 +17,8 @@ You don't have to read the rest of this file to use it. The short version:
 /load    first thing when you come back
 /park    when a task is blocked and you want to work on something else
 /done    when the work is finished
+
+/add-person  once, when a second person is about to start on this project
 ```
 
 Cloned this into a project and not set up yet? Run `/setup`.
