@@ -1,0 +1,39 @@
+# Merge and checkout rules for a SHARED .claude/ — installed by /setup when project.conf says
+# PEOPLE="shared". Copy it to .gitattributes at the root of whichever repository holds work/:
+# the working-docs fork on the fork layout, the project itself on the copy layout.
+#
+# Paths below are relative to THAT repository's root. If work/ sits at .claude/work/ in your
+# project, prefix every pattern with `.claude/`. Getting this wrong is silent — git reads
+# .gitattributes only from the repository CONTAINING the file, so a pattern naming paths the
+# repository does not track simply never matches, and union merge is off without a word.
+#
+# ---------------------------------------------------------------------------
+# Union merge — the APPEND-ONLY docs, and ONLY those.
+#
+# Several people write to the tail of the same file from separate machines, which is the most
+# conflict-prone shape in git. Union keeps both sides' lines with no conflict markers.
+#
+# NOT the churn lists. issues.md, hotfixes.md and traps.md are lists where DELETING an entry is a
+# normal operation, and union cannot express a deletion: a delete that races with any edit to the
+# same region is silently discarded and the entry comes back. Those take git's ordinary 3-way
+# merge instead, so a concurrent append conflicts and is resolved by hand. Loud and occasional
+# beats silent and wrong.
+#
+# The cost of union on the files that keep it: it NEVER conflicts. Lines byte-identical on both
+# sides are deduplicated, and two entries interleave into one block that reads as coherent and is
+# not; two people editing the SAME existing line makes union keep BOTH versions. That is why every
+# entry needs a unique heading and a unique closing stamp carrying a time. See CLAUDE.md,
+# "Formatting for union merge", and run the audit command there after any merge that touches these.
+work/decisions.md merge=union
+work/collab.md merge=union
+work/collab_settled.md merge=union
+
+# ---------------------------------------------------------------------------
+# Shell scripts check out with LF regardless of core.autocrlf.
+#
+# A Windows clone with core.autocrlf=true rewrites every .sh to CRLF on checkout; the shebang then
+# names an interpreter called `bash\r`, which does not exist, and the script dies with a message
+# naming a file you can see is right there. The hooks can dodge it — a harness that invokes them as
+# `bash <script>` never reads the shebang — but anything you run yourself will not, and without
+# this line the fix is not durable: the next checkout, merge or stash puts the CRs straight back.
+*.sh text eol=lf
