@@ -126,7 +126,7 @@ switches above.
 | `traps.md` | permanent gotchas about this workspace — the things that bite every session |
 | `deferred.md` | **not yet** — wanted, out of scope for now. Sits between your design's non-goals (*never*) and the tracker (*now*). No dates, no ordering, no priority, or it becomes a second build order |
 | `traps_retired.md` | traps whose failure has been fixed, each naming the fix. Retire when the mechanism could return; delete when it is simply gone |
-| `pipeline_backlog.md` | small changes to *this working-docs system* that block nobody. A churn list, batched to the next time the team sits down. *Delete if you work alone* |
+| `pipeline_backlog.md` | small changes to *this working-docs system* that block nobody. A churn list — batched to the next sitting if there is a team, applied when convenient if not. Useful either way |
 | `collab_settled.md` | the archive half of `collab.md`. Item numbers run as one sequence across both files. *Delete if you work alone* |
 | `collab.md` | running agenda between the people who share this repo — anything on one side that conflicts with or overrides the other's work. Mark **Agreed** with a date; never delete. *Delete this row if you work alone* |
 
@@ -273,6 +273,12 @@ rest of the time those two lines are enough.
 
 8. `/done <slug>` — settle every loose end, then archive `$WORK_CURRENT` → `archive/<YYYY-MM>_<slug>/`
 
+**Someone joining**
+
+- `/add-person` — restores the coordination files a solo `/setup` removed, adds them to
+  `work/owners.txt`, installs the merge driver and moves live tasks under an owner. **Run it before
+  they clone**, not after.
+
 Docs can go stale between sessions. Where the docs and the repo disagree, **the repo wins** —
 report the discrepancy rather than following the stale version.
 
@@ -364,7 +370,12 @@ from a finished one to the next session.
   with no verification method is how `[~]` items become false `[x]`s later.
 - Absolute dates only, never "today" or "last session".
 - Reference code as `path:line`.
-- Don't commit or push unless asked.
+- **Don't commit or push unless asked** — with exactly three exceptions, and they are a closed list:
+  `/setup` commits its own configuration, and `/save` and `/park` commit and push the live task
+  directory. All three touch **the `.claude/` repository only**, never the project. Anything not on
+  that list needs its own explicit instruction, every time, however obvious it looks. The exceptions
+  exist because each of those skills produces output that is worthless if it never lands: an
+  unpushed handoff fails silently, and you find out on the other machine, usually a day late.
 - Flag temporary work as temporary and add it to `hotfixes.md`.
 - Date rules when you change them, and supersede rather than overwrite: strike the old line through
   and add the new one with its date and reason. The reversal trail is worth more than a tidy file.
