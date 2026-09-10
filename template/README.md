@@ -40,6 +40,26 @@ You don't have to read the rest of this file to use it. The short version:
 - **`/done`** settles every loose end — unfiled issues, hotfixes whose removal condition is now
   met, unverified items — then archives the task.
 
+**`/park <slug>`** sits between `/save` and `/done`: it saves, stamps `handoff.md` with the
+concrete event that would unblock the task, and moves the whole task directory aside so `/start` is
+free. `/load <slug>` brings it back.
+
+## How this directory is configured
+
+`project.conf` holds this project's identity and two switches; `work/owners.txt` holds the
+email-to-directory table on a shared install. **Everything else reads them** — no hook, check or
+skill hardcodes a repo name, a clone URL or anyone's email.
+
+| Switch | |
+|---|---|
+| `PEOPLE=solo\|shared` | whether live tasks sit at `work/current/` or `work/<owner>/current/`, and whether the append-only docs union-merge |
+| `MACHINES=single\|multi` | whether `/save` stamps and pushes, and whether `/load` checks for cross-machine divergence |
+
+They are separate questions. One person with two computers is `solo` + `multi`.
+
+If you are not sure which applies, ask before writing anything into a task directory: on a shared
+install, writing into the wrong person's directory is silent.
+
 ## The files
 
 **Task-scoped** — `work/current/`, archived by `/done`:

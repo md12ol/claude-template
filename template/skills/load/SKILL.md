@@ -64,7 +64,22 @@ session brief, `/save` and `/done` all read `$WORK_CURRENT` and there is no tieb
 
 ```bash
 [[ -n "$(ls -A "$WORK_CURRENT" 2>/dev/null)" ]] && echo "park the live task first"
+rmdir "$WORK_CURRENT" 2>/dev/null          # see below — this line is load-bearing
 mv "$WORK_PARKED/<slug>" "$WORK_CURRENT"
+```
+
+**The `rmdir` is not tidying, and leaving it out corrupts the restore.** `/park` recreates the live
+directory empty, so `$WORK_CURRENT` normally *exists* when you unpark — and `mv src dst` with `dst`
+an existing directory moves `src` **inside** it, giving you
+`work/<owner>/current/<slug>/plan.md` rather than `work/<owner>/current/plan.md`. Nothing errors.
+The session brief then reports no active task, because it looks for `plan.md` one level up, and the
+task reads as lost. `rmdir` only succeeds on an empty directory, so it cannot destroy a live task
+even if the guard above is somehow skipped.
+
+Confirm the shape afterwards rather than assuming it:
+
+```bash
+ls "$WORK_CURRENT"                          # expect plan.md and handoff.md, not a directory
 ```
 
 Then read the handoff's `**Blocked on:**` line **first**. It names the event that has to have

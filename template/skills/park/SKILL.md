@@ -98,8 +98,19 @@ is a different thing and usually means `/done` with an honest outcome, or an ent
 ```bash
 mkdir -p "$WORK_PARKED"
 mv "$WORK_CURRENT" "$WORK_PARKED/<slug>"
-mkdir -p "$WORK_CURRENT"
+mkdir -p "$WORK_CURRENT"      # left empty, so /start has somewhere to write
 ```
+
+Check the parked copy is a task directory and not a directory containing one — if `<slug>` already
+existed, `mv` will have nested it silently:
+
+```bash
+ls "$WORK_PARKED/<slug>"      # expect plan.md and handoff.md, not another directory
+```
+
+That last `mkdir` is why **`/load <slug>` must `rmdir` before it moves the task back**: unparking
+into an existing directory nests it one level down, and nothing errors. `/load` §0.5 handles it;
+do not hand-roll the reverse of this step.
 
 Then confirm the live directory is genuinely empty — `/start` refuses to run while it is not, and a
 stray `plan_superseded.md` left behind is the usual culprit:
