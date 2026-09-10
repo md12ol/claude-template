@@ -299,6 +299,45 @@ has "session_brief is wired by default" "session_brief" "$s"
 hasnt "block_env is NOT wired by default" "block_env" "$s"
 
 # ---------------------------------------------------------------------------------------------
+section "15b. the solo removal leaves a working install"
+# /setup deletes six things on PEOPLE=solo. The risk is not the deletion; it is something that
+# quietly read one of them and now fails at session start, which is the worst place to find out.
+d="$(newproj solo_strip solo single)"
+# -f because the fixture modified owners.txt after cloning, and plain `git rm` refuses on a
+# modified file. Without it the removals silently do not happen and everything below passes
+# vacuously — which is exactly what this suite did until the check two lines down was added.
+(cd "$d/.claude" && git rm -qrf work/collab.md work/collab_settled.md work/owners.txt \
+                                gitattributes.multi-writer skills-optional work/meetings)
+still="$(cd "$d/.claude" && ls -d work/collab.md work/collab_settled.md work/owners.txt \
+         gitattributes.multi-writer skills-optional work/meetings 2>/dev/null || true)"
+is "the removal actually removed everything" "${still:-gone}" "gone"
+out="$(cd "$d" && .claude/hooks/session_brief.sh 2>&1)"
+hasnt "session_brief does not error after the removal" "No such file" "$out"
+has "session_brief still reports" "No active task" "$out"
+(cd "$d" && .claude/checks/cloud_ready.sh >/dev/null 2>&1) && ok "cloud_ready still passes" || bad "cloud_ready still passes"
+got="$(cd "$d" && . .claude/hooks/lib.sh && load_conf && resolve_owner && echo "$WORK_CURRENT")"
+is "paths still resolve with no owners.txt" "$got" "work/current"
+out="$(printf '{"tool_input":{"command":"git push --force"}}' | "$d/.claude/hooks/block_env_commands.sh" 2>&1; echo "rc=$?")"
+has "the command hook still blocks" "rc=2" "$out"
+(cd "$d" && .claude/codex/check_bridge.sh >/dev/null 2>&1) && ok "codex bridge still validates" || bad "codex bridge still validates"
+
+# session_brief and cloud_setup DO name owners.txt, and that is correct — they read it only when
+# PEOPLE=shared. What matters is that every executable still runs clean with the file absent, so
+# assert behaviour rather than the absence of a mention: a script may refer to a file it tolerates.
+for h in "$d"/.claude/hooks/*.sh "$d"/.claude/checks/*.sh; do
+    n="$(basename "$h")"
+    [[ "$n" == "lib.sh" ]] && continue
+    o="$(cd "$d" && env CLAUDE_CODE_REMOTE= "$h" </dev/null 2>&1)"; rc=$?
+    hasnt "$n runs clean without the removed files" "No such file or directory" "$o"
+    # cloud_setup exits 3 off a container by design; everything else must succeed.
+    if [[ "$n" == "cloud_setup.sh" ]]; then
+        is "$n refuses off a container, as designed" "$rc" "3"
+    else
+        is "$n exits 0" "$rc" "0"
+    fi
+done
+
+# ---------------------------------------------------------------------------------------------
 section "16. every file says what it is, in its first few lines"
 # A reader opening any file cold should learn its purpose without reading the whole thing. JSON is
 # exempt: it has no comment syntax, and an unknown key risks a strict validator disabling the file.

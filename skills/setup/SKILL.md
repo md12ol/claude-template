@@ -291,6 +291,40 @@ git -C .claude remote -v          # expect an origin
 git -C .claude status --short     # expect a clean tree, or say what is uncommitted
 ```
 
+### If `PEOPLE="solo"` — remove what cannot apply
+
+**Do this; do not offer it.** Everything below describes coordination between people, and on a solo
+install there is no second person for it to describe. Left in place it is worse than clutter: a
+reader cannot tell a file that is empty because nothing happened from one that is empty because it
+does not apply, and rules for a hazard that cannot occur teach everyone to skim rules.
+
+```bash
+git -C .claude rm -qr work/collab.md work/collab_settled.md \
+                      work/owners.txt gitattributes.multi-writer \
+                      skills-optional work/meetings
+```
+
+| Removed | Why it cannot apply |
+|---|---|
+| `work/collab.md`, `work/collab_settled.md` | a running agenda between people, and its archive |
+| `work/owners.txt` | the email-to-directory table, read only when `PEOPLE="shared"` |
+| `gitattributes.multi-writer` | the union merge driver — there is no second writer to merge with |
+| `skills-optional/`, `work/meetings/` | the meeting loop and its output |
+
+Then edit `CLAUDE.md` to match, or it keeps describing files that are gone:
+
+- delete the **`collab.md`** and **`collab_settled.md`** rows from the persistent-docs table
+- delete the whole **"More than one person uses this `.claude/`"** section, including its
+  **"Formatting for union merge"** subsection
+- in "How this `.claude/` is configured", delete the **`work/owners.txt`** row and shorten the
+  **`PEOPLE`** paragraph to say live tasks are at `work/current/`
+
+**Keep `work/pipeline_backlog.md`.** "Small changes to this working-docs system that block nobody"
+is a useful list alone too — you apply them yourself instead of batching them to a sitting.
+
+**If someone joins later, `/add-person` restores all of this** from the commit that removed it. The
+removal is committed for exactly that reason, so nothing here is lost and nobody goes looking.
+
 ### If `PEOPLE="shared"` — the merge driver
 
 Install the shipped file into the docs repo:
@@ -311,7 +345,7 @@ State the trade when you offer it, because it is real: **union merge never confl
 collision on the same entry merges silently and interleaved. That is why it covers only the three
 append-only docs and not the churn lists, and why every entry needs a unique heading and a unique
 timestamped stamp — the "Formatting for union merge" section of `CLAUDE.md` mandates both. Keep that
-section and `work/collab.md`; if they work alone, delete both.
+section and `work/collab.md`.
 
 ### If `PEOPLE="shared"` and the host supports it — reviewers
 
@@ -333,6 +367,24 @@ no CODEOWNERS, because everyone believes it is working.
 `.github/workflows/test.yml` and `.gitlab-ci.yml` too if the user does not intend to keep testing
 their own changes to the skills. Deleting is optional and nothing depends on it; say what each one
 is for and let them choose.
+
+## 5b. Commit what `/setup` changed, and say what you committed
+
+**`/setup` commits its own work.** It has just written `project.conf`, rewritten `CLAUDE.md`, and on
+a solo install deleted several files — and that deletion is the thing `--add-person` restores from,
+so leaving it uncommitted would break the undo path at exactly the moment someone needs it.
+
+```bash
+git -C .claude add -A
+git -C .claude commit -m "Configure this .claude/ for <project>"
+```
+
+This is a deliberate, narrow exception to "don't commit or push unless asked", alongside `/save`'s.
+It does not widen: **it commits the `.claude/` repository only**, never the project, and it does not
+push — the user may want to look first.
+
+Then **list what went into it**, in a few lines: the two switches, the files removed if any, and the
+hooks now wired. A commit nobody can see the shape of is a commit nobody trusts.
 
 ## 6. Report, then hand off to `/start`
 
