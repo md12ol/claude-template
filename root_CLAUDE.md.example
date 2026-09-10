@@ -1,0 +1,41 @@
+<!--
+WHAT THIS FILE IS: a starting point for the PROJECT's own root CLAUDE.md — the signpost that
+points at .claude/ and survives its absence. It is not used from here; copy it out.
+
+COPY THIS TO THE PROJECT'S ROOT as CLAUDE.md.
+
+It is the one file that still loads when `.claude/` is missing entirely — which is the single
+failure this system cannot otherwise catch. A SessionStart hook cannot report it, because
+`settings.json` and the hooks are inside the directory that is not there. A machine that skipped
+the clone gets no conventions, and nothing tells anyone.
+
+Keep it SHORT. It is a signpost, not a second copy of the rules: anything duplicated here drifts
+from `.claude/CLAUDE.md` and then contradicts it, which is worse than the gap it was filling.
+
+Fill in the two <angle-bracket> values from `.claude/project.conf` and delete this comment.
+-->
+
+# <PROJECT> — working rules
+
+**The working rules for this project are not in this file.** They live in `.claude/`, which is a
+separate repository cloned into place:
+
+```bash
+git clone <DOCS_REPO_URL> .claude
+```
+
+**If that directory is missing, stop and clone it before doing anything else.** Without it no
+conventions are loaded, and a session will work confidently against rules it has never read.
+
+Once it is there, `.claude/CLAUDE.md` is the authority and this file says nothing further.
+
+## The four that matter most, in case the clone is not possible right now
+
+1. **Don't commit or push unless asked.** Every commit, push and pull request needs its own explicit
+   instruction, each time. Agreeing to a plan that says "open the PR" is not that instruction.
+2. **Never mark work done that you have not seen verified.** If it only compiled, it is not done.
+3. **Ask before anything outward-facing or hard to undo** — publishing, deleting, force-pushing,
+   anything that reaches a shared environment.
+4. **Write state into the file that owns it**, not into a memory store: what happened, why, what is
+   temporary, what is someone else's. `.claude/` has a file for each, and a second auto-loading copy
+   of the same facts drifts and then presents itself as current.

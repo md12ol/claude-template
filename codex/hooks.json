@@ -1,0 +1,37 @@
+{
+  "description": "Codex lifecycle bridge to this project's canonical .claude hooks. Every command below runs the same script Claude Code runs; nothing here is a second implementation.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/.claude/hooks/block_env_commands.sh\"",
+            "timeout": 30,
+            "statusMessage": "Checking the project command policy"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/.claude/hooks/pull_main.sh\" 2>/dev/null || true",
+            "timeout": 15,
+            "statusMessage": "Refreshing the working docs"
+          },
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/.claude/hooks/session_brief.sh\"",
+            "timeout": 30,
+            "statusMessage": "Reading the session brief"
+          }
+        ]
+      }
+    ]
+  }
+}
