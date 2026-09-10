@@ -10,8 +10,9 @@ own copy of it, clone that into a project, and you have the whole system.
 ## Starting a new project
 
 ```bash
-# 1. On your host, make your own copy of this repository, named <project>-claude.
-#    GitHub: "Use this template" (or Fork).  GitLab: Fork.  Anywhere: clone and change the remote.
+# 1. Make your own copy of this repository, named <project>-claude.
+#    On GitHub: the "Use this template" button, or
+gh repo create <you>/myproject-claude --template <you>/claude-template --private
 
 # 2. Clone it into the project it belongs to, as .claude/
 cd ~/code/myproject
@@ -20,6 +21,23 @@ git clone <your-copy-url> .claude
 # 3. Open Claude Code there and run:
 /setup
 ```
+
+**Use a template copy, not a fork**, and make it **private**. Three reasons, and the first two will
+stop you outright:
+
+- **You cannot fork your own repository into your own account** on GitHub, which is exactly what
+  `<you>/claude-template` → `<you>/myproject-claude` would be.
+- **A fork of a public repository is always public.** This repo will hold your plans, your decisions
+  and your session notes, which is usually not something you want indexed.
+- **A fork's upstream link buys nothing here.** Nothing is expected to flow back — see
+  "Your copy is yours" below.
+
+**Prerequisite, once:** the source repository must be marked as a *template repository* in its
+settings, or the button does not appear and `--template` is rejected. If you are reading this in a
+fresh copy, that has already been done.
+
+**On another host, or no host at all:** clone this repository, delete its `.git`, and push the
+result somewhere new. Nothing below depends on how the copy was made.
 
 `/setup` reads the repo, asks what it cannot infer, writes `project.conf` and `CLAUDE.md`, wires the
 hooks that apply, and adds `.claude/` to the project's `.gitignore`. Then `/start` your first task.
