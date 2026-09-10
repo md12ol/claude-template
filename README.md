@@ -1,163 +1,99 @@
-# claude-template
+# `.claude/` — how work is tracked in this project
 
-A portable working-docs system for [Claude Code](https://claude.com/claude-code). Six slash
-commands and a file layout that stop sessions losing state between context clears.
+Claude Code sessions are stateless. This directory is the memory: what we're building, what was
+decided, what's temporarily hacked, and where the last session stopped. Six slash commands
+maintain it.
 
-Nothing here is language-, host- or team-specific. It works for one person on one laptop and for a
-team across several machines, and the difference is two settings rather than two forks.
+**This directory is its own git repository**, cloned into a project that gitignores it. It is where
+this project's *work* is recorded, separately from the code — so it never enters the project's
+history, never ships inside a build, and never freezes on whatever branch happens to be checked out.
+
+You don't have to read the rest of this file to use it. The short version:
 
 ```
-/setup   once per project — inspects the repo, asks what it can't infer, configures everything
-/start   opens a task: objective + plan, before any code
+/setup   once per project, right after cloning this in — fills in CLAUDE.md and project.conf
+/start   at the beginning of a piece of work
 /save    last thing before you stop, every session
 /load    first thing when you come back
-/park    set a blocked task down without losing it
-/done    settles loose ends, archives the task
+/park    when a task is blocked and you want to work on something else
+/done    when the work is finished
 ```
 
-Three more ship optional, for teams that meet: `/make-agenda`, `/start-meeting`, `/end-meeting`.
+Cloned this into a project and not set up yet? Run `/setup`.
 
-## Why
-
-Claude Code sessions are stateless, so every context clear costs you the reasoning behind the last
-few days of work — silently. The next session resumes from a stale understanding and sounds
-confident doing it. The usual patch is a `NOTES.md` nobody updates.
-
-This makes the update a command, and gives each kind of fact exactly one home.
-
-The highest-value behaviour is `/save`'s **loose-thread sweep**: before writing anything it re-reads
-the session for things discussed but never landed — agreed-then-diverted, noticed-in-passing,
-asked-and-unanswered — and asks about what it can't settle. Those are the items that evaporate on
-`/clear`.
-
-## Your copy is yours
-
-**The template seeds a project and then gets out of the way.** Once installed, a project's
-`.claude/` is self-contained and diverges freely: rewrite a skill, delete one, change a rule,
-rename a file. Nothing here needs to know, and nothing you do there is expected to come back.
-
-That is a deliberate constraint, not an omission. A template that expects changes to flow back
-becomes a dependency — every local improvement carries a nagging obligation, every divergence
-reads as drift to be corrected, and the projects that most need to adapt it are the ones that feel
-worst about doing so. The projects differ; that is the normal case, not a problem to manage.
-
-**So nothing in an installed `.claude/` reaches back to this repository.** No hook checks for
-updates, no skill references the template, and nothing breaks or goes stale because the template
-moved on. If you ever do want something from a newer version, it is a manual merge you choose to
-run, and there is no mechanism pushing you toward it.
-
-## Two layouts — pick one
-
-### Fork (recommended)
-
-The working docs get their own repository, cloned into place. Nothing about them touches your
-project's history, ships inside a built artifact, or freezes on whatever branch you cut.
-
-```bash
-# 1. Fork this repo on your host — "Use this template" or "Fork" — naming it <project>-claude.
-# 2. Clone YOUR fork and reshape it into a .claude/:
-git clone <your-fork-url> myproj-claude && cd myproj-claude
-/path/to/claude-template/install.sh --promote .
-git add -A && git commit -m "Promote the template into this project's working docs" && git push
-
-# 3. Clone it into the project it belongs to:
-cd ~/code/myproj
-git clone <your-fork-url> .claude
-echo '.claude/' >> .gitignore          # the project must not track it as well
-```
-
-`--promote` refuses to run while `origin` still points at this template, which is the mistake that
-would push one project's working docs into the shared template's history.
-
-### Copy
-
-Plain files versioned by the project's own git. One repository, nothing to clone, no upstream link.
-Right for a small project, a private experiment, or anywhere a second repository is overhead.
-
-```bash
-git clone https://github.com/<you>/claude-template.git ~/.claude-template   # once per machine
-~/.claude-template/install.sh ~/code/my-project                             # once per project
-```
-
-Then, either way, open Claude Code in the project and run `/setup`. It reads the repo, asks two or
-three questions with recommended answers pre-selected, writes `project.conf` and `CLAUDE.md`, and
-wires up the hooks that apply. It runs once, and refuses to re-run over rules you've already earned.
-
-The one question it always asks, because no repo reveals it: **which commands do you run yourself,
-that the agent must not?** Name real commands and it wires up a hook that enforces them.
-
-## The two switches
-
-`/setup` asks two questions and writes the answers to `project.conf`. Everything else reads them, so
-there is one place to change your mind.
-
-| | `solo` / `single` | `shared` / `multi` |
-|---|---|---|
-| **`PEOPLE`** | live tasks at `work/current/` | `work/<owner>/current/`, union merge driver, `owners.txt`, `collab_settled.md` |
-| **`MACHINES`** | nothing extra | `pull_main.sh`, the `Machine:` stamp, `/load`'s divergence check |
-
-**They are separate questions and neither implies the other.** One person with a laptop and a
-desktop is `solo` + `multi`, and has the full staleness problem with no teammate. A co-located pair
-sharing one machine is `shared` + `single`. Inferring either from the other is wrong in both
-directions.
-
-## Layout
-
-The split is **what Claude Code owns** vs **what you accumulate**:
+## The loop
 
 ```
-.claude/
-├── CLAUDE.md            rules, auto-loaded every session   ← /setup fills this in
-├── project.conf         identity + the two switches        ← everything reads this
-├── comment_style.md     one test, language-neutral
-├── settings.json        hooks — backup enabled by default
-├── settings.local.json  personal overrides (gitignored)
-├── skills/              setup · start · save · load · park · done
-├── skills-optional/     make-agenda · start-meeting · end-meeting
-├── hooks/               lib.sh + backup + 4 optional scripts
-├── checks/              cloud_ready.sh — read-only PASS/FAIL
-├── codex/               optional bridge: same workflows, no forked copies
-├── reference/           notes on a dependency or toolchain — NOT session state
-└── work/                ── everything YOU accumulate ──
-    ├── owners.txt       the ONLY email→directory table
-    ├── decisions.md     append-only: what was chosen and why
-    ├── issues.md        work for other people, staged for the tracker
-    ├── hotfixes.md      temporary code, each with a Remove when:
-    ├── traps.md         permanent workspace gotchas
-    ├── traps_retired.md fixed traps, each naming the fix
-    ├── deferred.md      wanted, not now — no dates, no ordering
-    ├── collab.md        cross-owner questions (delete if solo)
-    ├── current/         the active task
-    ├── parked/          blocked tasks, each with a Blocked on:
-    ├── archive/         finished tasks, <YYYY-MM>_<slug>/
-    └── meetings/        one file per sitting (optional)
+  /setup  ── once per project ──┐
+                                ▼
+  new task ──▶ /start ──▶ work ──▶ /save ──┐
+                            ▲              │
+                            └── /load ◀────┘   (once per session)
+                                  │
+                            finished? ──▶ /done <slug> ──▶ archive/
 ```
 
-Claude Code reads `CLAUDE.md`, `settings*.json` and `skills/*/SKILL.md` at those exact paths — they
-can't move. Everything under `work/` is yours.
+- **`/setup`** runs once, ever. It inspects the repo, asks what it can't infer — above all *which
+  commands you run yourself and the agent must not* — and turns the template's `FILL IN` blocks into
+  this project's rules. If `CLAUDE.md` has no `FILL IN` blocks left, it's already done.
 
-## Task vs project
+- **`/start`** agrees the objective and writes `work/current/plan.md` **before any code**. It refuses to
+  run if there's an unfinished task in `work/current/`.
+- **`/save`** is the important one. It re-reads the session for things that were *discussed but
+  never landed* — agreed then diverted, noticed in passing, asked and unanswered — and asks you
+  about the ones it can't settle. Then it updates every doc and writes the next-session prompt.
+- **`/load`** reads that prompt and **checks it against the repo** before trusting it. Docs go
+  stale; where they disagree with the code, the code wins.
+- **`/done`** settles every loose end — unfiled issues, hotfixes whose removal condition is now
+  met, unverified items — then archives the task.
 
-One question decides where something goes: **does it stop being true when the task ends?**
+**`/park <slug>`** sits between `/save` and `/done`: it saves, stamps `handoff.md` with the
+concrete event that would unblock the task, and moves the whole task directory aside so `/start` is
+free. `/load <slug>` brings it back.
 
-| | | |
-|---|---|---|
-| `plan.md` · `history.md` · `handoff.md` | task | dead once the objective is met |
-| `decisions.md` | **project** | the choice still constrains the code |
-| `hotfixes.md` | **project** | the band-aid is still in the tree |
-| `issues.md` | **project** | the bug doesn't stop existing |
-| `traps.md` | **project** | the workspace still behaves that way |
-| `deferred.md` | **project** | still wanted, still not now |
-| `collab.md` | **project** | coordination outlives any one task |
+## How this directory is configured
 
-Project files: **one of each, forever.** Task files: **one set live at a time** — `/done` moves it to
-`archive/`, `/park` moves it to `parked/`, `/start` refuses to run until it's empty.
+`project.conf` holds this project's identity and two switches; `work/owners.txt` holds the
+email-to-directory table on a shared install. **Everything else reads them** — no hook, check or
+skill hardcodes a repo name, a clone URL or anyone's email.
 
-The confusable pair is `hotfixes` vs `traps`. A hotfix is **code you added and want gone**; a trap is
-**how the workspace behaves and always will**. A hardcoded scale factor is a hotfix. `grep -r`
-silently skipping symlinked directories is a trap.
+| Switch | |
+|---|---|
+| `PEOPLE=solo\|shared` | whether live tasks sit at `work/current/` or `work/<owner>/current/`, and whether the append-only docs union-merge |
+| `MACHINES=single\|multi` | whether `/save` stamps and pushes, and whether `/load` checks for cross-machine divergence |
 
-## Task states
+They are separate questions. One person with two computers is `solo` + `multi`.
+
+If you are not sure which applies, ask before writing anything into a task directory: on a shared
+install, writing into the wrong person's directory is silent.
+
+## The files
+
+**Task-scoped** — `work/current/`, archived by `/done`:
+
+| | |
+|---|---|
+| `work/current/plan.md` | objective + task list. **A task list, not a record** — kept under ~600 lines |
+| `work/current/plan_superseded.md` | original wording of finished tasks. Reference only |
+| `work/current/history.md` | append-only session log for this task |
+| `work/current/handoff.md` | the next-session prompt. Overwritten every save |
+
+**Persistent** — these describe the *code*, so they outlive any one task:
+
+| | |
+|---|---|
+| `decisions.md` | append-only: what was chosen and why, including reversals |
+| `issues.md` | work belonging to other people, staged for the tracker |
+| `hotfixes.md` | temporary code in the tree, each with a `Remove when:` and an `Owner:` |
+| `traps.md` | permanent workspace gotchas |
+| `collab.md` | cross-owner decisions, when more than one person shares the repo. Delete if you work alone |
+
+`CLAUDE.md` holds the rules themselves and is loaded into every session automatically.
+
+Everything above is tracked, along with `work/archive/`. Only `work/current/` and
+`settings.local.json` are per-person — see "More than one person" below.
+
+## The three task states
 
 ```
 [ ]  pending
@@ -165,87 +101,44 @@ silently skipping symlinked directories is a trap.
 [x]  done AND verified
 ```
 
-`[~]` exists because "it compiles" and "it works" are different claims. Nothing reaches `[x]` on
-inference — only on evidence, or on you saying you ran it. Every task carries a `Verify by:` line,
-and `/save` stamps each `[~]` with the date it went unverified so a stale one looks stale.
+`[~]` exists because "it compiles" and "it works" are different claims, and conflating them is the
+most expensive mistake this system is designed to prevent. Nothing is promoted to `[x]` on
+inference — only on evidence, or on you saying you ran it. Every task carries a `Verify by:` line
+naming what would prove it.
 
-## Commands
+## Conventions worth knowing
 
-| | |
-|---|---|
-| `install.sh --promote [dir]` | reshape a fresh fork into a working-docs repo |
-| `install.sh <project>` | copy layout: seed a new `.claude/`. Never clobbers existing files |
-| `install.sh --update <project>` | copy layout: refresh `skills/`, `hooks/`, `checks/`, `output-styles/`, `codex/` |
-| `install.sh --export <project>` | copy layout: pull a project's improved machinery **back** here |
-| `install.sh --diff <project>` | show what differs. Changes nothing |
-| `install.sh --with-meetings <project>` | also install the three meeting skills |
+- **Absolute dates only.** "Last session" means nothing to a cold reader three weeks later.
+- **Supersede, don't overwrite.** When a rule or decision changes, the old one is struck through and
+  the new one dated beside it. The reversal trail is usually worth more than the tidy version.
+- **One home per fact.** What happened → `history.md` · why → `decisions.md` · temporary code →
+  `hotfixes.md` · someone else's problem → `issues.md` · workspace gotcha → `traps.md`. Duplication
+  across files is how half of them go quietly wrong.
 
-`--update` and `--export` exist for the copy layout and are entirely optional. `--update` refreshes
-the machinery *if* you want a newer version; `--export` is there for the rare case where you want
-to lift something back. Neither is part of any workflow, and a project that never runs either is
-working exactly as intended.
+## More than one person
 
-On the fork layout both are unavailable, and that is fine: the fork is a full copy already.
+If someone else clones this repo and runs `/start` on their own machine, read the "More than one
+person uses this `.claude/`" section of `CLAUDE.md` first. The short version:
 
-## Hooks
+- **`/setup` runs once per project, ever — never on a clone.** It would overwrite `CLAUDE.md`.
+  Start with `/load` instead. Personal settings go in `settings.local.json` (gitignored).
+- **Stamp every entry with an author.** The persistent docs merge with `merge=union`, so appends
+  never conflict — but union merge never conflicts about *anything*, including two edits to the
+  same entry. The stamp is what makes a silent duplicate visible. Read the tail after a merge.
+- **Check `Owner:` in `hotfixes.md`.** Someone else's uncommitted hotfix is not in your tree.
+- **Hook and `settings.json` changes go through a PR**, both ways. They execute on the other
+  person's machine at session start, without them reading the diff.
+- **`[x]` is per-machine.** Never promote someone else's `[~]` because their notes read as done.
 
-`hooks/` ships five scripts plus `lib.sh`; only the backup is enabled. See `hooks/README.md` —
-`/setup` offers the rest and wires up the ones that apply.
+## Backups
 
-| | |
-|---|---|
-| `lib.sh` | reads `project.conf` and `owners.txt` for every other script. **Nothing else hardcodes them** |
-| `backup_docs.sh` | snapshots to `~/.claude-backups/<project>/<date>/`. **On by default** |
-| `block_env_commands.sh` | three tiers: allow · warn · block. Prose rules get violated; exit 2 doesn't |
-| `show_hotfixes.sh` | prints `hotfixes.md` when editing a file that carries deliberate edits |
-| `pull_main.sh` | fast-forwards before a stale session starts. Only when `MACHINES=multi` |
-| `session_brief.sh` | handoff, counts, parked tasks and blockers at session start |
+`backup_docs.sh` snapshots this directory to `~/.claude-backups/<project>/<date>/`, fired by hooks
+in `settings.json`. **If `.claude/` is tracked by this project's git, you don't need it** — delete
+the two hooks. It exists for the case where it isn't, and a same-disk daily copy is a weak
+substitute for version control.
 
-Plus `hooks/cloud_setup.sh` and `checks/cloud_ready.sh` for containers — run by hand, never wired.
+---
 
-## Codex
-
-`codex/` makes the same workflows available to Codex. Wrappers are **generated** from the canonical
-skills, never forked, so a change to a workflow reaches both hosts at once:
-
-```bash
-.claude/codex/install.sh      # once per clone; .ps1 for native Windows
-.claude/codex/check_bridge.sh # after adding, removing or renaming a skill
-```
-
-## Tests
-
-```bash
-./test.sh        # 106 checks
-./test.sh -v     # list every one
-```
-
-Both layouts, all four switch combinations, the park/unpark round trip, the three command tiers,
-the merge-driver narrowing, the Codex bridge and the cloud pair. CI runs it on push for GitHub and
-GitLab both, because the template must not assume a host.
-
-**Every case corresponds to a defect that was actually found, or to a claim this README makes.**
-When you fix a bug, add the case that would have caught it — and check the case fails before the
-fix, since a check that cannot fail is worse than no check.
-
-## Design notes
-
-Rules that exist because their absence cost something specific:
-
-- **`plan.md` soft-caps at ~600 lines**, completed items compressed to ≤3 lines *when ticked*. The
-  source project's plan hit 1432 lines and had to be halved by hand.
-- **Never leave a superseded item wearing `[ ]`.** Nine permanently-unticked "kept for the reasoning"
-  entries taught everyone to skim past `[ ]` — which is how a real pending item gets lost.
-- **`traps.md` exists** because durable warnings kept being parked in `handoff.md`, which `/save`
-  overwrites every session. One had gone silently wrong before anyone re-tested it.
-- **`/done` should fire regularly.** One "task" ran 13 sessions and produced a 1345-line plan, a
-  3263-line history, and an empty `archive/`.
-- **Union merge covers three files, not all of them.** The churn lists allow deletion, and union
-  cannot express one: a delete racing any edit to the same region is silently discarded and the
-  entry comes back.
-- **One copy of the owner table.** The source project reached six copies plus about thirty
-  hardcoded clone URLs, and its own documentation had gone stale about how many copies there were.
-
-## Licence
-
-MIT.
+*Seeded from a working-docs template and free to diverge from it. Nothing here reaches back to
+that template, and nothing you change needs to be sent back: this repository is the record of
+**this** project's work, and it is yours to reshape.*

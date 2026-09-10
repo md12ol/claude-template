@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Verify the template. Creates throwaway projects in a temp dir and exercises both layouts, both
-# switches, the hooks and the Codex bridge. Read-only with respect to this repository.
+# Verify the template. Creates throwaway projects in a temp dir - each with this repository cloned
+# in as .claude/, exactly as a real project has it - and exercises both team shapes, both machine
+# settings, the hooks and the Codex bridge. Read-only with respect to this repository.
 #
 #     ./test.sh            run everything
 #     ./test.sh -v         also print each check that passes
@@ -17,6 +18,29 @@ VERBOSE=0
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
+# Build a throwaway origin from the WORKING TREE, not from HEAD.
+#
+# `git clone "$ROOT"` would clone the last commit, so an uncommitted edit to a skill or a hook would
+# be silently untested and the suite would pass on code nobody is running. Snapshot what is on disk
+# instead, commit it into a scratch repo, and let every test project clone from that — which also
+# gives each .claude/ a real origin to push to, the way a project's does.
+ORIGIN="$TMP/origin"
+mkdir -p "$ORIGIN"
+tar -C "$ROOT" --exclude=.git -cf - . | tar -C "$ORIGIN" -xf -
+git -C "$ORIGIN" init -q -b main .
+git -C "$ORIGIN" config user.email test@example.com
+git -C "$ORIGIN" config user.name Test
+git -C "$ORIGIN" add -A
+git -C "$ORIGIN" commit -qm "working tree under test"
+
+# The machinery that actually ships as a project's working docs. Excludes .git/, this script, the
+# CI files and TEMPLATE.md — those are the template's own scaffolding, which /setup offers to
+# delete and which is allowed to talk about the template.
+SHIPPED=(CLAUDE.md README.md project.conf comment_style.md settings.json root_CLAUDE.md.example
+         gitattributes.multi-writer skills skills-optional hooks checks codex work reference
+         output-styles)
+scan() { grep -rniE "$1" "${SHIPPED[@]/#/$ROOT/}" 2>/dev/null || true; }
+
 pass=0; fail=0
 ok()   { pass=$((pass+1)); [[ $VERBOSE -eq 1 ]] && printf '  ok    %s\n' "$1"; return 0; }
 bad()  { fail=$((fail+1)); printf '  FAIL  %s\n' "$1"; [[ -n "${2:-}" ]] && printf '        %s\n' "$2"; return 0; }
@@ -25,16 +49,21 @@ has()  { grep -q "$2" <<<"$3" && ok "$1" || bad "$1" "missing: $2"; }
 hasnt(){ grep -q "$2" <<<"$3" && bad "$1" "unexpected: $2" || ok "$1"; }
 section() { printf '\n%s\n' "$1"; }
 
+# A project, with this repository cloned in as .claude/ the way a real one has it.
 newproj() {  # newproj <name> [people] [machines] -> echoes the path
     local d="$TMP/$1"
     rm -rf "$d"; mkdir -p "$d"
     git -C "$d" init -q .
     git -C "$d" config user.email ada@example.com
     git -C "$d" config user.name "Ada Lovelace"
-    "$ROOT/install.sh" "$d" >/dev/null 2>&1
+    git clone -q "$ORIGIN" "$d/.claude" 2>/dev/null
+    git -C "$d/.claude" config user.email ada@example.com
+    git -C "$d/.claude" config user.name "Ada Lovelace"
     printf 'PEOPLE="%s"\nMACHINES="%s"\n' "${2:-solo}" "${3:-single}" > "$d/.claude/project.conf"
     printf 'ada@example.com\tada\tAda Lovelace\ngrace@example.org\tgrace\tGrace Hopper\n' \
         > "$d/.claude/work/owners.txt"
+    mkdir -p "$d/.claude/work/current" "$d/.claude/work/parked" \
+             "$d/.claude/work/ada/current" "$d/.claude/work/ada/parked"
     echo "$d"
 }
 
@@ -46,52 +75,44 @@ done < <(find "$ROOT" -name '*.sh' -not -path '*/.git/*')
 
 # ---------------------------------------------------------------------------------------------
 section "2. nothing project-, host- or language-specific leaked in"
-leak="$(grep -rniE 'GET-claude|md12ol|GraphEvolutionTool|shorinbonsai|uoguelph' "$ROOT/template" 2>/dev/null || true)"
-is "no source-project identity in template/" "${leak:-clean}" "clean"
-lang="$(grep -rlE 'rustc|clippy|maturin|pyo3|__init__\.py' "$ROOT/template" 2>/dev/null || true)"
+leak="$(scan 'GET-claude|md12ol|GraphEvolutionTool|shorinbonsai|uoguelph')"
+is "no source-project identity ships" "${leak:-clean}" "clean"
+lang="$(scan 'rustc|clippy|maturin|pyo3|__init__\.py')"
 is "no language assumed" "${lang:-clean}" "clean"
 
 # ---------------------------------------------------------------------------------------------
 section "2b. an installed .claude/ is self-contained"
 # The README promises a project's copy diverges freely and never reaches back here. Nothing
 # installed may check for template updates, pin a template version, or fetch from it.
-back="$(grep -rnE 'claude-template|fetch upstream|merge upstream' "$ROOT/template" 2>/dev/null | grep -v 'skills-optional' || true)"
-is "nothing installed refers to the template repo" "${back:-clean}" "clean"
-pin="$(grep -rnE 'TEMPLATE_VERSION|template_version|check.*for.*updates' "$ROOT/template" 2>/dev/null || true)"
+back="$(scan 'claude-template|fetch upstream|merge upstream')"
+is "the shipped machinery never refers to the template repo" "${back:-clean}" "clean"
+pin="$(scan 'TEMPLATE_VERSION|template_version|checks? for updates')"
 is "no template version pin or update check" "${pin:-clean}" "clean"
 
 # ---------------------------------------------------------------------------------------------
-section "3. install, both layouts"
-p="$(newproj copy)"
-[[ -f "$p/.claude/project.conf" ]] && ok "copy install seeds project.conf" || bad "copy install seeds project.conf"
-[[ -f "$p/.claude/hooks/lib.sh" ]] && ok "copy install seeds lib.sh" || bad "copy install seeds lib.sh"
-[[ -d "$p/.claude/reference" ]] && ok "reference/ is top-level, not under work/" || bad "reference/ is top-level"
-[[ -d "$p/.claude/work/reference" ]] && bad "reference/ must NOT be under work/" || ok "reference/ absent from work/"
-out="$(ls "$p/.claude/skills")"
-hasnt "meeting skills absent by default" "make-agenda" "$out"
-
-p2="$(newproj withmeet)"; rm -rf "$p2/.claude"
-"$ROOT/install.sh" --with-meetings "$p2" >/dev/null 2>&1
-out="$(ls "$p2/.claude/skills")"
-has "--with-meetings installs the loop" "make-agenda" "$out"
-
-# The idempotence claim the README makes: a second run never clobbers seeded content.
-before="$(cat "$p/.claude/work/decisions.md")"
-echo "MY OWN CONTENT" >> "$p/.claude/work/decisions.md"
-"$ROOT/install.sh" "$p" >/dev/null 2>&1
-has "reinstall does not clobber seeded docs" "MY OWN CONTENT" "$(cat "$p/.claude/work/decisions.md")"
+section "3. the repo root IS a .claude/ — clone it and it works"
+d="$(newproj clone)"
+for f in CLAUDE.md project.conf comment_style.md settings.json hooks/lib.sh work/owners.txt; do
+    [[ -e "$d/.claude/$f" ]] && ok "clone provides $f" || bad "clone provides $f"
+done
+[[ -d "$d/.claude/reference" ]] && ok "reference/ is top-level" || bad "reference/ is top-level"
+[[ -d "$d/.claude/work/reference" ]] && bad "reference/ must NOT be under work/" || ok "reference/ absent from work/"
+[[ -e "$d/.claude/template" ]] && bad "no template/ subdirectory should remain" || ok "no template/ subdirectory"
+[[ -e "$d/.claude/install.sh" ]] && bad "install.sh should be gone" || ok "no install.sh"
+out="$(ls "$d/.claude/skills")"
+hasnt "meeting skills are not active by default" "make-agenda" "$out"
+[[ -d "$d/.claude/skills-optional/make-agenda" ]] && ok "meeting skills ship in skills-optional/" \
+    || bad "meeting skills ship in skills-optional/"
 
 # ---------------------------------------------------------------------------------------------
-section "4. promote reshapes a fork, and refuses the dangerous case"
-f="$TMP/fork"; git clone -q "$ROOT" "$f" 2>/dev/null
-out="$("$ROOT/install.sh" --promote "$f" 2>&1 || true)"
-has "promote refuses while origin is the template" "origin still points at the template" "$out"
-git -C "$f" remote set-url origin https://git.example.com/me/proj-claude.git
-out="$("$ROOT/install.sh" --promote "$f" 2>&1)"
-[[ -d "$f/template" ]] && bad "promote leaves template/ behind" || ok "promote empties and removes template/"
-[[ -f "$f/install.sh" ]] && bad "promote leaves the installer behind" || ok "promote removes the installer"
-[[ -f "$f/CLAUDE.md" && -f "$f/project.conf" && -d "$f/hooks" ]] && ok "promoted fork is shaped like a .claude/" || bad "promoted fork shape"
-has "promote explains the upstream remote" "upstream" "$out"
+section "4. the project ignores .claude/, and the docs repo can push"
+d="$(newproj ignore)"
+# What /setup does, verbatim from its step 5.
+(cd "$d" && git check-ignore -q .claude || printf '\n.claude/\n' >> .gitignore)
+(cd "$d" && git check-ignore -q .claude) && ok "the .gitignore line takes effect" || bad "the .gitignore line takes effect"
+is "the project tracks nothing from .claude/" "$(cd "$d" && git status --porcelain | grep -c '\.claude' || true)" "0"
+[[ -d "$d/.claude/.git" ]] && ok ".claude/ is its own repository" || bad ".claude/ is its own repository"
+is "the docs repo has an origin" "$(git -C "$d/.claude" remote | head -1)" "origin"
 
 # ---------------------------------------------------------------------------------------------
 section "5. lib.sh resolves the four switch combinations"
@@ -109,7 +130,8 @@ got="$(cd "$d" && . .claude/hooks/lib.sh && load_conf && resolve_owner && echo "
 is "an unknown identity resolves to nothing, not a guess" "$got" "[]"
 
 # Adding a person is a one-line edit in one file, and no other file defines the table.
-defs="$(grep -rl 'ada@example.com' "$d/.claude" 2>/dev/null | grep -v owners.txt || true)"
+defs="$(grep -rl 'ada@example.com' "$d/.claude" --exclude-dir=.git --exclude=test.sh 2>/dev/null \
+        | grep -v owners.txt || true)"
 is "owners.txt is the only copy of the table" "${defs:-single}" "single"
 
 # ---------------------------------------------------------------------------------------------
@@ -194,7 +216,7 @@ git -C "$up" config user.email a@b.c; git -C "$up" config user.name A
 echo one > "$up/f"; git -C "$up" add -A; git -C "$up" commit -qm one
 w="$TMP/w"; git clone -q "$up" "$w"
 git -C "$w" config user.email a@b.c; git -C "$w" config user.name A
-cp -r "$ROOT/template" "$w/.claude"
+git clone -q "$ORIGIN" "$w/.claude" 2>/dev/null
 echo two >> "$up/f"; git -C "$up" commit -qam two
 out="$(cd "$w" && .claude/hooks/pull_main.sh 2>&1)"
 has "fast-forwards when clean and behind" "fast-forwarded" "$out"
@@ -211,7 +233,7 @@ is "silent on a feature branch" "${out:-silent}" "silent"
 # ---------------------------------------------------------------------------------------------
 section "10. gitattributes narrows union merge to the append-only docs"
 g="$TMP/ga"; mkdir -p "$g/work"; git -C "$g" init -q .
-cp "$ROOT/template/gitattributes.shared" "$g/.gitattributes"
+cp "$ROOT/gitattributes.multi-writer" "$g/.gitattributes"
 touch "$g/work/decisions.md" "$g/work/traps.md" "$g/work/issues.md" "$g/work/hotfixes.md"
 attr() { git -C "$g" check-attr merge -- "$1" | sed 's/.*: //'; }
 is "decisions.md union-merges" "$(attr work/decisions.md)" "union"
@@ -221,7 +243,7 @@ is "hotfixes.md does NOT union-merge" "$(attr work/hotfixes.md)" "unspecified"
 
 # ---------------------------------------------------------------------------------------------
 section "11. seeded docs survive their own union-merge audit"
-for f in "$ROOT"/template/work/*.md; do
+for f in "$ROOT"/work/*.md; do
     dup="$(grep -vE '^[[:space:]]*$' "$f" | sort | uniq -d)"
     is "no colliding lines in $(basename "$f")" "${dup:-clean}" "clean"
 done
@@ -257,7 +279,7 @@ hasnt "cloud_ready reports no failures" "^FAIL" "$out"
 
 # ---------------------------------------------------------------------------------------------
 section "14. every skill has usable frontmatter"
-for f in "$ROOT"/template/skills/*/SKILL.md "$ROOT"/template/skills-optional/*/SKILL.md; do
+for f in "$ROOT"/skills/*/SKILL.md "$ROOT"/skills-optional/*/SKILL.md; do
     name="$(basename "$(dirname "$f")")"
     is "$name declares its name" "$(sed -n '2s/^name: //p' "$f")" "$name"
     d="$(sed -n '3s/^description: //p' "$f")"
@@ -267,12 +289,12 @@ done
 # ---------------------------------------------------------------------------------------------
 section "15. settings.json is valid and wires only what needs no configuring"
 if command -v python3 >/dev/null; then
-    python3 -m json.tool "$ROOT/template/settings.json" >/dev/null 2>&1 \
+    python3 -m json.tool "$ROOT/settings.json" >/dev/null 2>&1 \
         && ok "settings.json is valid JSON" || bad "settings.json is valid JSON"
-    python3 -m json.tool "$ROOT/template/codex/hooks.json" >/dev/null 2>&1 \
+    python3 -m json.tool "$ROOT/codex/hooks.json" >/dev/null 2>&1 \
         && ok "codex/hooks.json is valid JSON" || bad "codex/hooks.json is valid JSON"
 fi
-s="$(cat "$ROOT/template/settings.json")"
+s="$(cat "$ROOT/settings.json")"
 has "session_brief is wired by default" "session_brief" "$s"
 hasnt "block_env is NOT wired by default" "block_env" "$s"
 
