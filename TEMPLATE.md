@@ -40,7 +40,12 @@ fresh copy, that has already been done.
 result somewhere new. Nothing below depends on how the copy was made.
 
 `/setup` reads the repo, asks what it cannot infer, writes `project.conf` and `CLAUDE.md`, wires the
-hooks that apply, and adds `.claude/` to the project's `.gitignore`. Then `/start` your first task.
+hooks that apply, adds `.claude/` to the project's `.gitignore`, and removes whatever cannot apply —
+a solo project does not keep the coordination files, and a project that will never run Codex does not
+keep the bridge. Then `/start` your first task.
+
+The commands you get: **`/start` `/save` `/load` `/park` `/done`**, and **`/add-person`** for the day
+someone joins.
 
 **Step 3 is the only step with a decision in it.** The rest is one repository copy and one clone.
 

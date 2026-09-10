@@ -338,6 +338,31 @@ for h in "$d"/.claude/hooks/*.sh "$d"/.claude/checks/*.sh; do
 done
 
 # ---------------------------------------------------------------------------------------------
+section "15c. removing the Codex bridge leaves a working install"
+d="$(newproj nocodex)"
+(cd "$d/.claude" && git rm -qrf codex)
+[[ -e "$d/.claude/codex" ]] && bad "codex/ removed" || ok "codex/ removed"
+for h in "$d"/.claude/hooks/*.sh "$d"/.claude/checks/*.sh; do
+    n="$(basename "$h")"; [[ "$n" == "lib.sh" ]] && continue
+    o="$(cd "$d" && env CLAUDE_CODE_REMOTE= "$h" </dev/null 2>&1)"; rc=$?
+    hasnt "$n runs clean with no codex/" "No such file or directory" "$o"
+    [[ "$n" == "cloud_setup.sh" ]] || is "$n exits 0 with no codex/" "$rc" "0"
+done
+
+# ---------------------------------------------------------------------------------------------
+section "15d. the root CLAUDE.md example is substitutable"
+ex="$ROOT/root_CLAUDE.md.example"
+has "carries a project placeholder" "<PROJECT>" "$(cat "$ex")"
+has "carries a clone-URL placeholder" "<DOCS_REPO_URL>" "$(cat "$ex")"
+# What /setup does, verbatim from its step 5.
+outfile="$TMP/rootclaude.md"
+sed -e "s|<PROJECT>|myproject|" -e "s|<DOCS_REPO_URL>|git@example.com:me/myproject-claude.git|" \
+    "$ex" > "$outfile"
+hasnt "no placeholder survives substitution" "<PROJECT>\|<DOCS_REPO_URL>" "$(cat "$outfile")"
+has "the result names the project" "myproject" "$(cat "$outfile")"
+has "the result carries the clone command" "git clone git@example.com" "$(cat "$outfile")"
+
+# ---------------------------------------------------------------------------------------------
 section "16. every file says what it is, in its first few lines"
 # A reader opening any file cold should learn its purpose without reading the whole thing. JSON is
 # exempt: it has no comment syntax, and an unknown key risks a strict validator disabling the file.
