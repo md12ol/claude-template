@@ -10,5 +10,5 @@ test:
     - git config --global user.email ci@example.com
     - git config --global user.name CI
   script:
-    - find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0 shellcheck -S error || true
+    - find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0 shellcheck -S warning
     - ./test.sh -v
