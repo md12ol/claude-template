@@ -130,8 +130,9 @@ switches above.
 | `collab_settled.md` | the archive half of `collab.md`. Item numbers run as one sequence across both files. *Delete if you work alone* |
 | `collab.md` | running agenda between the people who share this repo — anything on one side that conflicts with or overrides the other's work. Mark **Agreed** with a date; never delete. *Delete this row if you work alone* |
 
-Finished tasks land in `.claude/work/archive/<YYYY-MM>_<slug>/` — **tracked**, so a finished task's
-record reaches everyone. Only `work/current/` is per-person.
+Finished tasks land in `work/archive/<YYYY-MM>_<slug>/`, with **no owner in the path** — a finished
+task is the project's history and belongs to everyone. Only *live* tasks are per-owner. Meeting
+notes sit in `work/meetings/` for the same reason.
 
 ### Keep `plan.md` small — it is a task list, not a record
 
@@ -157,31 +158,35 @@ session pays to re-read them before doing any work.
 
 ## More than one person uses this `.claude/`
 
-<!-- DELETE THIS WHOLE SECTION IF YOU WORK ALONE. Keep it the moment a second person clones the
-     repo and starts running /start and /save on their own machine — every rule below is a bug
-     that has to be fixed anyway once that happens, and three of them are silent. -->
+*Delete this whole section if you work alone.* It applies when `project.conf` says
+`PEOPLE="shared"` — several people cloning this same working-docs repository onto their own
+machines. Four rules follow, and all four are non-obvious.
 
-`.claude/` is checked into the repo and used by several people on their own machines. The
-machinery, the skills and the persistent docs are shared; `work/current/` and
-`settings.local.json` are not. Four rules follow, and all four are non-obvious.
-
-**1. The persistent docs merge by union — so stamp every entry with an author.**
-`decisions.md`, `traps.md`, `hotfixes.md`, `issues.md` and `collab.md` are append-only, so
-everyone writes to the tail of the same file — the most conflict-prone shape in git. Put this in
-the repo root `.gitattributes`:
+**1. Three docs merge by union — so stamp every entry with an author and a time.**
+`decisions.md`, `collab.md` and `collab_settled.md` are append-only, so everyone writes to the tail
+of the same file, which is the most conflict-prone shape in git. `/setup` installs the rule by
+copying `gitattributes.multi-writer` to `.gitattributes` **in this repository**, not in the project:
 
 ```gitattributes
-.claude/work/*.md merge=union
+work/decisions.md merge=union
+work/collab.md merge=union
+work/collab_settled.md merge=union
 ```
 
-Both sides' lines then survive with no conflict markers. The catch is that union merge **never
-conflicts**. Measured on two branches each appending one entry:
+Both sides' lines then survive with no conflict markers. Measured on two branches each appending one
+entry:
 
 - Entries with **distinct** text merge **correctly** — both survive whole and in order. The only
   damage is that the blank line between them is eaten, being common to both sides. Cosmetic.
 - Lines that are **byte-identical** on both sides are **deduplicated**, and the two entries
   interleave into one block that reads as a single coherent entry and is not. Silent, and the
   reason boilerplate-only entries are dangerous.
+
+**`traps.md`, `issues.md`, `hotfixes.md` and `pipeline_backlog.md` are deliberately NOT union-merged.**
+They are **churn lists**, where deleting an entry is a normal operation, and union merge cannot
+express a deletion: a delete that races any edit to the same region is silently discarded and the
+entry comes back. Those take git's ordinary 3-way merge, so a concurrent append **conflicts** and is
+resolved by hand. Loud and occasional beats silent and wrong.
 
 ### Formatting for union merge
 
@@ -221,10 +226,13 @@ Anything it prints is a line two entries could collapse onto. Fix it before it m
 executable code that runs on everyone else's machine at session start, on their next pull, without
 them reading the diff. This is the one part of `.claude/` where "it's just docs" is false.
 
-**3. `/setup` runs once per project, ever — never on a clone.** It rewrites `CLAUDE.md` from the
-template's FILL IN blocks and would destroy this file. If you have just cloned, `.claude/` is
-already set up: start with `/load`. Personal settings go in `settings.local.json`, which is
-gitignored and exists exactly for that.
+**3. `/setup` runs once per PROJECT, not once per clone.** It fills in this file's FILL IN blocks
+and writes `project.conf`, so running it again over a configured file would destroy work that was
+agreed once and is relied on since. The first person runs it and commits; **everyone after that
+clones an already-configured repository and starts with `/load`.** Personal settings go in
+`settings.local.json`, which is gitignored and exists exactly for that.
+
+If you are unsure which case you are in, look: FILL IN blocks still present means it has not run.
 
 **4. Verification is per-machine.** `[x]` means *you* saw it verified, on your machine. Never
 promote someone else's `[~]` to `[x]` because their notes read as finished — re-run the
