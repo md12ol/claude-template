@@ -328,11 +328,14 @@ means the guard does not exist.
 
 ```bash
 sed -e "s|<PROJECT>|$PROJECT_NAME|" -e "s|<DOCS_REPO_URL>|$DOCS_REPO_URL|" \
-    .claude/root_CLAUDE.md.example > CLAUDE.md
+    .claude/root_CLAUDE.md.example \
+  | awk 'drop && /^-->$/ {drop=0; next} !drop' drop=1 > CLAUDE.md
 ```
 
-Strip the leading `<!-- ... -->` explanation block as you write it — it is instructions to you, not
-content for the file.
+**The `awk` is not optional.** It drops the leading `<!-- ... -->` block, which is instructions to
+you and not content for the file. Without it the project's root `CLAUDE.md` opens by telling its
+reader to copy itself somewhere, which is exactly the kind of leftover scaffolding that makes a
+generated file look untrustworthy.
 
 **If the project already has a root `CLAUDE.md`, do not overwrite it.** Show the user the short
 pointer block and ask where to add it, or append it under a new heading. Their existing rules are
