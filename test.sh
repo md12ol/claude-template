@@ -298,6 +298,29 @@ s="$(cat "$ROOT/settings.json")"
 has "session_brief is wired by default" "session_brief" "$s"
 hasnt "block_env is NOT wired by default" "block_env" "$s"
 
+# ---------------------------------------------------------------------------------------------
+section "16. every file says what it is, in its first few lines"
+# A reader opening any file cold should learn its purpose without reading the whole thing. JSON is
+# exempt: it has no comment syntax, and an unknown key risks a strict validator disabling the file.
+while read -r f; do
+    case "$f" in
+        *.json) continue ;;
+        codex/skills/*) continue ;;                       # generated; the generator is checked instead
+        *.md)
+            if head -1 "$ROOT/$f" | grep -q '^---$'; then
+                # A skill: its frontmatter description IS the docstring.
+                d="$(sed -n '3s/^description: //p' "$ROOT/$f")"
+                [[ ${#d} -gt 40 ]] && ok "$f describes itself" || bad "$f describes itself"
+            else
+                body="$(sed -n '1,10p' "$ROOT/$f" | grep -vE '^#|^\s*$' | head -1)"
+                [[ -n "$body" ]] && ok "$f describes itself" || bad "$f describes itself" "no prose in the first 10 lines"
+            fi ;;
+        *)
+            hdr="$(sed -n '1,6p' "$ROOT/$f" | grep -E '^\s*(#|<!--)' | grep -vE '^#!' | head -1)"
+            [[ -n "$hdr" ]] && ok "$f describes itself" || bad "$f describes itself" "no comment header" ;;
+    esac
+done < <(cd "$ROOT" && git ls-files)
+
 printf '\n%s\n' "----------------------------------------"
 printf 'passed %s, failed %s\n' "$pass" "$fail"
 exit $(( fail > 0 ))

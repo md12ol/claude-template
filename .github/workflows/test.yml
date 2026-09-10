@@ -1,3 +1,6 @@
+# Runs ./test.sh on every push and pull request, so a change to a hook, a skill or the install
+# flow cannot land broken. The GitLab equivalent is /.gitlab-ci.yml; both exist because this
+# template must not assume a git host.
 name: test
 
 on:

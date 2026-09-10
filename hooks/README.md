@@ -19,6 +19,11 @@ Two more scripts live outside this directory because they are **not** hooks and 
 `settings.json`: `cloud_setup.sh` here is run by hand on a fresh container, and
 `../checks/cloud_ready.sh` is a read-only PASS/FAIL gate you can run anywhere.
 
+**`../settings.json` is what actually wires them up** — which hook runs on which event. It carries no
+description of its own because JSON has no comment syntax, and an unknown key risks a strict
+validator rejecting the file, which would silently disable every hook in it. This README is its
+documentation.
+
 Each is testable without a session:
 
 ```bash

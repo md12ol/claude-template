@@ -1,5 +1,9 @@
 # Codex adapter
 
+**How to read this project's Claude Code workflows when running under Codex.** It translates
+host-specific mechanics only — tool names, invocation syntax, frontmatter that does not apply — and
+never changes what a workflow means or which of its stops and confirmations are required.
+
 The selected `.claude/skills/<name>/SKILL.md` is **canonical**. Read it completely, then follow its
 intent and safety boundaries while translating only the host-specific mechanics below.
 
