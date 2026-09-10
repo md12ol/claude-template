@@ -13,7 +13,7 @@ set -uo pipefail
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")/../hooks" && pwd)/lib.sh"
 claude_paths
 load_conf
-cd "$PROJECT_DIR"
+cd "$PROJECT_DIR" || { echo "FAIL  cannot enter $PROJECT_DIR"; exit 1; }
 fails=0
 
 check() {  # check <label> <command...>

@@ -24,11 +24,14 @@ jobs:
           git config --global user.email ci@example.com
           git config --global user.name CI
 
+      # Gates at warning level, not error (which finds nothing here) and not the default (111
+      # style findings, mostly quoting preferences that would make this noise rather than a gate).
+      # Warning is where SC2164 lives: a `cd` that fails and then runs commands in the wrong
+      # directory, which is the silent-failure class this repository cares most about.
       - name: shellcheck
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
-          # Informational for now: the scripts are readable-first and a few warnings are deliberate.
-          find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0 shellcheck -S error || true
+          find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0 shellcheck -S warning
 
       - name: ./test.sh
         run: ./test.sh -v
