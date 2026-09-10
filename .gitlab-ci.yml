@@ -4,8 +4,8 @@ test:
   image: debian:stable-slim
   before_script:
     - apt-get update -qq && apt-get install -y -qq git python3 shellcheck
-    # test.sh clones this repo to exercise `install.sh --promote`; git refuses to operate on a
-    # checkout it considers owned by another user inside a container.
+    # test.sh snapshots the working tree into a scratch repo and clones it; git refuses to operate
+    # on a checkout it considers owned by another user inside a container.
     - git config --global --add safe.directory "$CI_PROJECT_DIR"
     - git config --global user.email ci@example.com
     - git config --global user.name CI
