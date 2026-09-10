@@ -64,6 +64,10 @@ newproj() {  # newproj <name> [people] [machines] -> echoes the path
         > "$d/.claude/work/owners.txt"
     mkdir -p "$d/.claude/work/current" "$d/.claude/work/parked" \
              "$d/.claude/work/ada/current" "$d/.claude/work/ada/parked"
+    # A configured install: /setup has run and resolved the FILL IN blocks. Almost every test below
+    # is about a working install, not a fresh unconfigured clone — the one test that wants the
+    # unconfigured case puts the marker back itself.
+    sed -i 's/FILL IN/[filled in]/g' "$d/.claude/CLAUDE.md"
     echo "$d"
 }
 
@@ -137,6 +141,16 @@ is "owners.txt is the only copy of the table" "${defs:-single}" "single"
 # ---------------------------------------------------------------------------------------------
 section "6. session_brief"
 d="$(newproj brief solo single)"
+
+# A fresh clone, before /setup: the brief must send you to /setup, not /start. /start would write a
+# plan against rules nobody has agreed yet.
+sed -i 's/\[filled in\]/FILL IN/g' "$d/.claude/CLAUDE.md"
+out="$(cd "$d" && .claude/hooks/session_brief.sh)"
+has "an unconfigured install points at /setup" "Run /setup first" "$out"
+hasnt "and does not point at /start" "start one with /start" "$out"
+
+# Everything below is a configured install again.
+sed -i 's/FILL IN/[filled in]/g' "$d/.claude/CLAUDE.md"
 out="$(cd "$d" && .claude/hooks/session_brief.sh)"
 has "reports no active task" "No active task" "$out"
 
@@ -357,7 +371,11 @@ has "carries a clone-URL placeholder" "<DOCS_REPO_URL>" "$(cat "$ex")"
 # What /setup does, verbatim from its step 5.
 outfile="$TMP/rootclaude.md"
 sed -e "s|<PROJECT>|myproject|" -e "s|<DOCS_REPO_URL>|git@example.com:me/myproject-claude.git|" \
-    "$ex" > "$outfile"
+    "$ex" | awk 'drop && /^-->$/ {drop=0; next} !drop' drop=1 > "$outfile"
+# The explanation block is instructions to whoever runs /setup, not content for the project's file.
+hasnt "the explanation block is stripped" "COPY THIS TO THE PROJECT" "$(cat "$outfile")"
+hasnt "no HTML comment survives" "<!--" "$(cat "$outfile")"
+has "the heading is the first content line" "^# myproject" "$(sed -n '1,3p' "$outfile")"
 hasnt "no placeholder survives substitution" "<PROJECT>\|<DOCS_REPO_URL>" "$(cat "$outfile")"
 has "the result names the project" "myproject" "$(cat "$outfile")"
 has "the result carries the clone command" "git clone git@example.com" "$(cat "$outfile")"

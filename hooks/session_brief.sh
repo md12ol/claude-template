@@ -44,6 +44,19 @@ if [[ ! -d "$CLAUDE_DIR/skills" || ! -d "$CLAUDE_DIR/work" ]]; then
 fi
 
 load_conf
+
+# /setup has not run yet if CLAUDE.md still carries its FILL IN blocks. Say so instead of pointing
+# at /start: a fresh clone is the one moment the right next command is not the usual one, and
+# /start would write a plan against rules nobody has agreed yet.
+if grep -q 'FILL IN' "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null; then
+    echo "$rule_top"
+    echo "This .claude/ has not been configured yet — CLAUDE.md still has FILL IN blocks."
+    echo "Run /setup first. It writes project.conf and CLAUDE.md, wires the hooks that apply,"
+    echo "and adds .claude/ to this project's .gitignore. Then /start your first task."
+    echo "$rule_bot"
+    exit 0
+fi
+
 resolve_owner
 
 # On a shared install an unrecognised identity is genuinely ambiguous — writing into the wrong
