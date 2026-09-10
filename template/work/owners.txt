@@ -1,0 +1,28 @@
+# Who writes to these working docs. ONE line per person:
+#
+#     <git-email>	<directory-name>	<display name>
+#
+# Tab OR spaces between fields; the display name may contain spaces. Lines starting with # are
+# comments and blank lines are ignored.
+#
+# THIS IS THE ONLY COPY OF THIS TABLE. The hooks read it through hooks/lib.sh, and the skills read
+# it with the awk line below. Adding a person is a one-line edit here and nowhere else — if you
+# ever find yourself editing a second file to add someone, that is a bug in this template.
+#
+#     awk -F'\t' -v e="$(git config user.email)" '$1==e{print $2; found=1} END{exit !found}' work/owners.txt
+#
+# The <directory-name> is what appears in work/<owner>/ on a SHARED install. Keep it short, stable
+# and filesystem-safe: it becomes a path, and renaming it later moves live task directories.
+#
+# One person may have several addresses — a work one, a personal one, a host's noreply one. Give
+# each its own line pointing at the same directory. That is not duplication; an address that is
+# missing here stops a session dead, which is the point.
+#
+# On a SOLO install (project.conf: PEOPLE="solo") nothing reads this file and live tasks sit in
+# work/current/. It is seeded anyway so that switching to shared is one edit, not a migration.
+#
+# Example — delete these lines and add your own:
+#
+# ada@example.com	ada	Ada Lovelace
+# 1234567+ada@users.noreply.github.com	ada	Ada Lovelace
+# grace@example.org	grace	Grace Hopper
