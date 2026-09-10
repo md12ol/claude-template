@@ -12,12 +12,14 @@
 #   FORK (recommended, and what --promote is for). Fork this template into <project>-claude, run
 #   --promote in the fork, push, then clone it as .claude/ inside your project. The working docs
 #   are their own repository, so they never appear in your project's history, never ship inside a
-#   built artifact, and are never frozen on whatever branch you cut. Improvements flow back here as
-#   a pull request against upstream, which is what a fork is for.
+#   built artifact, and are never frozen on whatever branch you cut.
 #
-#   COPY (the original, still fully supported). Plain files versioned by the project's own git. One
-#   repository, nothing to clone, and no upstream link — you carry improvements across by hand.
+#   COPY. Plain files versioned by the project's own git. One repository and nothing to clone.
 #   Right for a small project, a private experiment, or anywhere a second repository is overhead.
+#
+# EITHER WAY THE RESULT IS YOURS AND IS EXPECTED TO DIVERGE. Nothing installed reaches back to this
+# template, nothing goes stale because the template moved on, and no change made in a project needs
+# to be ported back here. The template seeds a project and gets out of the way.
 #
 # /setup asks nothing about this: it detects which layout it is in.
 
@@ -103,7 +105,7 @@ promote)
         find "$TARGET/template" -mindepth 1 -maxdepth 2 | sed "s|$TARGET/|           |"
     fi
 
-    mkdir -p "$TARGET"/work/{archive,meetings} "$TARGET"/checks
+    mkdir -p "$TARGET"/work/{archive,meetings} "$TARGET"/{checks,reference}
     [[ -e "$TARGET/.gitignore" ]] || printf 'settings.local.json\nworktrees/\n' > "$TARGET/.gitignore"
     [[ -e "$TARGET/settings.local.json" ]] || echo '{}' > "$TARGET/settings.local.json"
     chmod +x "$TARGET"/hooks/*.sh "$TARGET"/checks/*.sh "$TARGET"/codex/*.sh 2>/dev/null || true
@@ -125,12 +127,14 @@ Then, inside the project it belongs to:
 
 Then open Claude Code there and run /setup. It fills in project.conf and CLAUDE.md.
 
-Keeping up with the template later — this is what the fork buys you:
+From here this repository is YOURS. Change anything: rewrite a skill, delete one, rewrite the
+rules. Nothing reaches back to the template, nothing goes stale because the template moved on, and
+nothing you do here is expected to be sent back.
 
-    git remote add upstream <this template's URL>    # once
-    git fetch upstream && git merge upstream/main    # when you want its improvements
+If you ever want a later version of something, it is a manual merge you choose to run:
 
-and to send an improvement back, push a branch here and open a pull request against upstream.
+    git remote add upstream <the template's URL>     # optional, once
+    git fetch upstream && git merge upstream/main    # only when you actually want it
 EOF
     ;;
 
@@ -144,7 +148,7 @@ install)
     [[ -d "$DEST/.git" ]] && die "$DEST is a clone (fork layout) — pull it instead of installing over it"
 
     echo "installing .claude/ into $TARGET_PROJECT  (copy layout)"
-    mkdir -p "$DEST"/work/{current,parked,archive,meetings,reference} "$DEST"/{skills,hooks,checks,output-styles,codex}
+    mkdir -p "$DEST"/work/{current,parked,archive,meetings} "$DEST"/{skills,hooks,checks,output-styles,codex,reference}
 
     skipped=0 written=0
     for f in "${SEEDED[@]}"; do
@@ -173,6 +177,7 @@ install)
 
     [[ -e "$DEST/settings.local.json" ]] || echo '{}' > "$DEST/settings.local.json"
     cp "$SRC/work/meetings/README.md" "$DEST/work/meetings/" 2>/dev/null || true
+    cp "$SRC/reference/README.md" "$DEST/reference/" 2>/dev/null || true
 
     echo
     echo "wrote $written, skipped $skipped."
@@ -229,9 +234,9 @@ export)
     [[ -d "$DEST" ]] || die "no .claude/ in $TARGET_PROJECT"
     if [[ -d "$DEST/.git" ]]; then
         cat >&2 <<EOF
-$DEST is a clone (fork layout), so --export is the wrong tool: push a branch there and open a pull
-request against this template's upstream instead. That keeps authorship and review, which copying
-files over the top does not.
+$DEST is a clone (fork layout), which is already a full copy — there is nothing to export. If you
+want something from it in the template, merge or cherry-pick it yourself. Nothing about that is
+required: a project's .claude/ is meant to diverge.
 EOF
         exit 1
     fi
