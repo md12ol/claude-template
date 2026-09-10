@@ -10,7 +10,7 @@
 # When you fix a bug, add the case that would have caught it.
 
 set -uo pipefail
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || { echo "cannot enter the repo root" >&2; exit 1; }
 ROOT="$PWD"
 VERBOSE=0
 [[ "${1:-}" == "-v" ]] && VERBOSE=1
@@ -191,7 +191,7 @@ is "echo pushing allows"             "$(tier 'echo pushing to prod')"      allow
 section "8. park and unpark round trip"
 d="$(newproj park shared multi)"
 eval "$(cd "$d" && . .claude/hooks/lib.sh && load_conf && resolve_owner && echo "WC=$WORK_CURRENT; WP=$WORK_PARKED")"
-cd "$d/.claude"
+cd "$d/.claude" || { bad "cannot enter the park fixture"; return 1 2>/dev/null || exit 1; }
 mkdir -p "$WC"
 printf '# Plan\n- [ ] a\n' > "$WC/plan.md"
 printf '# Next session\n**Blocked on:** PR #482 merging\n' > "$WC/handoff.md"
@@ -207,7 +207,7 @@ rmdir "$WC" 2>/dev/null; mv "$WP/api-rename" "$WC"
 is "nothing left parked" "$(ls -A "$WP" | wc -l | tr -d ' ')" "0"
 out="$(cd "$d" && .claude/hooks/session_brief.sh)"
 hasnt "the brief no longer lists it as parked" "parked: api-rename" "$out"
-cd "$ROOT"
+cd "$ROOT" || exit 1
 
 # ---------------------------------------------------------------------------------------------
 section "9. pull_main only ever fast-forwards"
