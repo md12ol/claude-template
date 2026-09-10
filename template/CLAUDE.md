@@ -62,18 +62,53 @@
      ══════════════════════════════════════════════════════════════════════════════════════════ -->
 
 
+## How this `.claude/` is configured
+
+Two files decide the shape of everything below. **Read them; never guess from what is on disk.**
+
+| | |
+|---|---|
+| `project.conf` | identity (repo, clone URL, host, tracker) and two switches: `PEOPLE` and `MACHINES` |
+| `work/owners.txt` | on a shared install, the only copy of the email-to-directory table |
+
+```bash
+. .claude/hooks/lib.sh && load_conf && resolve_owner
+echo "$WORK_CURRENT"          # work/current  OR  work/<owner>/current
+```
+
+**`PEOPLE`** — `solo` keeps live tasks at `work/current/`. `shared` puts them at
+`work/<owner>/current/`, turns on the union merge driver for the append-only docs, and makes
+`work/owners.txt` load-bearing: an address missing from it stops that person's session dead, which
+is deliberate. Writing into someone else's directory is silent, and surfaces only when they open a
+directory they did not expect to have anything in.
+
+**`MACHINES`** — `multi` turns on `pull_main.sh`, the `Machine:` stamp `/save` writes into
+`handoff.md`, and `/load`'s divergence check. **It is not the same question as `PEOPLE`.** One
+person with a laptop and a desktop is `multi`; so is anyone working in a cloud container. The
+failure it prevents is a stale doc, which needs two machines, not two people.
+
+**Layout** — `.claude/` is either its own cloned repository (fork layout, `.claude/.git` exists) or
+plain files inside this project (copy layout). On the fork layout every `work/` path is inside
+*that* repository, and the two never appear in the same commit.
+
+**Never hardcode any of this anywhere else.** Not a repo name, not a clone URL, not a person's
+email. Each belongs in one of the two files above, and every hook, check and skill reads them
+through `hooks/lib.sh`.
+
 ## Working docs
 
-Session state lives in `.claude/`:
+Session state lives in `.claude/`. Paths below are written `$WORK_CURRENT` where they depend on the
+switches above.
 
-**Task-scoped** — `.claude/work/current/`, archived by `/done` when the task ends:
+**Task-scoped** — `$WORK_CURRENT`, archived by `/done` when the task ends, or moved to
+`$WORK_PARKED/<slug>/` by `/park` when it is blocked:
 
 | File | |
 |---|---|
-| `work/current/plan.md` | objective + tasks. `[ ]` pending · `[x]` done **and verified** · `[~]` done, NOT verified. **A task list, not a record** — see the size rules below |
-| `work/current/plan_superseded.md` | original wording of tasks now done. Reference only, never actionable |
-| `work/current/history.md` | append-only session log for this task |
-| `work/current/handoff.md` | prompt for the next session — **read this first** |
+| `$WORK_CURRENT/plan.md` | objective + tasks. `[ ]` pending · `[x]` done **and verified** · `[~]` done, NOT verified. **A task list, not a record** — see the size rules below |
+| `$WORK_CURRENT/plan_superseded.md` | original wording of tasks now done. Reference only, never actionable |
+| `$WORK_CURRENT/history.md` | append-only session log for this task |
+| `$WORK_CURRENT/handoff.md` | prompt for the next session — **read this first**. On a multi-machine install it carries a `Machine:` stamp and the SHA it was written against, and a `**Blocked on:**` line once parked |
 
 **Persistent** — these describe the *code*, not the work, so they outlive the task:
 
@@ -83,6 +118,10 @@ Session state lives in `.claude/`:
 | `issues.md` | staged for the tracker, for other people |
 | `hotfixes.md` | temporary code in the tree, each with a `Remove when:` and an `Owner:` |
 | `traps.md` | permanent gotchas about this workspace — the things that bite every session |
+| `deferred.md` | **not yet** — wanted, out of scope for now. Sits between your design's non-goals (*never*) and the tracker (*now*). No dates, no ordering, no priority, or it becomes a second build order |
+| `traps_retired.md` | traps whose failure has been fixed, each naming the fix. Retire when the mechanism could return; delete when it is simply gone |
+| `pipeline_backlog.md` | small changes to *this working-docs system* that block nobody. A churn list, batched to the next time the team sits down. *Delete if you work alone* |
+| `collab_settled.md` | the archive half of `collab.md`. Item numbers run as one sequence across both files. *Delete if you work alone* |
 | `collab.md` | running agenda between the people who share this repo — anything on one side that conflicts with or overrides the other's work. Mark **Agreed** with a date; never delete. *Delete this row if you work alone* |
 
 Finished tasks land in `.claude/work/archive/<YYYY-MM>_<slug>/` — **tracked**, so a finished task's
@@ -185,27 +224,62 @@ gitignored and exists exactly for that.
 promote someone else's `[~]` to `[x]` because their notes read as finished — re-run the
 `Verify by:` or leave it alone.
 
+## Comment style
+
+**Every comment written or edited in this project follows `.claude/comment_style.md`.** The whole of
+it reduces to one test — *would deleting this make a competent reader, new to this code rather than
+new to the field, more likely to misunderstand or break it?* — plus one habit: **prefer removing the
+comment's reason to exist** over tightening its wording. Read it before a comment-heavy change; the
+rest of the time those two lines are enough.
+
 ## Workflow
 
 **Start the task**
 
 1. New task
-2. `/start` — agree the objective, write `work/current/plan.md` **before any code**
+2. `/start` — agree the objective, write `$WORK_CURRENT/plan.md` **before any code**
 3. Work
 
 **Then loop, once per session** ⟳
 
-4. `/save` — update every doc, write the next-session prompt · *last thing before you stop*
-5. `/load` — read the handoff, check it against the repo, report · *first thing when you return*
+4. `/save` — update every doc, write the next-session prompt, push the task dir · *last thing before you stop*
+5. `/load [slug]` — read the handoff, check it against the repo, report · *first thing when you return*
 6. Work
 7. Not finished? → back to **4**
 
+**Blocked, not finished**
+
+- `/park <slug>` — save, stamp what would unblock it, then set the task down in
+  `$WORK_PARKED/<slug>/` and `/start` something else. `/load <slug>` picks it up again, parking
+  whatever is live to make room. **The `Blocked on:` line must name an event someone else could
+  recognize as having happened** — "waiting on review" is not one; "PR #482 merging" is. The session
+  brief prints it on every start until the task returns.
+
 **Finish the task**
 
-8. `/done <slug>` — settle every loose end, then archive `work/current/` → `archive/<YYYY-MM>_<slug>/`
+8. `/done <slug>` — settle every loose end, then archive `$WORK_CURRENT` → `archive/<YYYY-MM>_<slug>/`
 
 Docs can go stale between sessions. Where the docs and the repo disagree, **the repo wins** —
 report the discrepancy rather than following the stale version.
+
+<!-- DELETE IF YOU WORK ALONE, or if the team does not sit down together on a schedule.
+
+### Joint meetings — a separate loop
+
+`collab.md` is where questions for a meeting accumulate. Three optional skills turn that pile into
+an agenda, a decision, and the edits it implies:
+
+- **`/make-agenda [date]`** classifies every unsettled item and writes `work/meetings/<date>.md`.
+  Rerunnable; it never edits `collab.md` beyond marking already-settled items.
+- **`/start-meeting [date]`** is a read-only standby. It answers questions about any item from the
+  sources, with citations, and **writes nothing** — the `Response` blocks are filled in by hand.
+- **`/end-meeting [date]`** reads those responses, compiles the action list, asks its questions in
+  one round, gets one confirmation, then executes. An empty `Response` block always stops it.
+
+**The split between deciding and executing is the point.** A meeting that edits files as it goes
+leaves half-applied decisions when it overruns, and a half-applied meeting is indistinguishable
+from a finished one to the next session.
+-->
 
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
