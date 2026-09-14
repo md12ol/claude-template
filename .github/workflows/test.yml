@@ -35,3 +35,8 @@ jobs:
 
       - name: ./test.sh
         run: ./test.sh -v
+
+      # The fixture suite needs a real code repo and a real working-docs repo; with neither present
+      # it prints one line and exits 0, so running it here costs nothing and catches a broken script.
+      - name: ./test_fixture.sh
+        run: ./test_fixture.sh -v

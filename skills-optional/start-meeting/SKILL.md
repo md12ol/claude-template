@@ -9,14 +9,10 @@ Load the prepared agenda, report the map, then **wait**. People work through it 
 number and a question; this skill answers from the sources. It asks nothing, decides nothing and
 **writes no file** — the `Response` blocks are filled in by hand, by a person, in an editor.
 
-**This is a research desk, not an interviewer.** An earlier design had this skill walk the items,
-ask each question as a prompt, and write the answer into the file. That inverts who holds the
-decision: the model drives and the humans answer. It also records decisions from a conversation
-rather than from considered text, and the difference shows up weeks later when someone asks what
-was actually agreed.
-
-What it is genuinely better at is the thing it now does: pulling the relevant facts out of a very
-long `collab.md`, the decision log, the code and `git log`, fast and with citations.
+**This is a research desk, not an interviewer.** Walking the items and writing down the answers
+inverts who holds the decision, and records a conversation rather than considered text. What this is
+better at is what it now does: pulling facts out of a long `collab.md`, the decision log, the code
+and `git log`, fast and with citations.
 
 ## 0. Set up
 
@@ -32,40 +28,27 @@ git -C .claude pull --ff-only
 | `executed` | **stop.** `/end-meeting` has already run. Offer `/make-agenda` for a new date |
 | file missing | **stop.** Run `/make-agenda` first. Do not improvise an agenda on the spot |
 
-There is no `in progress` status and no cursor. Both existed to make a walked meeting resumable,
-and a file people edit by hand is resumable by looking at it: **an item with an empty `Response`
-block is one that has not been answered yet.**
+No `in progress` status, no cursor: **an item with an empty `Response` block is one not yet
+answered**, which is all a hand-edited file needs to be resumable.
 
 ## 1. Report the map, once
 
-Read `work/pipeline_backlog.md` alongside the agenda. Then five lines, and stop talking:
-
-- how many items, split by status
-- which are blockers
-- anything in `pipeline_backlog.md` marked `Needs discussion.`
-- how many `Response` blocks are already filled in
-- that you are on standby: give an item number and a question
-
-Then **wait.** Do not summarize item 1. Do not suggest where to start.
+Read `work/pipeline_backlog.md` alongside the agenda. Then five lines, and stop talking: how many
+items, split by status · which are blockers · anything in `pipeline_backlog.md` marked
+`Needs discussion.` · how many `Response` blocks are filled in · that you are on standby and want an
+item number and a question. Then **wait.** Do not summarize item 1, or suggest where to start.
 
 ## 2. Answer on demand
 
-For each question asked, answer from the sources, in this order of preference:
+Answer from the sources, in order of preference: **`collab.md` and `collab_settled.md`** (the thread
+itself, and anything the same question was asked in before — quote it), then **`decisions.md`**
+(whether it was already decided, and why), then **the code and `git log`** (what is true now, as
+opposed to what was agreed), and last **your own reading**, marked as such.
 
-1. **`collab.md` and `collab_settled.md`** — the thread itself, and anything the same question was
-   asked in before. Quote it.
-2. **`decisions.md`** — whether this was already decided, and what the reasoning was.
-3. **The code and `git log`** — what is actually true now, as opposed to what was agreed.
-4. **Your own reading** — clearly marked as such, and last.
-
-**Cite every claim** with a file and a line, or a commit. An uncited answer in a meeting becomes a
-decision nobody can trace afterwards.
-
-**Say "I don't know" plainly.** The failure mode here is a confident synthesis of three half-related
-threads, delivered at the exact moment nobody has time to check it.
-
-**When the sources disagree, say so and stop.** Do not reconcile them. A contradiction between the
-decision log and the code is itself the finding, and often the reason the item was raised.
+**Cite every claim** with a file and a line, or a commit; an uncited answer becomes a decision
+nobody can trace. **Say "I don't know" plainly** — the failure here is a confident synthesis of
+three half-related threads, delivered when nobody has time to check it. **When the sources disagree,
+say so and stop**: the contradiction is itself the finding, and often why the item was raised.
 
 ## Constraints
 

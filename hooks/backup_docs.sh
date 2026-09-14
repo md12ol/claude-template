@@ -1,26 +1,23 @@
 #!/usr/bin/env bash
 # Back up this project's .claude/ working docs.
 #
-# Insurance for when .claude/ is NOT tracked by the project's own git. If you do track it
-# (recommended — see .claude/README.md), this is belt-and-braces and the hooks calling it can go.
-#
-# Snapshots land in ~/.claude-backups/<project>/<YYYY-MM-DD>/ — one directory per day, overwritten
-# within the day, pruned beyond RETAIN_DAYS. The project name comes from the directory containing
-# .claude/, so nothing needs configuring per project.
+# Insurance for a .claude/ that is not its own clone; with one, the hooks calling it can go.
+# Snapshots land in ~/.claude-backups/<project>/<YYYY-MM-DD>/ — one per day, overwritten within the
+# day, pruned beyond RETAIN_DAYS. The project name is the directory containing .claude/, so nothing
+# needs configuring per project.
 #
 #   .claude/hooks/backup_docs.sh            # throttled; safe from a Stop hook after every turn
 #   .claude/hooks/backup_docs.sh --force    # copy regardless of throttle (use for SessionEnd)
 
 set -euo pipefail
 
-# This script lives in .claude/hooks/ — CLAUDE_DIR is one level up.
 CLAUDE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT="$(basename "$(dirname "$CLAUDE_DIR")")"
 DEST_ROOT="${CLAUDE_DOCS_BACKUP_DIR:-$HOME/.claude-backups/$PROJECT}"
 RETAIN_DAYS="${CLAUDE_DOCS_BACKUP_RETAIN:-14}"
 
-# Loose files at the .claude/ root. settings*.json are included deliberately — settings.json holds
-# the hooks that run this script, so without it a restore cannot restore its own trigger.
+# Loose files at the .claude/ root. settings.json holds the hooks that run this script: without it
+# a restore cannot restore its own trigger.
 DOCS=(
     CLAUDE.md
     README.md
@@ -28,8 +25,8 @@ DOCS=(
     settings.local.json
 )
 
-# Directories copied whole. work/ is all the accumulated project state — the actual point of the
-# backup. skills/ and hooks/ are machinery: cheap to include, annoying to rebuild by hand.
+# Copied whole. work/ is the point of the backup; skills/ and hooks/ are cheap to include and
+# annoying to rebuild by hand.
 DIRS=(work skills hooks)
 
 DEST="$DEST_ROOT/$(date +%F)"

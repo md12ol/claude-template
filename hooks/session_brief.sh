@@ -3,10 +3,7 @@
 #
 # Prints the handoff's "Start here" plus the counts that go stale silently: unverified [~] items,
 # open [ ] items, unfiled issues. It does NOT replace /load, which verifies the handoff against the
-# repo; it makes a rotting item visible at zero cost.
-#
-# Adapts to the install rather than assuming a shape — solo or shared, one owner or six, parked
-# tasks or none — reading all of it from project.conf and work/owners.txt via lib.sh.
+# repo. The install's shape comes from project.conf and work/owners.txt, via lib.sh.
 #
 # Test:  .claude/hooks/session_brief.sh
 
@@ -21,10 +18,9 @@ rule_top="─── .claude ─────────────────�
 rule_bot="───────────────────────────────────────────────────────────"
 
 # --- setup guard ---------------------------------------------------------------------------------
-# .claude/ is a clone, and a machine that skipped it loads no conventions at all. This catches the
-# PARTIAL case — the directory exists but is missing the pieces that matter — which is the only case
-# a hook CAN catch: absent entirely, settings.json and this script go with it. The total case is
-# covered by the project's root CLAUDE.md, the one file that still loads when .claude/ is not there.
+# The PARTIAL case — .claude/ is there but missing the pieces that matter — is the only missing-
+# clone case a hook CAN catch: absent entirely, settings.json and this script go with it. The
+# project's root CLAUDE.md, the one file that still loads, covers the total case.
 if [[ ! -d "$CLAUDE_DIR/skills" || ! -d "$CLAUDE_DIR/work" ]]; then
     load_conf
     echo "$rule_top"
@@ -44,13 +40,10 @@ fi
 
 load_conf
 
-# /setup has not run yet if CLAUDE.md still carries its FILL IN blocks. Say so instead of pointing
-# at /start: a fresh clone is the one moment the right next command is not the usual one, and
-# /start would write a plan against rules nobody has agreed yet.
-#
-# Match the em-dash heading every block opens with, never the bare words: CLAUDE.md's shared-install
-# section discusses "FILL IN blocks" in live prose that survives /setup, and a bare grep therefore
-# reports a configured shared install as unconfigured at every session start, forever.
+# /setup has not run yet if CLAUDE.md still carries its FILL IN blocks; /start would write a plan
+# against rules nobody has agreed. Match the em-dash heading every block opens with, never the bare
+# words — live prose discusses "FILL IN blocks" too, and a bare grep would report a configured
+# shared install as unconfigured at every session start, forever.
 if grep -q 'FILL IN —' "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null; then
     echo "$rule_top"
     echo "This .claude/ has not been configured yet — CLAUDE.md still has FILL IN blocks."
@@ -62,9 +55,8 @@ fi
 
 resolve_owner
 
-# On a shared install an unrecognised identity is genuinely ambiguous, and writing into the wrong
-# person's directory is silent. Say so and stop — but exit 0, because a hook that blocks a session
-# is worse than one that says nothing.
+# On a shared install an unrecognised identity is ambiguous, and writing into the wrong person's
+# directory is silent. Say so and stop — but exit 0: a hook that blocks a session is worse.
 if is_shared && [[ -z "$OWNER_DIR" ]]; then
     echo "$rule_top"
     echo "Unrecognised git user.email (${OWNER_EMAIL:-unset}) — cannot tell whose work/ directory this is."
@@ -74,7 +66,7 @@ if is_shared && [[ -z "$OWNER_DIR" ]]; then
 fi
 
 # `grep -c` prints its count AND exits 1 when it is zero, so the obvious `|| echo 0` appends a
-# SECOND zero and the counts line breaks in two. Take the first line, default empty.
+# SECOND zero and breaks the counts line in two. Take the first line.
 count() {  # count <pattern> <file>
     local n
     n=$(grep -c "$1" "$2" 2>/dev/null | head -1)
@@ -93,8 +85,7 @@ parked_report() {
     done
 }
 
-# One line per other owner, so their in-flight work is visible without being readable noise.
-# Scales to any number of people; with none it prints nothing.
+# One line per other owner, so their in-flight work is visible without being noise.
 others_report() {
     local dir name cur parked
     while IFS=$'\t' read -r dir name; do
@@ -129,12 +120,13 @@ traps=$(count '^### ' work/traps.md)
 
 if [[ -f "$WORK_CURRENT/handoff.md" ]]; then
     sed -n '1p' "$WORK_CURRENT/handoff.md"
-    # The machine stamp, if the handoff carries one — this is how a stale cross-machine handoff
-    # shows up before you have trusted anything in it.
+    # How a stale cross-machine handoff shows up before you have trusted anything in it.
     is_multi_machine && grep -m1 '^\*\*Machine:' "$WORK_CURRENT/handoff.md"
-    # The "Start here" section, up to the next heading or the next bold label.
+    # The "Start here" section, up to the next heading or the next bold label. The stop pattern says
+    # "** not followed by a lowercase letter" rather than listing the labels that can follow: one of
+    # them opens with a multibyte character, and those are undefined in a mawk bracket expression.
     awk '/^(## .*Start here|\*\*Start here)/{f=1; print; next}
-         f && /^(## |\*\*[A-Z⏰])/{exit}
+         f && (/^## / || (/^\*\*/ && !/^\*\*[a-z]/)){exit}
          f' "$WORK_CURRENT/handoff.md" | head -12
 fi
 
