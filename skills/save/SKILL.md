@@ -70,6 +70,8 @@ work. Never archive them:
 | `issues.md` | **Churn list** | Work for other people, staged for the tracker. Entries leave only once filed. |
 | `hotfixes.md` | **Churn list** | Temporary / band-aid code in the tree. Entries leave only once reverted. |
 | `traps.md` | **Churn list** | Permanent workspace gotchas. Entries leave only when no longer true. |
+| `traps_retired.md` | **Append-only** | Traps whose cause has been fixed, each naming the fix. |
+| `deferred.md` | **Churn list** | Wanted, deliberately not now. Entries leave when the tracker takes them. |
 | `collab.md` | **Append-only** | Cross-owner decisions, when the repo is shared. Agreed items are marked, never deleted. Skip if the file doesn't exist. |
 
 ## 1. Gather state
@@ -106,6 +108,8 @@ Look for:
 - **New traps** — anything that cost you time this session and will cost it again: a tool flag that
   must always be passed, a command that silently does the wrong thing, a path that isn't what it
   looks like. → `traps.md`.
+- **Wanted, ruled out for now** — something you both agreed was worth doing and out of scope for
+  this milestone. → `deferred.md`, which is where it stops being remembered only by you.
 
 Then dispose of every item, strictly:
 
@@ -300,6 +304,11 @@ durable parked there is deleted the moment it stops being top-of-mind.
 **Verify a trap before recording it.** Traps are stated as fact and get trusted for months. Run the
 reproducer and put it in the entry — in the project this came from, a `grep` trap was carried in
 `handoff.md` for days with the wrong mechanism before anyone re-tested it.
+
+**Retire, don't delete.** If this session removed a trap's cause, move the entry to
+`traps_retired.md` with a `Fixed by:` line naming the change — revert that fix and the trap is back
+exactly as written. Delete outright only when the mechanism is gone for good: the file removed, the
+tool dropped, the platform changed under it.
 
 ## 8. `$WORK_CURRENT/history.md` — append a session entry
 

@@ -1,28 +1,26 @@
 # Hooks
 
-Five scripts plus a shared library. **Only the backup is enabled by default**; `/setup` offers the
-rest and wires up the ones that apply to how this project is configured.
+Five hooks plus `lib.sh`, which they all source. **`session_brief.sh` and `backup_docs.sh` are
+wired by default**; `/setup` offers the rest and wires the ones that apply to this project.
 
-A hook that never fires fails silently, which is why these ship as real scripts you can run rather
-than as JSON snippets to paste.
+A hook that never fires fails silently, which is why these ship as runnable scripts rather than as
+JSON snippets to paste.
 
 | | Fires on | Needs editing first? |
 |---|---|---|
 | `lib.sh` | — sourced by the others | no — it reads `project.conf` and `work/owners.txt` |
-| `backup_docs.sh` | `Stop`, `SessionEnd` | no — **enabled by default** |
+| `session_brief.sh` | `SessionStart` | no — **wired by default** |
+| `backup_docs.sh` | `Stop`, `SessionEnd` | no — **wired by default** |
 | `block_env_commands.sh` | `PreToolUse(Bash)` | **yes** — the patterns are examples |
 | `show_hotfixes.sh` | `PreToolUse(Edit\|Write)` | no |
 | `pull_main.sh` | `SessionStart` | no — but only wire it when `MACHINES="multi"` |
-| `session_brief.sh` | `SessionStart` | no |
+| `cloud_setup.sh` | — **not a hook**; run by hand on a fresh container | no |
 
-Two more scripts live outside this directory because they are **not** hooks and are never wired into
-`settings.json`: `cloud_setup.sh` here is run by hand on a fresh container, and
-`../checks/cloud_ready.sh` is a read-only PASS/FAIL gate you can run anywhere.
+`../checks/cloud_ready.sh` is the other non-hook: a read-only PASS/FAIL gate, safe to run anywhere.
 
-**`../settings.json` is what actually wires them up** — which hook runs on which event. It carries no
-description of its own because JSON has no comment syntax, and an unknown key risks a strict
-validator rejecting the file, which would silently disable every hook in it. This README is its
-documentation.
+**`../settings.json` is what wires them up.** It carries no description of its own — JSON has no
+comment syntax, and an unknown key risks a strict validator rejecting the file and silently
+disabling every hook in it. This README is that documentation.
 
 Each is testable without a session:
 
