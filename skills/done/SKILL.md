@@ -1,177 +1,120 @@
 ---
 name: done
-description: Close out the finished task — run a final save, then archive .claude/$WORK_CURRENT/ to .claude/work/archive/<YYYY-MM>_<slug>/ and start a clean current/. Use when the user says a task is done, finished, wrapped up, or wants to start a new task.
+description: Close out the finished task — run a final save, settle every loose end, then archive $WORK_CURRENT to work/archive/<YYYY-MM>_<slug>/ and leave a clean desk. Use when the user says a task is done, finished or wrapped up, or wants to start a new task.
 ---
 
 # Done
 
-Close out the current task. `/save` checkpoints work *within* a task; `/done` ends one and clears
-the desk for the next.
+`/save` checkpoints work *within* a task; `/done` ends one and clears the desk for the next.
 
 **This should fire regularly.** An empty `archive/` beside a long-running `$WORK_CURRENT/` means
-tasks are being merged into a program that never closes — plan and history then grow past what fits
-in context, and every session pays to re-read them. If the objective has grown so far that `/done`
-can never pass its gate, close the part that *is* finished and `/start` the rest as a new task.
+tasks are being merged into a program that never closes, and every later session pays to re-read a
+plan and history that no longer fit in context. If the objective has grown past what this gate can
+pass, close the part that *is* finished and `/start` the rest. Which files move and which stay is
+`CLAUDE.md`'s two tables: the task-scoped four go, the persistent docs describe the code and stay.
 
-## 0. Resolve where work lives — read it, do not assume it
-
-Live task paths depend on how this `.claude/` is configured. **Read the configuration; never guess
-from what is on disk.**
+## 0. Where work lives
 
 ```bash
-. .claude/hooks/lib.sh && load_conf && resolve_owner
-echo "$WORK_CURRENT"      # work/current  OR  work/<owner>/current
-echo "$WORK_PARKED"       # work/parked   OR  work/<owner>/parked
+eval "$(.claude/bin/task.sh paths)" && .claude/bin/task.sh pull
 ```
 
-On a **shared** install the owner is `git config user.email` matched against `work/owners.txt`, the
-only copy of that table. An empty `WORK_CURRENT` means the address is missing: **stop and ask**,
-never pick the likeliest person — writing into someone else's directory is silent, and surfaces only
-when they open a directory they didn't expect to have work in.
+Both paths are inside the `.claude/` repository, never the branch you are coding on. On a shared
+install an unrecognised git email stops here — ask whose it is, never guess.
 
-Everything below writes `$WORK_CURRENT` and `$WORK_PARKED`, and every one of those paths is inside
-the **`.claude/` repository**, not the branch this session is coding on. Pull it first; the main
-tree's checked-out branch is never switched, stashed or touched.
+## 1. Read the argument for intent
 
-```bash
-git -C .claude pull --ff-only
-```
+Normally the argument is the **archive slug** — what follows `<YYYY-MM>_`. `/done api-migration` →
+`work/archive/2026-07_api-migration/`. Lowercase it, spaces and underscores to hyphens, strip
+anything outside `[a-z0-9-]`. Unless it clearly is not a slug:
 
-## 0.5. Refuse a parked task
+- Carries its own year-month (`2026-07_api`, `july api work`) → they are giving the full directory
+  name or a date. Don't double-prefix.
+- A path, or an existing archive directory → they mean *that* directory; ask before writing into it.
+- A sentence or directive (`just the teardown work`, `don't archive yet, only save`) → scope, not a
+  name. Follow it, and derive the slug from the plan's objective.
+- Empty → derive it from the `# Plan —` line, and **show it for confirmation** before archiving.
 
-`/done <slug>` closes the task in `$WORK_CURRENT`. If the slug names something in `$WORK_PARKED`
-instead, **stop and say so**: resume it first with `/load <slug>`, then close it.
+When in doubt, say which slug you are about to use and why, then proceed.
 
-```bash
-[[ -d "$WORK_PARKED/<slug>" ]] && echo "parked — resume it with /load <slug> before /done"
-```
+**A parked slug is refused.** If `<slug>` is in `$WORK_PARKED`, stop and say so: resume it with
+`/load <slug>` first, then close it. The final save has to run against the session that actually
+finished the work — it sweeps loose threads from *this* context, stamps `hotfixes.md` and writes the
+README from what happened. Against a directory nobody has opened, all three are guesswork.
 
-Not tidiness: `/done`'s final save must run against the session that actually finished the work. It
-sweeps loose threads from *this* context, stamps `hotfixes.md`, and writes the archive README from
-what happened. Against a directory nobody has opened, all three are guesswork that reads as fact
-afterwards.
+## 2. Save, then check the task is actually finished
 
-## The argument
+**Run `/save` in full** — no shortcuts. It is the last chance to capture rationale from the live
+conversation, and everything below assumes the docs are current.
 
-The argument is normally the **archive slug** — the name that follows `<YYYY-MM>_` in the archive
-directory. `/done api-migration` → `.claude/work/archive/2026-07_api-migration/`.
+Then read `$WORK_CURRENT/plan.md`. Any `[ ]` pending or `[~]` unverified items, or unanswered open
+questions? **Stop and list them.** Ask whether each is done, abandoned, or moving to the next task.
+Never archive over unfinished work — `[~]` especially, since that is work that only *looks* done.
 
-Normalize it: lowercase, spaces and underscores to hyphens, strip anything that isn't
-`[a-z0-9-]`. `/done "API Migration"` → `api-migration`.
+## 3. Sweep the persistent files before they carry forward
 
-**Unless it clearly isn't a slug.** Read the argument for intent before treating it as a name:
-
-- Contains its own year-month (`2026-07_api`, `july api work`) → the user is giving the full
-  directory name or a date. Don't double-prefix.
-- A path or an existing archive directory → they mean *that* directory; ask before writing into it.
-- A sentence or instruction (`just the teardown work`, `don't archive yet, only save`) → scope or a
-  directive, not a name. Follow it, and derive the slug from `plan.md`'s objective.
-- Empty → derive it from the `# Plan —` objective line in `$WORK_CURRENT/plan.md`, and **show it for
-  confirmation before creating the directory.**
-
-When in doubt, say what slug you're about to use and why, then proceed.
-
-## What moves and what stays
-
-The test is: does the file describe **the work** or **the code**?
-
-| Stays at `.claude/` | Why |
-|---|---|
-| `CLAUDE.md` | project rules |
-| `decisions.md` | most entries constrain the codebase, not just this task |
-| `hotfixes.md` | the band-aids are still **in the tree** after the task ends |
-| `issues.md` | unfiled work doesn't stop existing |
-| `traps.md` | the workspace still behaves that way |
-| `collab.md` | coordination outlives any one task; **Agreed** items are never deleted |
-
-| Archives with the task (`$WORK_CURRENT/`) | Why |
-|---|---|
-| `plan.md` | tasks for one objective, dead once met |
-| `plan_superseded.md` | the original wording of those tasks |
-| `history.md` | the session log *of this task* |
-| `handoff.md` | a prompt to resume a task that's over |
-
-## Steps
-
-**1. Run `/save` first.** Full save, no shortcuts — this is the last chance to capture rationale
-from the live conversation. Everything below assumes the docs are current.
-
-**2. Check the task is actually finished.** Read `$WORK_CURRENT/plan.md`:
-
-- Any `[ ]` pending or `[~]` unverified items? **Stop and list them.** Ask whether they are done,
-  abandoned, or moving to the next task. Do not archive over unfinished work — `[~]` especially,
-  since that's work that only *looks* done.
-- Unanswered **Open questions**? Surface them the same way.
-
-**3. Sweep the persistent files** before they carry forward:
-
-- `hotfixes.md` — two passes per entry:
-  1. **Is the code still there?** Read the file and confirm. Delete entries whose hotfix is gone.
-  2. **Is the `Remove when:` condition met?** Check what you actually can — did the upstream fix
-     land, did the owner's work ship, does the symptom still reproduce. Stamp every surviving entry
-     `**Last checked:** <YYYY-MM-DD>` and say what that rests on. Where you cannot verify (it needs
-     someone else's repo, or a run you can't make), write
-     `Last checked: <date> — could not verify, needs <who/what>` rather than implying you checked.
-     **Never mark a condition met on inference** — removing a load-bearing hotfix on a wrong guess
-     breaks everything downstream.
-
-  Then list for the user: entries whose condition now looks met, and entries unverifiable for more
-  than ~2 task cycles.
-- `issues.md` — anything still `Filed: not yet` gets listed to the user. This is the moment to file
-  them; once the task is archived, nobody looks again. Include parked entries: ask whether each is
-  still worth keeping or has been overtaken.
-- `traps.md` — drop any entry that is no longer true (the tool was fixed, the path changed).
-- `collab.md`, if it exists — move anything settled during this task into **Agreed** with its date,
-  and flag any Open item this task's outcome has now overtaken. Never delete an item.
-- `decisions.md` — append a `## Task complete: <slug> — <YYYY-MM-DD>` marker so later entries are
+- `hotfixes.md` — two passes per entry. **Is the code still there?** Read the file; delete entries
+  whose hotfix is gone. **Is the `Remove when:` condition met?** Check what you actually can, stamp
+  every survivor `**Last checked:** <YYYY-MM-DD>`, and where you cannot verify write
+  `Last checked: <date> — could not verify, needs <who/what>` rather than implying you checked.
+  **Never mark a condition met on inference.** Then list entries whose condition now looks met, and
+  entries unverifiable for more than about two task cycles.
+- `issues.md` — list everything still `Filed: not yet`, parked entries included. This is the moment
+  to file them; once the task is archived nobody looks again.
+- `traps.md` — drop any entry no longer true (the tool was fixed, the path changed).
+- `collab.md`, if it exists — mark what this task settled, flag any Open item its outcome overtook,
+  and never delete an item.
+- `decisions.md` — append a `## Task complete: <slug> — <YYYY-MM-DD>` marker, so later entries are
   attributable to the right task.
 
-**4. GATE — do not archive until everything outstanding is dispositioned.**
+## 4. GATE — do not archive until everything outstanding is dispositioned
 
-A hard stop. `/done` is the last moment anyone looks at this task's loose ends; once
-`$WORK_CURRENT/` is archived, unfiled issues and undocumented hotfixes are effectively lost.
-Collect everything outstanding as a numbered list the user answers:
+A hard stop. `/done` is the last moment anyone looks at this task's loose ends. Collect them as one
+numbered list for the user: issues still `Filed: not yet`; hotfixes whose `Remove when:` now looks
+met, and any added during this task; `[ ]` and `[~]` items; unanswered open questions.
 
-- Issues still `Filed: not yet` (both tiers).
-- Hotfixes whose `Remove when:` condition now looks met, and any added during this task.
-- `[ ]` and `[~]` items still in `plan.md`.
-- Unanswered open questions.
-
-**The gate is acknowledgment, not resolution.** Every item needs an explicit disposition, and
-these are all valid answers:
+**The gate is acknowledgment, not resolution.** Every item needs an explicit disposition, and all
+four of these are valid answers:
 
 - *File it now* — do it, record the URL in `Filed:`.
 - *Carry forward* — it stays in the persistent file for the next task. Say so in the archive README.
 - *Drop it* — remove the entry, and note why in `decisions.md`.
 - *Already handled* — verify, then remove.
 
-A hotfix blocked on someone else's work is **carried forward**, not a blocker — otherwise no task
-could ever close while an upstream fix is pending.
+A hotfix blocked on someone else's work is **carried forward**, not a blocker. **Never disposition
+an item on the user's behalf**, and no response to the list means stop there: a `/done` that saved
+but did not archive is recoverable, an archive that swallowed unresolved work is not.
 
-**Do not archive until every item has an answer.** No response to the list means stop there: a
-partial `/done` that saved but didn't archive is fine and recoverable, an archive that swallowed
-unresolved work is not. Never disposition an item on the user's behalf.
+## 5. Archive, write the README, commit
 
-**5. Archive.** Create `.claude/work/archive/<YYYY-MM>_<slug>/` using **today's** year-month. If the
-directory exists, do not overwrite — append `-2`, or ask. Then plain `mv` of `$WORK_CURRENT/plan.md`,
-`$WORK_CURRENT/plan_superseded.md`, `$WORK_CURRENT/history.md`, `$WORK_CURRENT/handoff.md` into it.
-⚠ **`plan_superseded.md` is easy to miss** — it is created lazily by `/save`, so it is absent from
-some tasks and present in others. Leaving it behind blocks the next `/start`, which refuses to run
-while `$WORK_CURRENT/` is non-empty.
+```bash
+.claude/bin/task.sh archive <slug>
+```
 
-Write a short `README.md` there: the objective, the dates spanned (first and last session in
-`history.md`), the outcome in 2–3 sentences, and anything left behind that outlived the task.
+It normalises the slug, creates `work/archive/<YYYY-MM>_<slug>/` from today's year-month, moves
+every file out of `$WORK_CURRENT` into it, and prints the path. It refuses when that directory
+already exists (suggesting `-2`) and when `$WORK_CURRENT` has no `plan.md`.
 
-**6. Leave `$WORK_CURRENT/` empty.** Do **not** write a stub `plan.md` or seed `history.md` — `/start`
-scaffolds the next task, and an empty directory makes it obvious there isn't one.
+Then write `README.md` in the archive directory — the objective, the dates spanned (first and last
+session in `history.md`), the outcome in 2–3 sentences, and anything left behind that outlived the
+task — and commit:
 
-**7. Report.** Say what was archived and where, the disposition of every item from the gate,
-which hotfixes and issues carried forward into the next task, and that the next step is `/start`.
+```bash
+.claude/bin/task.sh commit "done: <slug>"
+```
+
+That commits and pushes the archive, which is the point: an archive that never reaches `origin` is
+invisible on the other machine. **On a rejected push, do not force** — report and stop.
+
+`$WORK_CURRENT/` is now empty and stays that way — `/start` scaffolds the next task, and an empty
+directory makes it obvious there isn't one.
+
+## 6. Report
+
+What was archived and where, the disposition of every gate item, which hotfixes and issues carried
+forward, and that the next step is `/start`.
 
 ## Constraints
 
-- **`mv`, never delete.** If the archive directory can't be created, stop and say so rather than
-  proceeding.
-- **`/done` commits nothing of its own.** The `/save` in step 1 commits and pushes the task
-  directory per its §10; nothing else here reaches a remote.
-- If the user's argument said to save but not archive, do step 1 only and stop.
+- If the argument said to save but not archive, do step 2 only and stop.
+- Nothing here touches the project's own repository; source code still needs its own instruction.

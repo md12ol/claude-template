@@ -1,12 +1,9 @@
 # Decisions
 
-Append-only. One entry per real decision, newest at the **bottom**. Never edit or delete a past
-entry — if a later session reverses one, write a NEW entry that names and supersedes it. The
-reversal trail is the value.
-
-Maintained by `/save`. Survives `/done` — decisions constrain the codebase, not just one task.
-
-Only log what a cold reader could not re-derive from the code. Skip the obvious.
+Append-only, newest at the **bottom**. Never edit or delete a past entry: if a later session
+reverses one, write a new entry that names and supersedes it, because the reversal trail is the
+value. Log only what a cold reader could not re-derive from the code, and skip the obvious.
+Maintained by `/save`; survives `/done`, since decisions constrain the codebase rather than a task.
 
 ---
 

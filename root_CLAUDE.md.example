@@ -1,18 +1,13 @@
 <!--
-WHAT THIS FILE IS: a starting point for the PROJECT's own root CLAUDE.md — the signpost that
-points at .claude/ and survives its absence. It is not used from here; copy it out.
+WHAT THIS FILE IS: a starting point for the PROJECT's own root CLAUDE.md — the signpost that points
+at .claude/ and survives its absence. It is not used from here. Copy it to the project's root as
+CLAUDE.md, filling in the two <angle-bracket> values from .claude/project.conf and deleting this
+comment; `/setup` does exactly that for you.
 
-COPY THIS TO THE PROJECT'S ROOT as CLAUDE.md.
-
-It is the one file that still loads when `.claude/` is missing entirely — which is the single
-failure this system cannot otherwise catch. A SessionStart hook cannot report it, because
-`settings.json` and the hooks are inside the directory that is not there. A machine that skipped
-the clone gets no conventions, and nothing tells anyone.
-
-Keep it SHORT. It is a signpost, not a second copy of the rules: anything duplicated here drifts
-from `.claude/CLAUDE.md` and then contradicts it, which is worse than the gap it was filling.
-
-Fill in the two <angle-bracket> values from `.claude/project.conf` and delete this comment.
+It is the one file that still loads when `.claude/` is missing entirely, the single failure this
+system cannot otherwise catch: a SessionStart hook cannot report it, because settings.json and the
+hooks are inside the directory that is not there. Keep it SHORT — a signpost, not a second copy of
+the rules, since anything duplicated here drifts from `.claude/CLAUDE.md` and then contradicts it.
 -->
 
 # <PROJECT> — working rules
@@ -25,9 +20,8 @@ git clone <DOCS_REPO_URL> .claude
 ```
 
 **If that directory is missing, stop and clone it before doing anything else.** Without it no
-conventions are loaded, and a session will work confidently against rules it has never read.
-
-Once it is there, `.claude/CLAUDE.md` is the authority and this file says nothing further.
+conventions are loaded, and a session will work confidently against rules it has never read. Once it
+is there, `.claude/CLAUDE.md` is the authority and this file says nothing further.
 
 ## The four that matter most, in case the clone is not possible right now
 
