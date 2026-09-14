@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # Back up this project's .claude/ working docs.
 #
-# Insurance for the case where .claude/ is NOT tracked by the project's own git. If you do track it
-# (recommended — see .claude/README.md), this is belt-and-braces and you can drop the hooks that
-# call it.
+# Insurance for when .claude/ is NOT tracked by the project's own git. If you do track it
+# (recommended — see .claude/README.md), this is belt-and-braces and the hooks calling it can go.
 #
 # Snapshots land in ~/.claude-backups/<project>/<YYYY-MM-DD>/ — one directory per day, overwritten
-# within the day, pruned beyond RETAIN_DAYS. The project name is derived from the directory that
-# contains .claude/, so nothing needs configuring per project.
+# within the day, pruned beyond RETAIN_DAYS. The project name comes from the directory containing
+# .claude/, so nothing needs configuring per project.
 #
 #   .claude/hooks/backup_docs.sh            # throttled; safe from a Stop hook after every turn
 #   .claude/hooks/backup_docs.sh --force    # copy regardless of throttle (use for SessionEnd)

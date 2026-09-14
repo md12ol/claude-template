@@ -2,11 +2,11 @@
 # SessionStart — orient even when /load isn't typed.
 #
 # Prints the handoff's "Start here" plus the counts that go stale silently: unverified [~] items,
-# open [ ] items, and unfiled issues. It does NOT replace /load — /load verifies the handoff
-# against the repo, which this cannot do. It just makes a rotting item visible at zero cost.
+# open [ ] items, unfiled issues. It does NOT replace /load, which verifies the handoff against the
+# repo; it makes a rotting item visible at zero cost.
 #
-# Adapts to the install rather than assuming one shape: solo or shared, one owner or six, parked
-# tasks or none. Everything it needs comes from project.conf and work/owners.txt via lib.sh.
+# Adapts to the install rather than assuming a shape — solo or shared, one owner or six, parked
+# tasks or none — reading all of it from project.conf and work/owners.txt via lib.sh.
 #
 # Test:  .claude/hooks/session_brief.sh
 
@@ -21,11 +21,10 @@ rule_top="─── .claude ─────────────────�
 rule_bot="───────────────────────────────────────────────────────────"
 
 # --- setup guard ---------------------------------------------------------------------------------
-# .claude/ is a clone, and a machine that skipped it loads no conventions at all.
-# This catches the PARTIAL case — the directory exists but is missing the pieces that matter — and
-# it is the only case a hook CAN catch: if .claude/ were absent entirely, settings.json and this
-# script would be absent with it and nothing here would run. The total case is covered by the
-# project's root CLAUDE.md, the one file that still loads when .claude/ is not there.
+# .claude/ is a clone, and a machine that skipped it loads no conventions at all. This catches the
+# PARTIAL case — the directory exists but is missing the pieces that matter — which is the only case
+# a hook CAN catch: absent entirely, settings.json and this script go with it. The total case is
+# covered by the project's root CLAUDE.md, the one file that still loads when .claude/ is not there.
 if [[ ! -d "$CLAUDE_DIR/skills" || ! -d "$CLAUDE_DIR/work" ]]; then
     load_conf
     echo "$rule_top"
@@ -59,10 +58,9 @@ fi
 
 resolve_owner
 
-# On a shared install an unrecognised identity is genuinely ambiguous — writing into the wrong
-# person's directory is silent, and surfaces only when someone opens a directory they did not
-# expect to have work in. Say so and stop, but exit 0: a hook that blocks a session is worse than
-# a hook that says nothing.
+# On a shared install an unrecognised identity is genuinely ambiguous, and writing into the wrong
+# person's directory is silent. Say so and stop — but exit 0, because a hook that blocks a session
+# is worse than one that says nothing.
 if is_shared && [[ -z "$OWNER_DIR" ]]; then
     echo "$rule_top"
     echo "Unrecognised git user.email (${OWNER_EMAIL:-unset}) — cannot tell whose work/ directory this is."
@@ -71,8 +69,8 @@ if is_shared && [[ -z "$OWNER_DIR" ]]; then
     exit 0
 fi
 
-# `grep -c` prints its count AND exits 1 when the count is zero, so the obvious `|| echo 0` appends
-# a SECOND zero and the counts line breaks across two lines. Take the first line, default empty.
+# `grep -c` prints its count AND exits 1 when it is zero, so the obvious `|| echo 0` appends a
+# SECOND zero and the counts line breaks in two. Take the first line, default empty.
 count() {  # count <pattern> <file>
     local n
     n=$(grep -c "$1" "$2" 2>/dev/null | head -1)

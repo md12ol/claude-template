@@ -3,14 +3,13 @@
 #
 # Two cases:
 #
-#   1. Files outside your scope. CLAUDE.md's "files outside your scope" section names paths that
-#      carry deliberate working-tree edits. The disposition is per-file — only hotfixes.md knows
-#      which. EDIT THE PATH PATTERN BELOW BEFORE ENABLING; the default is an example.
+#   1. Files outside your scope. CLAUDE.md's "files outside your scope" section names paths carrying
+#      deliberate working-tree edits; the disposition is per-file, and only hotfixes.md knows which.
+#      EDIT THE PATH PATTERN BELOW BEFORE ENABLING — the default is an example.
 #
 #   2. The .claude/ machinery itself. settings.json and hooks/*.sh execute on everyone ELSE's
-#      machine, at session start, on their next pull, without them reading the diff. Those changes
-#      go through a PR. This branch needs no configuring and is worth keeping even solo — it is
-#      what stops a broken hook shipping to a teammate.
+#      machine at session start, on their next pull, without them reading the diff, so those changes
+#      go through a PR. This branch needs no configuring and is worth keeping even solo.
 #
 # Never blocks — exit 0 always. Both kinds of edit are legitimate; they just need to be deliberate.
 #
