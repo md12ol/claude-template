@@ -403,6 +403,29 @@ while read -r f; do
     esac
 done < <(cd "$ROOT" && git ls-files)
 
+# ---------------------------------------------------------------------------------------------
+section "17. a configured install is not reported as unconfigured"
+# The setup guard greps CLAUDE.md for its FILL IN blocks. CLAUDE.md used to discuss "FILL IN
+# blocks" in LIVE PROSE as well, in the shared-install section — which /setup deletes on a solo
+# install and keeps on a shared one. So a configured SHARED project reported "not configured yet"
+# at every session start, forever, and /setup's own step-0 gate read it as unfinished. Invisible
+# solo, which is why it survived. Strip the comment blocks the way /setup does, then assert.
+for shape in solo shared; do
+    d="$(newproj "configured_$shape" "$shape" single)"
+    # Undo the fixture's blunt marker substitution, then remove the blocks properly.
+    cp "$ORIGIN/CLAUDE.md" "$d/.claude/CLAUDE.md"
+    python3 - "$d/.claude/CLAUDE.md" <<'STRIP'
+import re, sys
+p = sys.argv[1]
+text = open(p).read()
+open(p, 'w').write(re.sub(r'<!--.*?-->', '', text, flags=re.S))
+STRIP
+    left="$(grep -c 'FILL IN' "$d/.claude/CLAUDE.md" || true)"
+    is "$shape: no marker survives in live prose" "$left" "0"
+    out="$(cd "$d" && .claude/hooks/session_brief.sh 2>&1)"
+    hasnt "$shape: the brief does not claim it is unconfigured" "has not been configured yet" "$out"
+done
+
 printf '\n%s\n' "----------------------------------------"
 printf 'passed %s, failed %s\n' "$pass" "$fail"
 exit $(( fail > 0 ))

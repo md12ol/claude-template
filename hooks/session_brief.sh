@@ -47,7 +47,11 @@ load_conf
 # /setup has not run yet if CLAUDE.md still carries its FILL IN blocks. Say so instead of pointing
 # at /start: a fresh clone is the one moment the right next command is not the usual one, and
 # /start would write a plan against rules nobody has agreed yet.
-if grep -q 'FILL IN' "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null; then
+#
+# Match the em-dash heading every block opens with, never the bare words: CLAUDE.md's shared-install
+# section discusses "FILL IN blocks" in live prose that survives /setup, and a bare grep therefore
+# reports a configured shared install as unconfigured at every session start, forever.
+if grep -q 'FILL IN —' "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null; then
     echo "$rule_top"
     echo "This .claude/ has not been configured yet — CLAUDE.md still has FILL IN blocks."
     echo "Run /setup first. It writes project.conf and CLAUDE.md, wires the hooks that apply,"

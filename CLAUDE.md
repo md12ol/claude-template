@@ -210,12 +210,12 @@ Anything it prints is a line two entries could collapse onto. Fix it before it m
 executable code that runs on everyone else's machine at session start, on their next pull, without
 them reading the diff. This is the one part of `.claude/` where "it's just docs" is false.
 
-**3. `/setup` runs once per PROJECT, not once per clone.** It fills in this file's FILL IN blocks
-and writes `project.conf`; running it again over a configured file destroys what was agreed once and
-relied on since. The first person runs it and commits; **everyone after that clones an
+**3. `/setup` runs once per PROJECT, not once per clone.** It resolves this file's placeholder
+blocks and writes `project.conf`; running it again over a configured file destroys what was agreed
+once and relied on since. The first person runs it and commits; **everyone after that clones an
 already-configured repository and starts with `/load`.** Personal settings go in
 `settings.local.json`, which is gitignored and exists for exactly that. Unsure which case you are
-in? FILL IN blocks still present means it has not run.
+in? A configured file has no placeholder blocks left, and the session brief says so at startup.
 
 **4. Verification is per-machine.** `[x]` means *you* saw it verified, on your machine. Never
 promote someone else's `[~]` because their notes read as finished — re-run the `Verify by:` or leave
