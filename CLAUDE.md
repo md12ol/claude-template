@@ -242,12 +242,12 @@ where they and the repo disagree the repo wins — report it rather than followi
   failure mode this system has.
 - **Every task needs a `Verify by:`** — the command, the log line, the artifact to inspect. A task
   with no verification method is how `[~]` items become false `[x]`s later.
-- **Don't commit or push unless asked** — with exactly five exceptions, a closed list: `/setup`
-  commits its own configuration; `/save`, `/park` and `/done` commit **and push** the task
-  directories they write (`$WORK_CURRENT`, `$WORK_PARKED`, `work/archive/`); and `/add-person`
-  commits and pushes the switch to a shared repo, because the new person clones next. All five touch
-  **the `.claude/` repository only**, never the project, and anything else needs its own explicit
-  instruction every time. They exist because an unpushed handoff or archive fails silently: you find
+- **Don't commit or push unless asked** — with a closed list of exceptions: `/setup` commits its
+  own configuration; `/save`, `/park`, `/load <slug>` and `/done` commit **and push** the task
+  directories they write or move (`$WORK_CURRENT`, `$WORK_PARKED`, `work/archive/`); and
+  `/add-person` commits and pushes the switch to a shared repo, because the new person clones next.
+  All of them touch **the `.claude/` repository only**, never the project, and anything else needs
+  its own explicit instruction every time. They exist because an unpushed handoff or archive fails silently: you find
   out on the other machine, usually a day late.
 - Absolute dates only, never "today" or "last session". Reference code as `path:line`.
 - Flag temporary work as temporary and add it to `hotfixes.md`.

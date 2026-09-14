@@ -42,8 +42,7 @@ load_conf
 
 # /setup has not run yet if CLAUDE.md still carries its FILL IN blocks; /start would write a plan
 # against rules nobody has agreed. Match the em-dash heading every block opens with, never the bare
-# words — live prose discusses "FILL IN blocks" too, and a bare grep would report a configured
-# shared install as unconfigured at every session start, forever.
+# words: a project rule that merely quotes them would otherwise read as unconfigured forever.
 if grep -q 'FILL IN —' "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null; then
     echo "$rule_top"
     echo "This .claude/ has not been configured yet — CLAUDE.md still has FILL IN blocks."
