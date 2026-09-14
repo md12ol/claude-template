@@ -6,49 +6,36 @@ description: Turn work/collab.md into a meeting agenda at work/meetings/<YYYY-MM
 # Make agenda
 
 Read `collab.md`, decide what actually needs everyone in a room, and write it out as a file
-`/start-meeting` can walk. The agenda is a **derived document** — `collab.md` stays the source of
-truth, and **this skill never edits it**.
+`/start-meeting` can walk. The agenda is **derived**: `collab.md` stays the source of truth and this
+skill writes nothing to it beyond §1's status changes. It is the judgement-heavy one of the three —
+an agenda that statuses a settled item as `Decide` wastes the meeting's scarcest resource, and one
+whose questions need `collab.md` open has failed.
 
-**The judgement-heavy skill of the three.** The value is not in listing items but in classifying
-them correctly and writing questions answerable by picking rather than by going back to the source.
-An agenda that statuses a settled item as `Decide` wastes the meeting's scarcest resource, and one
-whose questions need `collab.md` open has failed at its only job.
+## 0. Set up, and resolve the target
 
-## 0. Set up
-
-Work where `collab.md` lives, and pull first — a stale copy is how a meeting gets prepared from a
-file missing the last three items raised.
+Pull first: a stale copy is how a meeting gets prepared from a file missing its last three items.
 
 ```bash
 git -C .claude pull --ff-only
-git -C .claude rev-parse --short HEAD    # record this; a rerun diffs against it
+git -C .claude rev-parse --short HEAD    # goes in the header; a rerun diffs against it
 ```
 
-**Record that SHA.** It goes in the agenda header and it is what a rerun compares against.
-
-## 1. Resolve the date and the target
-
-`/make-agenda [YYYY-MM-DD]`, defaulting to today. Target: `work/meetings/<date>.md`.
-
-**No owner in the path.** A meeting belongs to everyone in it, the same reasoning that keeps
-`work/archive/` shared.
+`/make-agenda [YYYY-MM-DD]`, defaulting to today. Target: `work/meetings/<date>.md` — **no owner in
+the path**, the same reasoning that keeps `work/archive/` shared.
 
 | Target file | This run is |
 |---|---|
 | missing | a first build |
-| `Status: prepared` | a **rerun** — see §4 |
+| `Status: prepared` | a **rerun** — see §3 |
 | `Status: executed` | **stop.** `/end-meeting` has run against it. Offer a new date |
 
-## 2. Sweep what does not need the meeting
+## 1. Sweep what does not need the meeting
 
-First find items **already settled in their own thread** — asked, answered, everyone visibly agreed,
-nothing outstanding. Settle those in place and say so in the agenda header rather than putting them
-in front of people twice.
+Find the items **already settled in their own thread** — asked, answered, visibly agreed, nothing
+outstanding. Settle those in place and name them in the header rather than putting them in front of
+people twice; a status change is the only writing this skill does to `collab.md`.
 
-This is the only writing this skill does to `collab.md`: a status change, never a rewrite of anyone's
-words.
-
-## 3. Classify every remaining item
+## 2. Classify every remaining item
 
 Exactly one status each. Getting this right is the whole skill:
 
@@ -62,50 +49,39 @@ Exactly one status each. Getting this right is the whole skill:
 | **Close** | overtaken, duplicated, or answered elsewhere | "close, or say why not" |
 
 **Order: blockers first**, then Decide → Ratify → Acknowledge → FYI → Close. Deviate only for a
-reason stated in the header — a demonstration everyone needs to see before two ratifications make
-sense, say.
+reason stated in the header.
 
-## 4. Write the file
+## 3. Write the file
 
 ```markdown
 # Meeting — <YYYY-MM-DD>
-
 **Present:** <names>
 **Source:** `work/collab.md` at `<SHA>`, items <list>
 **Status:** prepared
-**Swept before this agenda was built:** <items settled in §2, or "none">
+**Swept before this agenda was built:** <items settled in §1, or "none">
 
 ## The map
-
 | Status | Items | Count |
-|---|---|---|
 
 ## <N>. <item title>
-
 **Status:** Decide
 **Raised:** <date> — <author>
-
-<A brief PROPORTIONATE to the decision. Two lines for a small one. For a large one: what is
-actually at stake, what has been tried, and what each option costs. Never a summary of the item
-that makes a reader open collab.md anyway.>
-
-**Question:** <answerable by picking>
-  (a) <option>
-  (b) <option>
-
+<A brief PROPORTIONATE to the decision: two lines for a small one; for a large one, what is at
+stake, what has been tried, what each option costs. Never a summary that sends a reader to collab.md.>
+**Question:** <answerable by picking>   (a) <option>   (b) <option>
 **Response:**
 _(fill this in by hand before /end-meeting)_
 ```
 
 **On a rerun:** diff `collab.md` against the header's SHA, fold in what is new, update the map and
-the SHA, and **touch nothing carrying a written `Response`** or visibly edited by a human. A rerun
-that overwrites someone's answer costs more than the items it adds.
+the SHA, and **touch nothing carrying a written `Response`** or visibly edited by a human — that
+costs more than the items it adds.
 
 ## Constraints
 
-- **Never edit an item's body in `collab.md`.** Status changes from §2 only.
-- **Never invent a question nobody raised.** If an item needs a decision the item does not name,
-  say so in the brief and ask whether to add it.
-- **Every item gets a `Response` block**, including `FYI` and `Close`. `/end-meeting` stops on an
+- **Never edit an item's body in `collab.md`.** Status changes from §1 only.
+- **Never invent a question nobody raised.** If an item needs a decision it does not name, say so
+  in the brief and ask whether to add it.
+- **Every item gets a `Response` block**, `FYI` and `Close` included. `/end-meeting` stops on an
   empty one, deliberately.
 - **Do not decide anything here.** This skill prepares; it does not rule.

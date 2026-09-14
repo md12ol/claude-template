@@ -3,9 +3,8 @@
 #
 #     .claude/codex/install.sh
 #
-# Run once per clone per machine. Nothing it creates is ever committed: the three entrypoints go
-# into .git/info/exclude, which is private to this clone, rather than .gitignore, which everyone
-# would have to carry whether or not they use Codex.
+# Run once per clone per machine. The three entrypoints go into .git/info/exclude, private to this
+# clone, rather than .gitignore, which everyone would carry whether or not they use Codex.
 set -euo pipefail
 
 BRIDGE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

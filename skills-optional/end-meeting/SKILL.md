@@ -5,15 +5,12 @@ description: Read the answers written by hand into a meeting agenda, compile the
 
 # End meeting
 
-Read the answers people wrote into a prepared agenda, compile them into an action list, and actually
-make the changes. **This is the only one of the three that touches real files.**
-
-**It runs after the meeting, not during it, and usually in a fresh session.** The `Response` blocks
-are the contract: everything they call for gets done, nothing they do not does.
-
-**It compiles the action list itself** rather than reading one transcribed during the meeting. A
-list written mid-thought is less clear than one written from the finished answers, and compiling it
-here means it gets shown and confirmed — which is where a misreading gets caught.
+Read the answers people wrote into a prepared agenda, compile them into an action list, and make the
+changes. **This is the only one of the three that touches real files**, and it runs after the
+meeting, usually in a fresh session. The `Response` blocks are the contract: everything they call
+for gets done, nothing they do not does. **It compiles the action list itself** rather than reading
+one transcribed mid-meeting, because that list then gets shown and confirmed — which is where a
+misreading gets caught.
 
 ## 0. Set up, and refuse the unsafe cases
 
@@ -27,29 +24,24 @@ any of these holds:**
 - **`Status: executed`.** It has already run. Report what it did and stop — a second run duplicates
   decision entries and re-files issues.
 - **Any `Response` block is empty**, placeholder or blank. **Stop and ask, every time, whatever the
-  item's status.** List the empty ones and wait for a ruling on each: an empty block is genuinely
-  ambiguous between *not discussed*, *nothing to do*, and *I thought I wrote that*. The third is the
-  expensive one — a `Close` nobody answered looks exactly like a `Close` everyone agreed to.
-  **Never infer from the status which it is.**
+  item's status.** List the empty ones and wait for a ruling on each: an empty block is ambiguous
+  between *not discussed*, *nothing to do*, and *I thought I wrote that*, and a `Close` nobody
+  answered looks exactly like a `Close` everyone agreed to. **Never infer it from the status.**
 - **Every block is empty.** Nothing was written. Say so and stop.
 - **The working tree is dirty in anything this run will edit.** Report what is dirty and stop.
 
 ## 1. Compile the action list, ask, then confirm
 
 Read the whole file. The `Response` is the decision; the brief and question are the context that
-makes it legible.
-
-Then produce **one list of concrete actions**, each naming the file it touches and the route it
-takes. Group every clarifying question into **one round**, then show the list and **get one
-confirmation before doing anything.**
-
-An action the `Response` blocks do not call for stays off the list, however good it looks. If you
-think something is missing, ask it in that same round.
+makes it legible. Produce **one list of concrete actions**, each naming the file it touches and the
+route it takes. Group every clarifying question into **one round**, then show the list and **get one
+confirmation before doing anything.** An action the `Response` blocks do not call for stays off the
+list, however good it looks; if you think something is missing, ask it in that same round.
 
 ## 2. Execute, routing each change correctly
 
-**Read the project's own `CLAUDE.md` for the routing table and follow it.** It differs per project
-and this skill must not assume one. The shape it generally takes:
+**Read the project's own `CLAUDE.md` for the routing table and follow it** — it differs per project.
+The shape it generally takes:
 
 | Change | Typical route |
 |---|---|
@@ -58,45 +50,35 @@ and this skill must not assume one. The shape it generally takes:
 | Source, and any authority document | branch and review |
 | Tracker issues | filed one at a time, each confirmed, each verified after filing |
 
-Two rules that hold regardless of the routing table:
+Two rules hold regardless of the routing table: **everyone in the meeting decided this, so co-author
+the commits to the people present**; and **never merge the review branch** — open it and stop, since
+the point of review is that someone who was not writing reads it.
 
-- **Everyone in the meeting decided this, so the commits say so.** Co-author them to the people
-  present.
-- **Never merge the review branch.** Open it and stop. The point of review is that someone who was
-  not writing reads it.
-
-## 3. Sweep the items
-
-For each item, according to its `Response`:
+## 3. Sweep the items, each according to its `Response`
 
 - **Decided** → make the change, append a dated entry to `decisions.md` saying what and why, mark
-  the `collab.md` item settled.
-- **Ratified** → same, noting it confirms what was already built.
-- **Acknowledged** → mark it acknowledged in `collab.md`; no other change.
+  the `collab.md` item settled. **Ratified** → the same, noting it confirms what was already built.
+- **Acknowledged** → mark it acknowledged in `collab.md`; no other change. **Closed** → mark it
+  settled with the reason. **FYI** → nothing.
 - **Parked** → leave it open in `collab.md` with a note on what it waits for; consider
   `work/deferred.md` if it has a shape but no date.
-- **Closed** → mark it settled with the reason.
-- **FYI** → nothing.
 
 Then move every settled item into `collab_settled.md` and run the audits its preamble prescribes —
 the duplicate-line and structural checks — **before** committing. Moving items is the one operation
-that can splice two entries together, and neither git nor union merge will tell you.
-
-Process `work/pipeline_backlog.md` in the same pass: apply what was agreed, remove each applied
-entry, and record its disposition in the entry you are already writing.
+that can splice two entries together, and neither git nor union merge will tell you. Process
+`work/pipeline_backlog.md` in the same pass: apply what was agreed, remove each applied entry, and
+record its disposition in the entry you are already writing.
 
 ## 4. Stamp and report
 
-Set the header to `Status: executed` with the date, and add one line naming where the docs landed
-and which review branch carries the rest. Then report: what changed, what was filed, what is
-waiting on review, and anything you asked about that nobody answered.
+Set the header to `Status: executed` with the date and one line naming where the docs landed and
+which review branch carries the rest. Then report: what changed, what was filed, what waits on
+review, and anything you asked that nobody answered.
 
 ## Constraints
 
-- **The `Response` blocks are the contract.** Not the brief, not the question, not what you would
-  have decided.
+- **The `Response` blocks are the contract.** Not the brief, the question, or your own view.
 - **One confirmation before executing, then execute the whole list.** Do not stop halfway to ask
-  something you could have asked in the first round — a half-applied meeting is indistinguishable
-  from a finished one to the next session.
-- **Never merge.** Never approve.
-- **Never edit anyone's `Response`.** If one is ambiguous, ask.
+  what you could have asked in the first round: a half-applied meeting is indistinguishable from a
+  finished one to the next session.
+- **Never merge. Never approve. Never edit anyone's `Response`** — if one is ambiguous, ask.

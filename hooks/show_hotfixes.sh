@@ -1,20 +1,13 @@
 #!/usr/bin/env bash
 # PreToolUse(Edit|Write) — warn at the moment of the edit, not an hour after CLAUDE.md was read.
-#
 # Two cases:
-#
-#   1. Files outside your scope. CLAUDE.md's "files outside your scope" section names paths carrying
-#      deliberate working-tree edits; the disposition is per-file, and only hotfixes.md knows which.
-#      EDIT THE PATH PATTERN BELOW BEFORE ENABLING — the default is an example.
-#
-#   2. The .claude/ machinery itself. settings.json and hooks/*.sh execute on everyone ELSE's
-#      machine at session start, on their next pull, without them reading the diff, so those changes
-#      go through a PR. This branch needs no configuring and is worth keeping even solo.
+#   1. Files outside your scope — paths carrying deliberate working-tree edits, whose disposition is
+#      per-file and only hotfixes.md knows. EDIT THE PATH PATTERN BELOW BEFORE ENABLING; it is an
+#      example. Per-machine override: CLAUDE_SCOPED_PATHS (an ERE) in settings.local.json.
+#   2. The .claude/ machinery itself. settings.json and hooks/*.sh execute on everyone ELSE's machine
+#      at session start, without them reading the diff. Needs no configuring; keep it even solo.
 #
 # Never blocks — exit 0 always. Both kinds of edit are legitimate; they just need to be deliberate.
-#
-# Per-machine override: set CLAUDE_SCOPED_PATHS (an ERE) in .claude/settings.local.json to narrow
-# case 1 to the files someone else is actually working on right now.
 #
 # Test:
 #   echo '{"tool_input":{"file_path":"vendor/x.py"}}'                    | .claude/hooks/show_hotfixes.sh
@@ -34,8 +27,7 @@ except Exception:
 [[ -z "$FILE" ]] && exit 0
 
 # ── 1. Files outside your scope ───────────────────────────────────────────────────────────────
-# EDIT THIS — components owned by other people that carry deliberate working-tree edits. An
-# out-of-date pattern that never fires is the same as no hook, so revisit it when ownership moves.
+# EDIT THIS — a pattern that never fires is the same as no hook, so revisit it as ownership moves.
 SCOPED="${CLAUDE_SCOPED_PATHS:-(^|/)(vendor|third_party)/}"
 
 if grep -qE "$SCOPED" <<<"$FILE"; then
@@ -43,10 +35,8 @@ if grep -qE "$SCOPED" <<<"$FILE"; then
 
 ⚠  $FILE is outside your scope — someone else may have live work in it.
 
-CLAUDE.md: read hotfixes.md BEFORE editing, staging or reverting here, and check the Owner: line.
-A hotfix owned by someone else is NOT in your working tree. The rules are not uniform — one file
-may have to be committed and another must never be, and only the entry knows which.
-
+CLAUDE.md: read hotfixes.md BEFORE editing, staging or reverting here, and check its Owner: line.
+The rules are per-file — one may have to be committed, another never — and only the entry knows.
 hotfixes.md entries (heading · owner · where · remove-when):
 EOF
     grep -nE '^### |^- \*\*(Owner|Machine|Where|Remove when):' "$DIR/work/hotfixes.md" 2>/dev/null \
@@ -67,13 +57,9 @@ if grep -qE '(^|/)\.claude/(settings\.json|hooks/)' <<<"$FILE"; then
 
 ⚠  $FILE runs on everyone else's machine.
 
-settings.json and hooks/*.sh are executable code that fires at THEIR session start on their next
-pull, without them reading it. CLAUDE.md: these changes go through a PR — never straight to main.
-Say in the PR what the hook now does.
-
-(settings.local.json is the per-machine escape hatch and is gitignored — use it for anything
-personal, and nothing here applies.)
-
+settings.json and hooks/*.sh fire at THEIR session start on their next pull, without them reading
+it. CLAUDE.md: these go through a PR, never straight to main — say what the hook now does.
+(settings.local.json is the gitignored per-machine escape hatch; nothing here applies to it.)
 EOF
 fi
 
