@@ -29,23 +29,10 @@ every stamp. Agreed items are never deleted — the trail is what stops the same
 
 ## Formatting rules — these are load-bearing, not style
 
-If the repo root `.gitattributes` sets `merge=union` on `.claude/work/*.md` (recommended — see
-`CLAUDE.md`, "More than one person uses this `.claude/`"), concurrent appends merge without conflict
-markers. The cost: **union merge never conflicts**, and lines that are byte-identical on both sides
-are folded together as shared context — silently interleaving two entries into one block that reads
-as coherent and is not.
-
-So, here and in every other `work/*.md`:
-
-1. **An entry's first and last lines must be unique in the file.** Those are the boundary lines a
-   merge treats as context. The heading carries the item number; the closing stamp repeats it.
-2. **Close every item with its own number and a time:**
-   `*#7 · raised <YYYY-MM-DD> <HH:MM> — <name>.*` — never a bare `*Raised <YYYY-MM-DD> — <name>.*`,
-   which collides the moment one person raises two items in a day. The `HH:MM` is the second guard:
-   two people appending minutes apart cannot produce the same stamp.
-3. **Never close an entry with a bare `---`.** Headings delimit entries; a repeated horizontal rule
-   is exactly the identical boundary line rule 1 warns about.
-4. **No bare structural labels.** Write `- **Body:** <first sentence>`, not `- **Body:**` alone.
+This file is union-merged, so **an entry's first and last lines must be unique**: a heading carrying
+the item number, and a closing stamp repeating it with a time —
+`*#7 · raised <YYYY-MM-DD> <HH:MM> — <name>.*`. Never a bare `---`, never a bare `- **Body:**`
+label. `CLAUDE.md`, "Formatting for union merge", has the four rules and why each one matters.
 
 Audit before you push, and again after any merge:
 

@@ -18,13 +18,12 @@ likely to misunderstand or break it?**
 
 No → delete it. That is the whole rule.
 
-**The default is no comment.** One line is the norm. A second line needs a reason a reader can act
-on. Length limits are ceilings, never targets: a comment that needs two lines does not earn five
-because five are allowed.
+**The default is no comment.** One line is the norm; a second needs a reason a reader can act on.
+Limits are ceilings, never targets.
 
-The reader you are writing for matters. They know the language. They know what a hash map is and
-what a race condition is. They do not know why *this* function takes the lock before reading the
-cache, or why *this* loop counts down. Write the second thing; never the first.
+Your reader knows the language, and knows what a hash map and a race condition are. They do not know
+why *this* function takes the lock before reading the cache, or why *this* loop counts down. Write
+the second thing, never the first.
 
 ## 2. Prefer removing the comment's reason to exist
 
@@ -33,25 +32,24 @@ The best outcome is not a tighter comment but code that no longer needs one. Pre
 **a clearer name · different structure · a validation or an assertion · a test · shipped
 documentation · prose.**
 
-A comment explaining what `d` holds is worse than renaming it. A comment warning that the caller
-must call `init()` first is worse than a check that says so at runtime, or a type that makes it
-impossible. A comment describing the three cases this function handles is worse than three tests
-named after them.
+A comment explaining what `d` holds is worse than renaming it; one warning that the caller must call
+`init()` first is worse than a runtime check, or a type that makes it impossible; one describing the
+three cases handled here is worse than three tests named after them.
 
-Reach for prose only when none of the above can carry it — which is mostly for **why**, and almost
-never for **what**.
+Reach for prose only when none of the above can carry it — mostly for **why**, almost never for
+**what**.
 
 ## 3. What earns a comment
 
-- **A reason that is not visible from the code.** Why this algorithm and not the obvious one; why
-  this constant; why the order of these two lines matters. This is the single most valuable comment
-  there is, and the one most often missing.
+- **A reason not visible from the code.** Why this algorithm and not the obvious one, why this
+  constant, why the order of these two lines matters. The most valuable comment there is, and the
+  one most often missing.
 - **A precondition the type system cannot express** — one line, stating the failure, not the rule:
   "panics if the slice is empty" beats "the slice must not be empty".
 - **A caller-visible effect that is easy to miss** — a parameter mutated in place, a global touched,
   a file left open.
-- **A deliberate divergence from a sibling.** When two similar functions do one thing differently on
-  purpose, the odd one out says why. Otherwise the next person "fixes" it.
+- **A deliberate divergence from a sibling.** Where two similar functions differ on purpose, the odd
+  one out says why — otherwise the next person "fixes" it.
 - **A workaround for someone else's bug**, with enough detail to retire it: what breaks, and what
   would have to change for this to go away. Cross-reference it in `work/hotfixes.md`.
 
@@ -59,15 +57,14 @@ never for **what**.
 
 - **Anything that narrates the next line.** `// increment the counter` above `counter += 1`.
 - **Anything that restates a name.** If the comment is the name in a sentence, delete the comment.
-- **Counts and roll-calls that rot.** "the three supported backends", "all five callers". Say "each
-  backend" or "every caller" — a number is wrong the moment someone adds a sixth, and nothing tells
-  you. This is the same rule as never recording a count that describes the current state of a tree.
+- **Counts and roll-calls that rot.** "the three supported backends", "all five callers" — say "each
+  backend", "every caller". A number is wrong the moment someone adds a sixth, and nothing tells you.
 - **Commented-out code.** Version control already has it, with a date and an author.
 - **A comment describing a state of the world** — "currently unused", "will be replaced next
   quarter". Say what the thing is *for*; that does not rot.
-- **A pointer to a document the reader cannot open.** A comment in shipped source that cites an
-  internal planning doc, a private tracker, or a design file outside the repo is a dead end for
-  everyone downstream. State the reason itself instead of citing where it was agreed.
+- **A pointer to a document the reader cannot open.** Shipped source citing an internal planning
+  doc, a private tracker or a design file outside the repo is a dead end downstream. State the
+  reason itself rather than where it was agreed.
 
 ## 5. Extension markers
 
@@ -84,28 +81,26 @@ so that one command finds every site at once:
 git grep -nE "ADD AN? .* STEP [0-9]"
 ```
 
-**The marker sits at the site that must change**, which is the point — a prose walkthrough lives away
-from the code it describes and drifts from it silently, while a marker is found by the person who is
-already editing.
+**The marker sits at the site that must change** — that is the point. A prose walkthrough lives away
+from the code and drifts from it silently; a marker is found by whoever is already editing.
 
 **Where a chain forks, the marker names the fork:** `ADD A BACKEND STEP 3 (for streaming)` beside
-`ADD A BACKEND STEP 3 (for batch)`. Without it, a reader extending one path meets a numbered list in
-which some steps are theirs and some belong to a path they will never take, with nothing on the line
-saying which.
+`ADD A BACKEND STEP 3 (for batch)`. Without it, a reader extending one path meets a numbered list
+mixing their steps with a path they will never take, and nothing says which is which.
 
 **Never write the literal prefix in prose**, including in tests and documentation, or the grep hands
 a reader a step that is not one.
 
 ## 6. Scope discipline
 
-A comment-only change is a comment-only change. Do not fix a bug, rename a variable, or restructure
-a function in the same commit — a reviewer skimming a comment sweep will not be looking for logic,
-and that is exactly where a real change hides.
+A comment-only change is a comment-only change: no bug fix, no rename, no restructuring in the same
+commit. A reviewer skimming a comment sweep is not looking for logic, which is exactly where a real
+change hides.
 
 ## 7. Auditing
 
-Whatever your language, a mechanical pass catches the recurring shapes faster than a human can, and
-every hit is something a rule above already forbids. Grow this as you find repeat offenders:
+A mechanical pass catches the recurring shapes faster than a human can, and every hit is something a
+rule above already forbids. Grow it as you find repeat offenders:
 
 ```bash
 # Comments that narrate the following line, roughly.
