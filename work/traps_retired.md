@@ -1,17 +1,16 @@
 # Retired traps — no longer bite, kept for the reasoning
 
-Entries moved out of `traps.md` because the failure they describe has been fixed. They are kept
-rather than deleted for one reason: **each names the fix that removed it**, so if that fix is ever
-reverted the trap comes back exactly as written, and the next person to touch that code can find out
-why it is the way it is.
+Entries moved out of `traps.md` once the failure they describe is fixed. Kept rather than deleted
+for one reason: **each names the fix that removed it**, so reverting that fix brings the trap back
+exactly as written, and the next person into that code can find out why it is the way it is.
 
-Nothing here is a live hazard. A session reading `traps.md` does not need to read this file, and
-`/load` and the session brief deliberately ignore it.
+Nothing here is a live hazard — `/load` and the session brief deliberately ignore it.
 
-**Retire rather than delete when the mechanism could return** — a fix in code, a config someone
-could revert, a dependency version. **Delete outright when the mechanism is simply gone** — the file
-no longer exists, the tool was dropped, the platform changed under it. The test is "could this come
-back", not "has anyone hit it lately".
+**Retire when the mechanism could return** (a fix in code, a revertable config, a dependency
+version). **Delete when it is simply gone** (the file removed, the tool dropped, the platform
+changed under it). The test is "could this come back", not "has anyone hit it lately".
+
+Written by `/save` §7, which retires a trap whose cause that session removed.
 
 ---
 

@@ -4,9 +4,9 @@ Makes this project's Claude Code workflows available to Codex **without changing
 canonical instructions**. Claude Code loads nothing from this directory, so installing the bridge
 cannot change how Claude behaves.
 
-The design point is that nothing is forked: the wrappers are three-line files that point at the
-canonical `SKILL.md`, so a change to a workflow reaches both hosts at once. A bridge that copied
-skill bodies would be two systems drifting apart within a week.
+Nothing is forked: the wrappers are three-line files pointing at the canonical `SKILL.md`, so a
+change to a workflow reaches both hosts at once. A bridge that copied skill bodies would be two
+systems drifting apart within a week.
 
 ## Install
 
@@ -25,13 +25,13 @@ Both are idempotent and:
 - **refuse** to replace an existing file or an unexpected symlink; and
 - validate the bridge and its wrappers.
 
-The bash installer uses relative symlinks and needs symlink support. The PowerShell installer uses
-hard links for files and a directory junction for the wrappers, because Windows symlinks need
-either Developer Mode or an elevated prompt. Both expose the same canonical files.
+The bash installer uses relative symlinks. The PowerShell one uses hard links and a directory
+junction, because Windows symlinks need Developer Mode or an elevated prompt. Both expose the same
+canonical files.
 
-If the same checkout moves between WSL and native Windows, re-run the installer for whichever
-environment will launch Codex. Then restart Codex and review the project hooks with `/hooks` before
-trusting them.
+If one checkout moves between WSL and native Windows, re-run the installer for whichever environment
+launches Codex. Then restart Codex and review the project hooks with `/hooks` before trusting
+them.
 
 ## After changing a skill
 
@@ -39,6 +39,6 @@ trusting them.
 .claude/codex/check_bridge.sh
 ```
 
-Run it whenever a canonical skill is added, removed, renamed, or has its frontmatter changed. A
-wrapper for a skill that no longer exists fails silently: Codex offers the command and it does
+Run it whenever a canonical skill is added, removed, renamed or has its frontmatter changed. A
+wrapper whose skill no longer exists fails silently — Codex offers the command and it does
 nothing.

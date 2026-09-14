@@ -1,8 +1,8 @@
 # Meetings
 
 One file per joint working session, `<YYYY-MM-DD>.md`, written by `/make-agenda` and stamped
-`Status: executed` by `/end-meeting`. The lifecycle is exactly two states — `prepared` then
-`executed` — because only those two skills write to the file, at the two ends.
+`Status: executed` by `/end-meeting`. Exactly two states, `prepared` then `executed`, because only
+those two skills write to it — at the two ends.
 
 **No owner in the path.** A meeting belongs to everyone in it, the same reasoning that keeps
 `work/archive/` shared.

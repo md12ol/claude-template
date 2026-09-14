@@ -4,9 +4,9 @@
 #
 #     .claude/checks/cloud_ready.sh
 #
-# READ-ONLY. It builds nothing, installs nothing and writes nothing, which is why it has no
-# CLAUDE_CODE_REMOTE guard the way cloud_setup.sh does: it is safe on a laptop and useful there.
-# If a line FAILs, the fix is cloud_setup.sh or an edit to project.conf, never this script.
+# READ-ONLY: builds nothing, installs nothing, writes nothing — which is why it needs no
+# CLAUDE_CODE_REMOTE guard the way cloud_setup.sh does. Safe on a laptop and useful there. When a
+# line FAILs the fix is cloud_setup.sh or an edit to project.conf, never this script.
 set -uo pipefail
 
 # shellcheck source=../hooks/lib.sh
@@ -56,7 +56,7 @@ hooks_runnable() {
 }
 
 # CRLF is the failure that looks like a missing file: a shebang naming `bash\r`, which does not
-# exist. gitattributes.shared prevents it; this catches a checkout made before that landed.
+# exist. gitattributes.multi-writer prevents it; this catches a checkout made before that landed.
 no_crlf() {
   local bad
   bad="$(grep -rlU $'\r' "$CLAUDE_DIR/hooks" "$CLAUDE_DIR/checks" 2>/dev/null | head -3)"

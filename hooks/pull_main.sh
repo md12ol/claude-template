@@ -2,14 +2,14 @@
 # SessionStart — bring the working docs up to date before anything reads them, and fast-forward the
 # code repo's default branch when that is what is checked out.
 #
-# Only ever fast-forwards. If either repo can't fast-forward — local commits not pushed, or a
-# working-tree change the remote's version would overwrite — it prints one line and leaves
-# everything untouched. It never merges, rebases, stashes, or discards anything, so a `git status`
-# after it runs shows exactly what it showed before except on the clean fast-forward path.
+# Only ever fast-forwards. Where either repo can't — local commits not pushed, or a working-tree
+# change the remote's version would overwrite — it prints one line and leaves everything untouched.
+# It never merges, rebases, stashes or discards, so `git status` after it shows what it showed
+# before, except on the clean fast-forward path.
 #
-# Wired up only when project.conf says MACHINES="multi". The failure it prevents is a stale doc,
-# which needs two MACHINES, not two people: a laptop and a desktop, or any cloud container. On a
-# single-machine install nothing here can go stale and the network call is pure cost.
+# Wired only when project.conf says MACHINES="multi". The failure it prevents is a stale doc, which
+# needs two MACHINES, not two people: a laptop and a desktop, or any cloud container. On a
+# single-machine install nothing can go stale and the network call is pure cost.
 #
 # Test:  .claude/hooks/pull_main.sh
 

@@ -2,21 +2,21 @@
 # PreToolUse(Bash) — refuse the commands you run yourself, and warn on the ones that reach outside
 # this machine.
 #
-# Prose rules get violated; exit 2 doesn't. This is the one hook that changes what the agent can do,
-# so it is also the one worth keeping short enough to read in full.
+# Prose rules get violated; exit 2 doesn't. The one hook that changes what the agent can do, so also
+# the one worth keeping short enough to read in full.
 #
 # THREE TIERS, because two is not enough:
 #
 #   ALLOW  checked first, and wins. Read-only lookups that merely resemble a blocked command.
-#   WARN   proceeds, but prints a notice the agent has to read. For actions that are legitimate
-#          when you asked for them and a mistake when you didn't — `git push` is the whole reason
-#          this tier exists. A hard block here would be wrong (you do ask for pushes) and silence
-#          would be wrong too (an unasked push is already outside the repo when you notice).
+#   WARN   proceeds, but prints a notice the agent has to read. For what is legitimate when you
+#          asked and a mistake when you didn't — `git push` is why this tier exists. A hard block
+#          is wrong (you do ask for pushes); so is silence (an unasked push is already outside the
+#          repo by the time you notice).
 #   BLOCK  exit 2. The agent cannot proceed and is told why.
 #
-# EDIT THE PATTERNS BELOW. They ship as examples spanning several ecosystems, not as a policy —
-# every project reserves different commands, and a hook that blocks nothing is a hook that fails
-# silently. /setup asks which commands you run yourself and fills these in.
+# EDIT THE PATTERNS BELOW. They ship as examples across several ecosystems, not as a policy — every
+# project reserves different commands, and a hook that blocks nothing fails silently. /setup asks
+# which commands you run yourself and fills these in.
 #
 # Test:  echo '{"tool_input":{"command":"git push --force"}}' | .claude/hooks/block_env_commands.sh; echo "exit $?"
 
@@ -42,12 +42,12 @@ WARN+='|(^|[^[:alnum:]_./-])(gh|glab)[[:space:]]+(pr|mr|issue)[[:space:]]+(creat
 
 # --- BLOCK: exit 2 ---------------------------------------------------------------------------------
 # 1. Force-pushes. They destroy remote history, and no amount of "I was asked to" makes that
-#    recoverable for someone who has already fetched. This one is worth keeping in every project.
+#    recoverable for someone who already fetched. Worth keeping in every project.
 BLOCK='(^|[^[:alnum:]_./-])git[[:space:]]+push([^#]*)(--force([^[:alnum:]_-]|$)|--force-with-lease|[[:space:]]-f([[:space:]]|$))'
 BLOCK+='|(^|[^[:alnum:]_./-])git[[:space:]]+(reset[[:space:]]+--hard[[:space:]]+origin|clean[[:space:]]+-[a-z]*f)'
 
-# 2. Publishing to a package registry. Irreversible on most of them, and never something an agent
-#    should reach on its own. Examples across ecosystems — delete the ones you don't use.
+# 2. Publishing to a package registry. Irreversible on most, and never something an agent should
+#    reach on its own. Delete the ecosystems you don't use.
 BLOCK+='|(^|[^[:alnum:]_./-])npm[[:space:]]+publish([^[:alnum:]_-]|$)'
 BLOCK+='|(^|[^[:alnum:]_./-])(cargo|poetry|gem)[[:space:]]+publish([^[:alnum:]_-]|$)'
 BLOCK+='|(^|[^[:alnum:]_./-])twine[[:space:]]+upload'

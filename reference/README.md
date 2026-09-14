@@ -1,11 +1,11 @@
 # Reference notes
 
-Longer-form notes about how a **dependency or toolchain** behaves — where a `traps.md` entry would
-be too long and a `decisions.md` entry would be the wrong shape, because nothing was decided.
+Longer-form notes on how a **dependency or toolchain** behaves — too long for a `traps.md` entry,
+wrong shape for `decisions.md` because nothing was decided.
 
-**Deliberately outside `work/`.** Everything under `work/` is either a task's state or a churn list
-that gets appended to and pruned; a reference note is neither, and putting it there gets it read as
-one, pruned as one, or picked up by a merge driver meant for something else.
+**Deliberately outside `work/`.** Everything there is either task state or a churn list that gets
+appended to and pruned. A reference note is neither, and filing it there gets it read as one, pruned
+as one, or picked up by a merge driver meant for something else.
 
 ## What belongs here
 
