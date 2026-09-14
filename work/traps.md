@@ -1,12 +1,10 @@
 # Traps — how this workspace actually behaves
 
-Permanent gotchas. Distinct from `hotfixes.md`: a hotfix is *code you added and want to remove*; a
-trap is *how this workspace behaves and always will*.
-
-This file exists because durable warnings kept getting parked in `handoff.md`, which `/save`
-overwrites every session — so they were deleted the moment they stopped being top-of-mind.
-
-Read by `/load` and `/start`. Entries leave only when no longer true.
+Permanent gotchas, distinct from `hotfixes.md`: a hotfix is *code you added and want to remove*, a
+trap is *how this workspace behaves and always will*. The file exists because durable warnings kept
+being parked in `handoff.md`, which `/save` overwrites every session, so they were deleted the
+moment they stopped being top-of-mind. Read by `/load` and `/start`; entries leave only when they
+stop being true, and move to `traps_retired.md` when a fix is what stopped them.
 
 ---
 
