@@ -12,8 +12,7 @@
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")" || { echo "cannot enter the repo root" >&2; exit 1; }
 ROOT="$PWD"
-VERBOSE=0
-[[ "${1:-}" == "-v" ]] && VERBOSE=1
+[[ "${1:-}" == "-v" ]] && export VERBOSE=1
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -41,13 +40,7 @@ SHIPPED=(CLAUDE.md README.md project.conf comment_style.md settings.json root_CL
          output-styles)
 scan() { grep -rniE "$1" "${SHIPPED[@]/#/$ROOT/}" 2>/dev/null || true; }
 
-pass=0; fail=0
-ok()   { pass=$((pass+1)); [[ $VERBOSE -eq 1 ]] && printf '  ok    %s\n' "$1"; return 0; }
-bad()  { fail=$((fail+1)); printf '  FAIL  %s\n' "$1"; [[ -n "${2:-}" ]] && printf '        %s\n' "$2"; return 0; }
-is()   { [[ "$2" == "$3" ]] && ok "$1" || bad "$1" "expected [$3], got [$2]"; }
-has()  { grep -q "$2" <<<"$3" && ok "$1" || bad "$1" "missing: $2"; }
-hasnt(){ grep -q "$2" <<<"$3" && bad "$1" "unexpected: $2" || ok "$1"; }
-section() { printf '\n%s\n' "$1"; }
+. "$ROOT/test_lib.sh"
 
 # A project, with this repository cloned in as .claude/ the way a real one has it.
 newproj() {  # newproj <name> [people] [machines] -> echoes the path
@@ -426,6 +419,4 @@ STRIP
     hasnt "$shape: the brief does not claim it is unconfigured" "has not been configured yet" "$out"
 done
 
-printf '\n%s\n' "----------------------------------------"
-printf 'passed %s, failed %s\n' "$pass" "$fail"
-exit $(( fail > 0 ))
+summary
