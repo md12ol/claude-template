@@ -27,12 +27,13 @@ all read `$WORK_CURRENT` and there is no tiebreak.
 
 ```bash
 .claude/bin/task.sh unpark <slug>
+.claude/bin/task.sh commit "load: unparked <slug>"
 ```
 
-It refuses when `$WORK_CURRENT` is non-empty or the slug is not parked, and it prints the handoff's
-`**Blocked on:**` line. **Read that line first.** It names the event that had to happen for this
-task to be workable; if it has not, say so and stop rather than starting work that parks again in
-ten minutes.
+`unpark` refuses when `$WORK_CURRENT` is non-empty or the slug is not parked, and prints the
+handoff's `**Blocked on:**` line; `commit` pushes the move so the other machine sees the same desk.
+**Read the blocker line first.** It names the event that had to happen for this task to be
+workable; if it has not, say so and stop rather than starting work that parks again in ten minutes.
 
 ## 2. Check for cross-machine divergence — before reading anything as true
 
@@ -102,8 +103,7 @@ moved since the handoff was written, which is exactly what the docs cannot know.
 
 ## Constraints
 
-- Read-only apart from the unpark in §1: `/load` edits no file, the docs included — if they are
-  wrong, report it and let `/save` or the user fix it. Don't commit, push or start edits; the
-  unpark's move reaches `origin` with the next `/save`.
+- Read-only apart from §1's unpark: `/load` edits no file, the docs included — if they are wrong,
+  report it and let `/save` or the user fix it. Don't commit, push or start edits beyond that.
 - Respect `CLAUDE.md`'s rule on who runs the environment. If verifying something needs a run you are
   not allowed to make, say what you need and ask.
