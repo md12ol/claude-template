@@ -20,8 +20,12 @@ doesn't apply here.
 ## 0. Check it hasn't already run
 
 ```bash
-grep -c 'FILL IN' .claude/CLAUDE.md
+grep -c 'FILL IN —' .claude/CLAUDE.md
 ```
+
+**Match the em dash, not the bare words.** CLAUDE.md's shared-install section discusses "FILL IN
+blocks" in live prose that survives this skill, so a bare `grep 'FILL IN'` reads an already-
+configured project as unfinished — and step 0 would then re-interview it.
 
 - **No `.claude/CLAUDE.md`** → the working docs aren't cloned yet. Say so, point at
   a fresh clone, stop.
