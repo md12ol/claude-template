@@ -18,12 +18,30 @@
 # project reserves different commands, and a hook that blocks nothing fails silently. /setup asks
 # which commands you run yourself and fills these in.
 #
-# Test:  echo '{"tool_input":{"command":"git push --force"}}' | .claude/hooks/block_env_commands.sh; echo "exit $?"
+# Test:
+#   echo '{"tool_input":{"command":"git push --force"}}' | .claude/hooks/block_env_commands.sh; echo "exit $?"
+#   echo '{"tool_input":{"command":"git push","description":"push, not --force"}}' | .claude/hooks/block_env_commands.sh
 
 set -uo pipefail
 
 INPUT="$(cat)"
-CMD="$(printf '%s' "$INPUT" | sed -n 's/.*"command"[[:space:]]*:[[:space:]]*"\(.*\)".*/\1/p' | head -1)"
+
+# Parse the command out of the JSON, and ONLY the command. The sibling "description" key regularly
+# quotes the very flags this hook blocks ("push, not --force"), and a greedy capture that runs
+# through it blocks a plain push. python3 first, because it is the only parser that is actually
+# right; the sed fallback stops at the first unescaped quote.
+CMD="$(printf '%s' "$INPUT" | python3 -c 'import json,sys
+try:
+    print(json.load(sys.stdin).get("tool_input", {}).get("command", "") or "")
+except Exception:
+    print("")' 2>/dev/null)"
+
+if [[ -z "$CMD" ]]; then
+    CMD="$(printf '%s' "$INPUT" \
+        | sed -n 's/.*"command"[[:space:]]*:[[:space:]]*"\(\([^"\\]\|\\.\)*\)".*/\1/p' | head -1)"
+    CMD="$(printf '%s' "$CMD" | sed -e 's/\\n/\n/g' -e 's/\\"/"/g' -e 's/\\\\/\\/g')"
+fi
+
 [[ -z "$CMD" ]] && exit 0
 
 # --- ALLOW: checked first, wins over everything ---------------------------------------------------

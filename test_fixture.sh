@@ -105,6 +105,7 @@ is "CLAUDE.md is configured" "$left" "0"
 
 brief() { (cd "$PROJ" && .claude/hooks/session_brief.sh 2>&1); }
 lib()   { (cd "$PROJ" && . .claude/hooks/lib.sh && load_conf && resolve_owner && eval "echo \"$1\""); }
+tsk()   { (cd "$PROJ" && .claude/bin/task.sh "$@" 2>&1); }
 
 # --- 1. identity ------------------------------------------------------------------------------
 section "1. lib.sh resolves the real owner table"
@@ -142,24 +143,52 @@ has "an unknown address is stopped" "Unrecognised git user.email" "$out"
 git -C "$PROJ" config user.email "$ME"
 
 # --- 3. park and unpark the real task -----------------------------------------------------------
-section "3. park and unpark the real live task"
-WC="$DOCS/work/$ME_DIR/current"; WP="$DOCS/work/$ME_DIR/parked"
-mkdir -p "$WP"; mv "$WC" "$WP/real-task"; mkdir -p "$WC"
-printf '**Blocked on:** the fixture unparking it\n' >> "$WP/real-task/handoff.md"
+section "3. park and unpark the real live task, through bin/task.sh"
+WC="$DOCS/work/$ME_DIR/current"
+eval "$(tsk paths)"
+is "task.sh paths agrees with lib.sh on the real table" "$WORK_CURRENT" "work/$ME_DIR/current"
+printf '**Blocked on:** the fixture unparking it\n' >> "$WC/handoff.md"
+is "task.sh park moves the real task" "$(tsk park real-task)" "work/$ME_DIR/parked/real-task"
 out="$(brief)"
 has "the brief lists the parked task" "parked: real-task" "$out"
 has "with its blocker" "the fixture unparking it" "$out"
 has "and reports no active task" "No active task" "$out"
-rmdir "$WC" 2>/dev/null; mv "$WP/real-task" "$WC"
+is "park refuses the same slug twice" "$( (cd "$PROJ" && .claude/bin/task.sh park real-task >/dev/null 2>&1); echo $? )" "1"
+has "task.sh unpark reports the blocker it was parked on" "the fixture unparking it" "$(tsk unpark real-task)"
 [[ -f "$WC/plan.md" ]] && ok "unpark restores the task at the top level" || bad "unpark nested the task"
 out="$(brief)"
 hasnt "no longer parked" "parked: real-task" "$out"
 has "the task is live again" "Start here" "$out"
 
+# --- 3b. the divergence check against a REAL handoff ------------------------------------------
+# The stamp in the fixture's handoff carries backticks and no HH:MM, and names a SHA from the docs
+# repository rather than this code repo - exactly the shape /load must not trust silently.
+section "3b. check-stamp on the real handoff"
+stamp_line="$(grep -m1 '^\*\*Machine:' "$WC/handoff.md")"
+[[ -n "$stamp_line" ]] && ok "the real handoff carries a Machine: stamp" || bad "the real handoff carries a Machine: stamp"
+out="$(tsk check-stamp)"; rc=$?
+is "an unknown SHA exits 1" "$rc" "1"
+has "the SHA is read through the backticks" "NOT in this code repo" "$out"
+hasnt "and reported without them" 'NOT in this code repo.*`' "$out"
+has "the machine is read through the backticks too" "written on [a-z]" "$out"
+hasnt "no backtick survives the host either" "written on \`" "$out"
+has "and the refusal says what not to do" "never merge or reset" "$out"
+is "check-stamp is at most 3 lines" "$( [[ "$(wc -l <<<"$out")" -le 3 ]] && echo yes )" "yes"
+# A handoff with no stamp predates the convention; that is not a divergence.
+cp "$WC/handoff.md" "$TMP/handoff.bak"
+grep -v '^\*\*Machine:' "$TMP/handoff.bak" > "$WC/handoff.md"
+out="$(tsk check-stamp)"; rc=$?
+is "a missing stamp exits 0" "$rc" "0"
+has "and says so plainly" "no stamp" "$out"
+cp "$TMP/handoff.bak" "$WC/handoff.md"
+
 # --- 4. the docs repo round-trips through its origin ----------------------------------------------
 section "4. commit and push the task directory; pull_main fast-forwards both repos"
-(cd "$DOCS" && git add "work/$ME_DIR" && git commit -qm "save: fixture" && git push -q origin main 2>/dev/null) \
-    && ok "the task directory pushes" || bad "the task directory pushes"
+out="$(tsk commit "save: fixture — the real task directory")"
+has "task.sh commit reports the commit" "save: fixture" "$out"
+has "and pushes to the bed's origin" "pushed" "$out"
+is "the push landed" "$(git -C "$DOCS" rev-parse HEAD)" "$(git -C "$DOCS_ORIGIN" rev-parse main)"
+has "a second commit with nothing to save says so" "nothing staged" "$(tsk commit "save: nothing moved")"
 other="$TMP/other_clone"; git clone -q "$DOCS_ORIGIN" "$other"
 git -C "$other" config user.email "$ME"; git -C "$other" config user.name Fixture
 echo "- remote edit" >> "$other/work/traps.md"; git -C "$other" commit -qam "from the other machine"; git -C "$other" push -q origin main 2>/dev/null
@@ -170,7 +199,7 @@ is "the code tree is now at origin" "$(git -C "$PROJ" rev-parse HEAD)" "$(git -C
 
 # --- 5. the read-only gate --------------------------------------------------------------------------
 section "5. cloud_ready"
-out="$(cd "$PROJ" && .claude/checks/cloud_ready.sh 2>&1)"; rc=$?
+out="$(cd "$PROJ" && .claude/bin/cloud_ready.sh 2>&1)"; rc=$?
 is "cloud_ready exits 0 on the bed" "$rc" "0"
 has "identity line names the owner" "PASS  git identity" "$out"
 has "reports the docs clone" "PASS  working docs" "$out"
@@ -197,6 +226,15 @@ for f in decisions collab; do
 done
 n="$(grep -c '^### [0-9]' "$DOCS/work/collab.md")"
 [[ "$n" -gt 5 ]] && ok "collab.md headings all at column 0 ($n items)" || bad "collab.md structure" "$n"
+# The same two audits, run by the script the skills call rather than re-spelled here.
+out="$(tsk audit work/decisions.md work/collab.md)"; rc=$?
+is "task.sh audit passes on the real append-only docs" "$rc" "0"
+has "and says how many it checked" "clean" "$out"
+# A splice is the failure uniq -d cannot see, so prove the audit sees it on real data.
+cp "$DOCS/work/collab.md" "$TMP/collab.bak"
+sed -i '0,/^### [0-9]/s//spliced text ### 999/' "$DOCS/work/collab.md"
+is "a spliced item heading is caught" "$( (cd "$PROJ" && .claude/bin/task.sh audit work/collab.md >/dev/null 2>&1); echo $? )" "1"
+cp "$TMP/collab.bak" "$DOCS/work/collab.md"
 
 # --- 8. the rest of the machinery runs clean on the bed -------------------------------------------------
 section "8. backup, hotfix warning, codex bridge"
