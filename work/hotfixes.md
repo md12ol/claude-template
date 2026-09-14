@@ -1,21 +1,13 @@
 # Hotfixes — temporary code in the tree
 
-Every band-aid, stub, sleep, hardcoded value and workaround currently in the working tree. Each
-needs an exit condition or it lives forever.
-
-Maintained by `/save`. `/done` stamps `Last checked:` — an entry with an old or missing stamp has
-not been assessed recently.
-
-⚠️ in a `Remove when:` marks a **load-bearing** hotfix: something breaks today without it. Do not
-delete those on a tidying pass.
-
-Group entries under `## <theme>` headings by what unblocks them — that is the axis on which they
-actually get removed, in batches.
-
-**If more than one person uses this repo:** an *uncommitted* hotfix exists on exactly one machine,
-so an entry here does not mean the code is in *your* tree — read `Owner:` and `Machine:` first.
-Don't delete another owner's entry; raise it in `collab.md`. A **committed** hotfix is in everyone's
-tree and everybody's to remove. *(Drop those two fields if you work alone.)*
+Every band-aid, stub, sleep, hardcoded value and workaround currently in the working tree; each
+needs an exit condition or it lives forever. Maintained by `/save`, and `/done` stamps
+`Last checked:`, so an old or missing stamp means nobody has assessed it lately. ⚠️ in a
+`Remove when:` marks a **load-bearing** hotfix that breaks something today if removed. Group entries
+under `## <theme>` headings by what unblocks them, the axis on which they get removed in batches.
+**Where several people share the repo**, an *uncommitted* hotfix exists on one machine only, so read
+`Owner:` and `Machine:` before assuming it is in your tree, and raise someone else's entry in
+`collab.md` rather than deleting it. *(Drop those two fields if you work alone.)*
 
 ---
 
