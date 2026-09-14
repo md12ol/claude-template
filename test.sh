@@ -25,7 +25,7 @@ trap 'rm -rf "$TMP"' EXIT
 # gives each .claude/ a real origin to push to, the way a project's does.
 ORIGIN="$TMP/origin"
 mkdir -p "$ORIGIN"
-tar -C "$ROOT" --exclude=.git -cf - . | tar -C "$ORIGIN" -xf -
+tar -C "$ROOT" --exclude=.git --exclude=./.claude -cf - . | tar -C "$ORIGIN" -xf -
 git -C "$ORIGIN" init -q -b main .
 git -C "$ORIGIN" config user.email test@example.com
 git -C "$ORIGIN" config user.name Test
@@ -68,7 +68,7 @@ newproj() {  # newproj <name> [people] [machines] -> echoes the path
 section "1. every shell script parses"
 while read -r f; do
     bash -n "$f" 2>/dev/null && ok "parse ${f#$ROOT/}" || bad "parse ${f#$ROOT/}"
-done < <(find "$ROOT" -name '*.sh' -not -path '*/.git/*')
+done < <(find "$ROOT" -name '*.sh' -not -path '*/.git/*' -not -path "$ROOT/.claude/*")
 
 # ---------------------------------------------------------------------------------------------
 section "2. nothing project-, host- or language-specific leaked in"

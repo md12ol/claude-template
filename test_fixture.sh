@@ -56,7 +56,7 @@ git -C "$PROJ" config user.email "$ME"; git -C "$PROJ" config user.name "Fixture
 git -C "$PROJ" reset -q --hard "$CODE_REV" || bad "check out the code rev $CODE_REV"
 
 build="$TMP/docs_build"; mkdir -p "$build"
-tar -C "$ROOT" --exclude=.git --exclude='test*.sh' --exclude=TEMPLATE.md --exclude=.github \
+tar -C "$ROOT" --exclude=.git --exclude=./.claude --exclude='test*.sh' --exclude=TEMPLATE.md --exclude=.github \
     --exclude=.gitlab-ci.yml -cf - . | tar -C "$build" -xf -
 docs_src="$TMP/docs_src"
 git clone -q "$DOCS_SRC" "$docs_src" 2>/dev/null && git -C "$docs_src" checkout -q "$DOCS_REV" \
