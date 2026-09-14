@@ -4,7 +4,8 @@ Staged for the tracker in two tiers, the difference being whether it has been ro
 Maintained by `/save`; `/done` lists anything still `Filed: not yet` before archiving. How issues
 get filed — tool, confirmation rule, target project — lives in `CLAUDE.md`. Once filed, **the
 tracker is the source of truth**: changes go there in the same session, and this file must not
-become a private fork of it.
+become a private fork of it. **`/setup` removes this file when `TRACKER_FIRST=yes`**, where a
+finding is reported in the session brief and filed as its own deliberate step.
 
 ---
 

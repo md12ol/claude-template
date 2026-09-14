@@ -42,11 +42,19 @@ Cloned this into a project and not set up yet? Run `/setup`.
   the repo** before trusting it: where stale docs disagree with the code, the code wins.
 - **`/park <slug>`** sits between `/save` and `/done`: it saves, stamps `handoff.md` with the
   concrete event that would unblock the task, and moves the directory aside so `/start` is free;
-  `/load <slug>` brings it back. **`/done`** settles every loose end — unfiled issues, hotfixes
-  whose removal condition is now met, unverified items — then archives the task and pushes that too.
+  `/load <slug>` brings it back. **`/done`** settles every loose end (unfiled findings, temporary
+  code whose removal condition is now met, unverified items), archives the task, pushes that too,
+  and deletes the task's branch once it is merged.
 
 Each is a thin skill over `bin/task.sh`, which does the file moves and the git work; the hooks in
-`hooks/` handle session start, backups and guard rails.
+`hooks/` handle session start, backups and guard rails. **A skill commits and pushes what it wrote
+in `.claude/`, and never code**: an unpushed handoff fails silently, on the other machine, a day
+late. Anything in the project's own repository still needs asking, every time.
+
+**Where findings live is a switch.** `TRACKER_FIRST=no`, the default, keeps `issues.md`,
+`hotfixes.md` and `deferred.md`. Set it to `yes` and `/setup` removes all three: anything with a
+lifecycle becomes a tracker issue, temporary code becomes a `TEMPORARY (<date>)` marker plus the
+issue that removes it, and a finding noticed mid-task is reported rather than staged.
 
 ## How this directory is configured
 

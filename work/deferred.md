@@ -6,6 +6,7 @@ no dates, no ordering, no priority**, because a ranked list here becomes a secon
 competing with the tracker, drifts from it and rots, and the tracker is already the ranked list. If
 it has a shape and someone would plausibly start it this month it is a tracker issue instead, staged
 through `issues.md` if it needs root-causing first, and it leaves here the moment it is filed.
+**`/setup` removes this file when `TRACKER_FIRST=yes`**, where every want is a tracker issue.
 
 ---
 
