@@ -17,13 +17,11 @@ frontmatter() {  # frontmatter <key> <file>
 [[ -f "$BRIDGE/AGENTS.md" ]]  || fail "codex/AGENTS.md is missing"
 [[ -f "$BRIDGE/ADAPTER.md" ]] || fail "codex/ADAPTER.md is missing"
 
-# JSON validity, if an interpreter is available.
-#
-# `python3` alone is not safe to assume. On Windows outside WSL, `python3` and `python` are Microsoft
-# Store app-execution aliases: they exist on PATH, print an advert, and exit non-zero — so a bare
-# `python3 … || fail` reports the file it was checking as broken rather than reporting a missing
-# interpreter. `py` is the real launcher there. Absence of any interpreter is NOT a failure of the
-# bridge, and is reported as a skipped check rather than a FAIL.
+# JSON validity, if an interpreter is available. `python3` alone is not safe to assume: on Windows
+# outside WSL, `python3` and `python` are Microsoft Store app-execution aliases that sit on PATH,
+# print an advert and exit non-zero, so a bare `python3 … || fail` would report the file it was
+# checking as broken rather than the interpreter as missing (`py` is the real launcher there). No
+# interpreter is not a failure of the bridge, so it is a skipped check rather than a FAIL.
 PY=""
 for c in python3 python py; do
     command -v "$c" >/dev/null 2>&1 \
@@ -36,9 +34,8 @@ else
     echo "SKIP: no Python 3 found (tried python3, python, py) — hooks.json not JSON-checked"
 fi
 
-# Every canonical skill has a wrapper, and every wrapper has a canonical skill. Both directions
-# matter: a missing wrapper means Codex cannot reach the workflow, and an orphaned wrapper means
-# Codex offers a command that silently does nothing.
+# Both directions matter: a missing wrapper means Codex cannot reach the workflow, an orphaned one
+# means Codex offers a command that silently does nothing.
 for canonical in "$CLAUDE_DIR"/skills/*/SKILL.md; do
     [[ -f "$canonical" ]] || continue
     name="$(basename "$(dirname "$canonical")")"
