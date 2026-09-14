@@ -2,8 +2,9 @@
 # SessionStart — orient even when /load isn't typed.
 #
 # Prints the handoff's "Start here" plus the counts that go stale silently: unverified [~] items,
-# open [ ] items, unfiled issues. It does NOT replace /load, which verifies the handoff against the
-# repo. The install's shape comes from project.conf and work/owners.txt, via lib.sh.
+# open [ ] items, unfiled issues (dropped when the tracker holds them), traps, and a warning when
+# plan.md is over its cap. It does NOT replace /load, which verifies the handoff against the repo.
+# The install's shape comes from project.conf and work/owners.txt, via lib.sh.
 #
 # Test:  .claude/hooks/session_brief.sh
 
@@ -116,6 +117,7 @@ open=$(count '^- \[ \]' "$WORK_CURRENT/plan.md")
 unver=$(count '^- \[~\]' "$WORK_CURRENT/plan.md")
 unfiled=$(count 'Filed:.*not yet' work/issues.md)
 traps=$(count '^### ' work/traps.md)
+plan_lines=$(wc -l < "$WORK_CURRENT/plan.md" 2>/dev/null | tr -d ' ')
 
 if [[ -f "$WORK_CURRENT/handoff.md" ]]; then
     sed -n '1p' "$WORK_CURRENT/handoff.md"
@@ -129,8 +131,20 @@ if [[ -f "$WORK_CURRENT/handoff.md" ]]; then
          f' "$WORK_CURRENT/handoff.md" | head -12
 fi
 
-printf '\nopen [ ]: %s   unverified [~]: %s   unfiled issues: %s   traps: %s\n' \
-    "$open" "$unver" "$unfiled" "$traps"
+# Tracker-first drops the unfiled field rather than printing a zero: there is no issues.md to count,
+# and a permanent 0 reads as "nothing outstanding" instead of "this install does not work that way".
+if is_tracker_first; then
+    printf '\nopen [ ]: %s   unverified [~]: %s   traps: %s\n' "$open" "$unver" "$traps"
+else
+    printf '\nopen [ ]: %s   unverified [~]: %s   unfiled issues: %s   traps: %s\n' \
+        "$open" "$unver" "$unfiled" "$traps"
+fi
+
+# The plan's own size is a task-scoping signal, not trivia. CLAUDE.md sets the cap and says what a
+# plan past it means, but nothing surfaced either, so it was only noticed by someone going looking.
+if [[ "${plan_lines:-0}" -gt 600 ]]; then
+    echo "⚠ plan.md is $plan_lines lines (cap ~600). Compress completed items, or split the task."
+fi
 parked_report
 others_report
 echo "Run /load to verify this against the repo before trusting it."
