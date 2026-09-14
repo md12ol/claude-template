@@ -19,8 +19,8 @@ Both are silent.
 
 ## 0. Resolve where work lives — read it, do not assume it
 
-Live task directories depend on how this `.claude/` is configured. **Read the configuration; never
-guess from what you see on disk.**
+Live task paths depend on how this `.claude/` is configured. **Read the configuration; never guess
+from what is on disk.**
 
 ```bash
 . .claude/hooks/lib.sh && load_conf && resolve_owner
@@ -28,29 +28,18 @@ echo "$WORK_CURRENT"      # work/current  OR  work/<owner>/current
 echo "$WORK_PARKED"       # work/parked   OR  work/<owner>/parked
 ```
 
-| `project.conf` | Live task path | Parked path |
-|---|---|---|
-| `PEOPLE="solo"` | `work/current/` | `work/parked/` |
-| `PEOPLE="shared"` | `work/<owner>/current/` | `work/<owner>/parked/` |
+On a **shared** install the owner is `git config user.email` matched against `work/owners.txt`, the
+only copy of that table. An empty `WORK_CURRENT` means the address is missing: **stop and ask**,
+never pick the likeliest person — writing into someone else's directory is silent, and surfaces only
+when they open a directory they didn't expect to have work in.
 
-On a **shared** install the owner comes from `git config user.email` matched against
-`work/owners.txt` — **the only copy of that table**. If `resolve_owner` returns an empty
-`WORK_CURRENT`, the address is not in it: **stop and ask.** Do not pick the likeliest person.
-Writing into someone else's directory is silent — the work is neither lost nor found, and it
-surfaces only when they open a directory they did not expect to have anything in.
-
-Everything below writes `$WORK_CURRENT` and `$WORK_PARKED` rather than a literal path, so the same
-instructions hold either way.
-
-**Every `work/` path below is inside the `.claude/` repository**, not the branch this session is
-coding on. `.claude/` is a clone of this project's working-docs repo and has one branch of its own.
-Pull it first:
+Everything below writes `$WORK_CURRENT` and `$WORK_PARKED`, and every one of those paths is inside
+the **`.claude/` repository**, not the branch this session is coding on. Pull it first; the main
+tree's checked-out branch is never switched, stashed or touched.
 
 ```bash
 git -C .claude pull --ff-only
 ```
-
-The main tree's checked-out branch is never switched, stashed or touched.
 
 ## 1. Name the slug
 
