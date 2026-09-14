@@ -80,7 +80,7 @@ git fetch upstream && git merge upstream/main     # only when you actually want 
 If you are changing the template rather than using it:
 
 ```bash
-./test.sh        # 108 checks
+./test.sh        # the whole suite
 ./test.sh -v     # list every one
 ```
 

@@ -127,6 +127,7 @@ switches above.
 | `deferred.md` | **not yet** — wanted, out of scope for now. Sits between your design's non-goals (*never*) and the tracker (*now*). No dates, no ordering, no priority, or it becomes a second build order |
 | `traps_retired.md` | traps whose failure has been fixed, each naming the fix. Retire when the mechanism could return; delete when it is simply gone |
 | `pipeline_backlog.md` | small changes to *this working-docs system* that block nobody. A churn list — batched to the next sitting if there is a team, applied when convenient if not. Useful either way |
+| `reference/` *(outside `work/`)* | how a dependency or toolchain actually behaves — too long for `traps.md`, wrong shape for `decisions.md` because nothing was decided |
 | `collab_settled.md` | the archive half of `collab.md`. Item numbers run as one sequence across both files. *Delete if you work alone* |
 | `collab.md` | running agenda between the people who share this repo — anything on one side that conflicts with or overrides the other's work. Mark **Agreed** with a date; never delete. *Delete this row if you work alone* |
 

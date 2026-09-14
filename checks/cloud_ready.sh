@@ -56,7 +56,7 @@ hooks_runnable() {
 }
 
 # CRLF is the failure that looks like a missing file: a shebang naming `bash\r`, which does not
-# exist. gitattributes.shared prevents it; this catches a checkout made before that landed.
+# exist. gitattributes.multi-writer prevents it; this catches a checkout made before that landed.
 no_crlf() {
   local bad
   bad="$(grep -rlU $'\r' "$CLAUDE_DIR/hooks" "$CLAUDE_DIR/checks" 2>/dev/null | head -3)"

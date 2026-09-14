@@ -88,6 +88,7 @@ install, writing into the wrong person's directory is silent.
 | `issues.md` | work belonging to other people, staged for the tracker |
 | `hotfixes.md` | temporary code in the tree, each with a `Remove when:` and an `Owner:` |
 | `traps.md` | permanent workspace gotchas |
+| `reference/` | longer-form notes on a dependency or toolchain — outside `work/`, because it is neither task state nor a churn list |
 | `collab.md` | cross-owner decisions, when more than one person shares the repo. Delete if you work alone |
 
 `CLAUDE.md` holds the rules themselves and is loaded into every session automatically.
