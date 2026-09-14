@@ -10,13 +10,13 @@ A **churn list**, like `hotfixes.md` and `traps.md`: entries are applied and rem
 in place. **Not union-merged** — a concurrent append conflicts and is resolved by hand, deliberately,
 because union merge cannot express the removal that closing an entry requires.
 
-**Two kinds of entry.** A plain one blocks nobody and needs no discussion — anyone can just do it.
-One marked **`Needs discussion.`** binds someone else's practice and is *not* to be applied
-unilaterally; it gets surfaced at the next sitting so everyone talks it through before anyone acts.
+**Two kinds of entry.** A plain one blocks nobody and anyone can just do it. One marked
+**`Needs discussion.`** binds someone else's practice, is not applied unilaterally, and is surfaced
+at the next sitting.
 
-**This is for something that needs the NEXT meeting, not something already decided in this one.** A
-change made on someone's live instruction is done now and recorded where such things are recorded —
-putting it here instead means it happens twice, or not at all.
+**For something that needs the NEXT meeting, not something already decided in this one.** A change
+made on someone's live instruction is done now and recorded where such things are recorded; putting
+it here too means it happens twice, or not at all.
 
 ---
 

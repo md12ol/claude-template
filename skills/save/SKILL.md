@@ -15,8 +15,8 @@ cover everything since the last save.
 
 ## 0. Resolve where work lives — read it, do not assume it
 
-Live task directories depend on how this `.claude/` is configured. **Read the configuration; never
-guess from what you see on disk.**
+Live task paths depend on how this `.claude/` is configured. **Read the configuration; never guess
+from what is on disk.**
 
 ```bash
 . .claude/hooks/lib.sh && load_conf && resolve_owner
@@ -24,23 +24,14 @@ echo "$WORK_CURRENT"      # work/current  OR  work/<owner>/current
 echo "$WORK_PARKED"       # work/parked   OR  work/<owner>/parked
 ```
 
-| `project.conf` | Live task path | Parked path |
-|---|---|---|
-| `PEOPLE="solo"` | `work/current/` | `work/parked/` |
-| `PEOPLE="shared"` | `work/<owner>/current/` | `work/<owner>/parked/` |
-
 On a **shared** install the owner comes from `git config user.email` matched against
-`work/owners.txt` — **the only copy of that table**. If `resolve_owner` returns an empty
-`WORK_CURRENT`, the address is not in it: **stop and ask.** Do not pick the likeliest person.
-Writing into someone else's directory is silent — the work is neither lost nor found, and it
-surfaces only when they open a directory they did not expect to have anything in.
+`work/owners.txt` — **the only copy of that table**. An empty `WORK_CURRENT` means the address is
+not in it: **stop and ask**, never pick the likeliest person. Writing into someone else's directory
+is silent, and surfaces only when they open a directory they didn't expect to have work in.
 
-Everything below writes `$WORK_CURRENT` and `$WORK_PARKED` rather than a literal path, so the same
-instructions hold either way.
-
-**Every `work/` path below is inside the `.claude/` repository**, not the branch this session is
-coding on. `.claude/` is a clone of this project's working-docs repo and has one branch of its own.
-Pull it first:
+Everything below writes `$WORK_CURRENT` and `$WORK_PARKED`, so the same instructions hold either
+way. **Every `work/` path is inside the `.claude/` repository**, not the branch this session is
+coding on — it is a clone with one branch of its own. Pull it first:
 
 ```bash
 git -C .claude pull --ff-only
@@ -70,6 +61,8 @@ work. Never archive them:
 | `issues.md` | **Churn list** | Work for other people, staged for the tracker. Entries leave only once filed. |
 | `hotfixes.md` | **Churn list** | Temporary / band-aid code in the tree. Entries leave only once reverted. |
 | `traps.md` | **Churn list** | Permanent workspace gotchas. Entries leave only when no longer true. |
+| `traps_retired.md` | **Append-only** | Traps whose cause has been fixed, each naming the fix. |
+| `deferred.md` | **Churn list** | Wanted, deliberately not now. Entries leave when the tracker takes them. |
 | `collab.md` | **Append-only** | Cross-owner decisions, when the repo is shared. Agreed items are marked, never deleted. Skip if the file doesn't exist. |
 
 ## 1. Gather state
@@ -83,10 +76,10 @@ work. Never archive them:
 
 ## 2. Sweep the session for loose threads
 
-**Do this before writing anything.** Re-read the conversation since the last save and list everything
-that was **discussed but never landed**. Only an in-conversation save can do this: the docs know what
-was *written*, and the failure mode is a thing that was agreed out loud and then dropped when the
-conversation moved on. It is the single highest-value step here.
+**Do this before writing anything.** Re-read the conversation since the last save and list what was
+**discussed but never landed**. Only an in-conversation save can: the docs know what was *written*,
+and the failure mode is something agreed out loud and dropped when the conversation moved on. The
+single highest-value step here.
 
 Look for:
 
@@ -106,6 +99,8 @@ Look for:
 - **New traps** — anything that cost you time this session and will cost it again: a tool flag that
   must always be passed, a command that silently does the wrong thing, a path that isn't what it
   looks like. → `traps.md`.
+- **Wanted, ruled out for now** — something you both agreed was worth doing and out of scope for
+  this milestone. → `deferred.md`, which is where it stops being remembered only by you.
 
 Then dispose of every item, strictly:
 
@@ -120,9 +115,8 @@ is real.
 ### Ask the open ones as a series of questions
 
 Put the threads that need the user through `AskUserQuestion` — **one question per thread**, batched
-up to 4 per call, repeating until they are all answered. Do not bury them in a prose list; a bullet
-in a closing summary is easy to skim past, and these are exactly the items that vanish when the
-context is cleared.
+up to 4 per call, repeating until all are answered. Never bury them in a prose list: a bullet in a
+closing summary is easy to skim past, and these are exactly the items that vanish on `/clear`.
 
 For each question:
 
@@ -146,23 +140,20 @@ default, you settle yourself and mention in the closing brief.
 - `[~]` is the important one: code that only compiles, or that ran only somewhere that doesn't
   count, is `[~]` — not `[x]`. Say what verification is still owed, and **stamp it**:
   `(unverified since <YYYY-MM-DD>)`. Age is what makes a stale `[~]` visible as stale.
-- **Compress each item as you tick it — to ≤ 3 lines.** What was done, the one piece of evidence
-  that verifies it, where the detail lives. The evidence itself goes to `history.md`, the reasoning
-  to `decisions.md`. If the original wording is worth keeping, move it to
-  `$WORK_CURRENT/plan_superseded.md` under a `## <item id> — superseded <YYYY-MM-DD>` heading. **Never
-  leave a superseded item in `plan.md` wearing a `[ ]` checkbox** — an item that can never be ticked
-  teaches everyone to skim past `[ ]`, and then a real pending item gets lost.
-- Append any work that was agreed *during* this session and isn't yet on the plan — including
-  anything the step-2 sweep turned up.
+- **Compress each item as you tick it — to ≤ 3 lines.** What was done, the one piece of evidence,
+  where the detail lives. Evidence goes to `history.md`, reasoning to `decisions.md`. Original
+  wording worth keeping moves to `$WORK_CURRENT/plan_superseded.md` under a
+  `## <item id> — superseded <YYYY-MM-DD>` heading.
+- Append work agreed *during* this session that isn't yet on the plan, including whatever the
+  step-2 sweep turned up.
 - Strike items that were abandoned, with a one-line reason (and a matching `decisions.md` entry).
 - Do not restructure or rewrite the plan's existing items.
 
 ### Keep the plan a TASK LIST, not a record — enforce this every save
 
-Left unenforced, `plan.md` grows without bound. In the project this template came from it reached
-**1432 lines** and had to be cut in half by hand. It grew because evidence, rationale and superseded
-text all accumulated in it. Every one of those belongs somewhere else, and each has a file that owns
-it:
+Left unenforced it grows without bound; in the project this template came from it reached 1432 lines
+and had to be halved by hand. It grew because evidence, rationale and superseded text accumulated in
+it, and each of those has a file that owns it:
 
 | What | Where it goes | NOT in the plan |
 |---|---|---|
@@ -172,21 +163,17 @@ it:
 | Temporary code | `hotfixes.md` | ✗ |
 | Someone else's work | `issues.md` | ✗ |
 
-**Budgets — check them at every save, and fix on the spot:**
+**Budgets — check at every save, fix on the spot:**
 
-- **A completed item is ≤ 3 lines.** Compress it **when you tick it**, not later: what was done, the
-  single piece of evidence that verifies it, and where the detail lives. Do not paste the evidence.
-- **An open item is ≤ 20 lines.** What to do, the verify-by, and any constraint that would cause harm
-  if forgotten. If it needs more, the reasoning goes in `decisions.md` and the plan links to it.
-- **Never keep "(original text, kept for the reasoning)" blocks in the plan.** Move them to
-  `$WORK_CURRENT/plan_superseded.md` the moment the task is done, and **never leave one wearing a `[ ]`** —
-  an item that can never be ticked teaches everyone to skim past `[ ]`, and then a real pending item
-  gets lost.
-- **Soft cap ~600 lines.** If `plan.md` is over it, compress the biggest completed items *before*
-  appending new ones. `wc -l current/plan.md` — do this check as part of the save.
-
-**Amalgamate.** If two items describe the same work (a task and its "verification" twin, an item and
-its rewrite), merge them into one and keep the number that is referenced elsewhere.
+- **Completed item ≤ 3 lines**, per the compression rule above.
+- **Open item ≤ 20 lines** — what to do, the verify-by, and any constraint that causes harm if
+  forgotten. More than that, and the reasoning goes in `decisions.md` with the plan linking to it.
+- **Never leave a superseded item wearing a `[ ]`.** An item that can never be ticked teaches
+  everyone to skim past `[ ]`, and then a real pending item gets lost.
+- **Soft cap ~600 lines** (`wc -l $WORK_CURRENT/plan.md`, as part of the save). Over it, compress the
+  biggest completed items before appending new ones.
+- **Amalgamate** two items describing the same work — a task and its "verification" twin, an item
+  and its rewrite — keeping the number referenced elsewhere.
 
 ## 4. `decisions.md` — append what was chosen and why
 
@@ -224,8 +211,8 @@ would derail the current task. Four lines, no more:
 - **Noticed:** <YYYY-MM-DD>, in <what you were doing when you hit it>
 ```
 
-**Ready to file** — root-caused and evidenced, written so the body pastes into the tracker without
-rewriting. How issues get filed (tool, confirmation rule, project mapping) lives in `.claude/CLAUDE.md`.
+**Ready to file** — root-caused and evidenced, written so the body pastes into the tracker
+unchanged. How issues get filed lives in `.claude/CLAUDE.md`.
 
 ```markdown
 ### <title — imperative, issue-ready>
@@ -238,13 +225,10 @@ rewriting. How issues get filed (tool, confirmation rule, project mapping) lives
   how to reproduce, and the candidate fixes.
 ```
 
-Promote parked → ready only when the investigation actually happened. **Never fabricate the
-evidence fields to make something look file-ready** — an unroot-caused issue dressed as a
-root-caused one wastes the assignee's time. If it's still a guess, it stays parked.
-
-Once an entry is filed, **the tracker is the source of truth.** If its content changes afterwards,
-push the change to the tracker in the same session and note that you did. `issues.md` must not
-become a private fork of the tracker.
+Promote parked → ready only when the investigation actually happened. **Never fabricate evidence
+fields to make something look file-ready** — a guess dressed as a root cause wastes the assignee's
+time. Once filed, **the tracker is the source of truth**: later changes go there in the same
+session, and `issues.md` must not become a private fork of it.
 
 Drop entries whose **Filed** is a URL and whose issue is closed. Leave everything else.
 
@@ -297,9 +281,14 @@ the wrong thing, paths that aren't what they look like, files that a routine com
 These belong here rather than in `handoff.md`. `handoff.md` is overwritten every save, so anything
 durable parked there is deleted the moment it stops being top-of-mind.
 
-**Verify a trap before recording it.** Traps are stated as fact and get trusted for months. Run the
-reproducer and put it in the entry — in the project this came from, a `grep` trap was carried in
+**Verify a trap before recording it.** Traps are stated as fact and trusted for months. Run the
+reproducer and put it in the entry — in the project this came from, a `grep` trap sat in
 `handoff.md` for days with the wrong mechanism before anyone re-tested it.
+
+**Retire, don't delete.** If this session removed a trap's cause, move the entry to
+`traps_retired.md` with a `Fixed by:` line naming the change — revert that fix and the trap is back
+exactly as written. Delete outright only when the mechanism is gone for good: the file removed, the
+tool dropped, the platform changed under it.
 
 ## 8. `$WORK_CURRENT/history.md` — append a session entry
 
@@ -350,10 +339,9 @@ than writing a stamp nobody will read.
 echo "**Machine:** $(hostname -s) · saved $(date '+%Y-%m-%d %H:%M') · $(git rev-parse --short HEAD)"
 ```
 
-It exists because the hazard on a multi-machine install is **you versus you**, not you versus a
-teammate. Two machines editing one `plan.md` is a real conflict on a file that is rewritten in
-place, and no merge strategy can recover the intent. The stamp is what lets `/load` notice before
-anything is trusted — see `/load` §0.6, which stops and reports rather than merging.
+The hazard on a multi-machine install is **you versus you**. Two machines editing one `plan.md` is a
+real conflict on a file rewritten in place, and no merge strategy recovers the intent. The stamp is
+what lets `/load` §0.6 notice before anything is trusted — it stops and reports rather than merging.
 
 ## Union-merge safety — check before you finish
 
@@ -402,27 +390,25 @@ install that is the normal, correct configuration.
 
 ```bash
 git -C .claude add "$WORK_CURRENT" "$WORK_PARKED" 2>/dev/null
-{
 git -C .claude commit -m "save: <task slug> — <what moved>"
 git -C .claude push
 ```
 
-The exception exists because a live task directory is tracked precisely so the task can be resumed
-on another machine, and **a save that never reaches `origin` fails silently**: you find out on the
-other machine, usually a day late. Pushing is the whole point of tracking it.
+The directory is tracked precisely so the task resumes on another machine, and **a save that never
+reaches `origin` fails silently** — you find out there, usually a day late. Pushing is the point of
+tracking it.
 
-If the push is rejected, **do not force it**. Report it and stop — a rejected push here usually
-means the other machine saved first, which is exactly the divergence `/load` §0.6 is built to
-catch, and resolving it needs a human looking at both plans.
+If the push is rejected, **do not force it.** Report and stop: it usually means the other machine
+saved first, which is the divergence `/load` §0.6 exists to catch, and resolving it needs a human
+looking at both plans.
 
 ## 11. Close with a brief the user can answer
 
 End with a short summary — **not** a file-by-file changelog. Its job is to surface what is
-outstanding, so nothing quietly rots between sessions. Keep it under ~20 lines.
+outstanding, so nothing rots quietly between sessions. Under ~20 lines.
 
-By this point the step-2 sweep's open threads have already been **asked and answered** via
-`AskUserQuestion`, and the answers written into the files. The brief reports what came of them; it
-does not re-litigate them.
+The step-2 threads have already been asked, answered and written into the files by this point. The
+brief reports what came of them; it does not re-litigate them.
 
 ```markdown
 **Saved:** <one line — what this session actually did>
@@ -440,12 +426,11 @@ does not re-litigate them.
 
 Rules for this brief:
 
-- **Only list what's genuinely outstanding.** If nothing is unfiled and nothing is unverified, say
-  so in a line. A brief that always looks the same gets skipped.
-- Unfiled issues and unverified `[~]` items go **first** — the two that go stale silently.
-- Don't list every hotfix every time; list the ones this session added, touched, or leaned on.
-- It's a prompt for the user, so make each line answerable: name the thing, say what it's waiting
-  on.
+- **Only list what's genuinely outstanding.** Nothing unfiled and nothing unverified? Say so in one
+  line — a brief that always looks the same gets skipped.
+- Unfiled issues and unverified `[~]` items go **first**; those two go stale silently.
+- List the hotfixes this session added, touched or leaned on, not all of them every time.
+- Make each line answerable: name the thing, say what it's waiting on.
 
 The user may reply with dispositions ("file that one", "that one can wait"). Act on them and update
 the docs before finishing.
@@ -457,34 +442,29 @@ End by asking — **never do it yourself, and never assume the answer:**
 > Everything is captured in the docs. Want to `/clear` and start fresh? Next session picks up with
 > `/load`.
 
-`/clear` is a CLI command only the user can type; you cannot run it and must not try. The offer
-exists because a save is the one moment when clearing is safe: the session's state lives in the
-files, and `$WORK_CURRENT/handoff.md` is written to make the next session resumable from cold.
-
-If the user is mid-task and plans to keep working in this session, they'll decline — that's the
-expected answer as often as not. Ask once, take the answer, don't press.
+`/clear` is a CLI command only the user can type; you cannot run it and must not try. A save is the
+one moment when clearing is safe, because the state now lives in the files and `handoff.md` is
+written to resume from cold. Mid-task they will often decline — ask once, take the answer, don't
+press.
 
 ### If work continues after the save, the save is stale
 
-Declining `/clear` is normal, and a save is a snapshot, not a seal. **Any work done after the brief
-is not in the docs** — and this bites in a specific way: the closing brief and `handoff.md` are
-written as though the session ended there, so they can actively *mislead* the next session by
-pointing at a state that has since moved on.
+A save is a snapshot, not a seal. **Any work done after the brief is not in the docs**, and it bites
+specifically: the brief and `handoff.md` are written as though the session ended there, so they can
+actively *mislead* the next session by pointing at a state that has moved on. When work continues:
 
-So, when the session continues past a save:
-
-- **Keep updating the docs as you go.** Don't bank changes for a second save — a decision made after
-  the brief still belongs in `decisions.md` when it is made.
-- **Re-run `/save` before `/clear`**, or before the session actually ends. It is cheap: step 2 sweeps
-  only what has happened since, and most files need no change.
-- **Re-check `handoff.md` in particular.** It is the one file written entirely in the past tense
-  about a "next session" that may now start from somewhere else. Verify its *Start here* is still the
-  real next action and that it names no file or section the later work deleted.
+- **Keep updating the docs as you go** — a decision made after the brief belongs in `decisions.md`
+  when it is made, not banked for a second save.
+- **Re-run `/save` before `/clear`** or before the session ends. It is cheap: step 2 sweeps only
+  what happened since, and most files need no change.
+- **Re-check `handoff.md`.** It is written about a "next session" that may now start somewhere else:
+  verify its *Start here* is still the real next action and names nothing the later work deleted.
 
 The step-2 sweep catches threads *within* a save. Nothing catches work done *after* one except
 saving again.
 
 ## Constraints
 
-- **Do NOT commit or push** unless the user explicitly asks.
+- **Commit and push nothing but `$WORK_CURRENT` and `$WORK_PARKED`, per §10.** Source code, the
+  persistent docs and any design document each need their own explicit instruction, every time.
 - After the brief, report per file what you added, or that it was unchanged.

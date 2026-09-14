@@ -21,8 +21,8 @@ and report — then stop and wait. Do not start work as part of `/load`.
 
 ## 0. Resolve where work lives — read it, do not assume it
 
-Live task directories depend on how this `.claude/` is configured. **Read the configuration; never
-guess from what you see on disk.**
+Live task paths depend on how this `.claude/` is configured. **Read the configuration; never guess
+from what is on disk.**
 
 ```bash
 . .claude/hooks/lib.sh && load_conf && resolve_owner
@@ -30,29 +30,18 @@ echo "$WORK_CURRENT"      # work/current  OR  work/<owner>/current
 echo "$WORK_PARKED"       # work/parked   OR  work/<owner>/parked
 ```
 
-| `project.conf` | Live task path | Parked path |
-|---|---|---|
-| `PEOPLE="solo"` | `work/current/` | `work/parked/` |
-| `PEOPLE="shared"` | `work/<owner>/current/` | `work/<owner>/parked/` |
+On a **shared** install the owner is `git config user.email` matched against `work/owners.txt`, the
+only copy of that table. An empty `WORK_CURRENT` means the address is missing: **stop and ask**,
+never pick the likeliest person — writing into someone else's directory is silent, and surfaces only
+when they open a directory they didn't expect to have work in.
 
-On a **shared** install the owner comes from `git config user.email` matched against
-`work/owners.txt` — **the only copy of that table**. If `resolve_owner` returns an empty
-`WORK_CURRENT`, the address is not in it: **stop and ask.** Do not pick the likeliest person.
-Writing into someone else's directory is silent — the work is neither lost nor found, and it
-surfaces only when they open a directory they did not expect to have anything in.
-
-Everything below writes `$WORK_CURRENT` and `$WORK_PARKED` rather than a literal path, so the same
-instructions hold either way.
-
-**Every `work/` path below is inside the `.claude/` repository**, not the branch this session is
-coding on. `.claude/` is a clone of this project's working-docs repo and has one branch of its own.
-Pull it first:
+Everything below writes `$WORK_CURRENT` and `$WORK_PARKED`, and every one of those paths is inside
+the **`.claude/` repository**, not the branch this session is coding on. Pull it first; the main
+tree's checked-out branch is never switched, stashed or touched.
 
 ```bash
 git -C .claude pull --ff-only
 ```
-
-The main tree's checked-out branch is never switched, stashed or touched.
 
 ## 0.5. Resume a parked task, if you were given a slug
 
@@ -69,13 +58,12 @@ rmdir "$WORK_CURRENT" 2>/dev/null          # see below — this line is load-bea
 mv "$WORK_PARKED/<slug>" "$WORK_CURRENT"
 ```
 
-**The `rmdir` is not tidying, and leaving it out corrupts the restore.** `/park` recreates the live
-directory empty, so `$WORK_CURRENT` normally *exists* when you unpark — and `mv src dst` with `dst`
-an existing directory moves `src` **inside** it, giving you
-`work/<owner>/current/<slug>/plan.md` rather than `work/<owner>/current/plan.md`. Nothing errors.
-The session brief then reports no active task, because it looks for `plan.md` one level up, and the
-task reads as lost. `rmdir` only succeeds on an empty directory, so it cannot destroy a live task
-even if the guard above is somehow skipped.
+**The `rmdir` is not tidying — leaving it out corrupts the restore.** `/park` recreates the live
+directory empty, so `$WORK_CURRENT` normally *exists* when you unpark, and `mv src dst` onto an
+existing directory moves `src` **inside** it: `current/<slug>/plan.md` instead of
+`current/plan.md`. Nothing errors, the session brief then reports no active task because it looks
+one level up, and the task reads as lost. `rmdir` only succeeds on an empty directory, so it cannot
+destroy a live task even if the guard above is skipped.
 
 Confirm the shape afterwards rather than assuming it:
 
@@ -83,9 +71,9 @@ Confirm the shape afterwards rather than assuming it:
 ls "$WORK_CURRENT"                          # expect plan.md and handoff.md, not a directory
 ```
 
-Then read the handoff's `**Blocked on:**` line **first**. It names the event that has to have
-happened for this task to be workable. If it has not happened, say so and stop, rather than
-starting work that will park again in ten minutes.
+Then read the handoff's `**Blocked on:**` line **first** — it names the event that must have
+happened for this task to be workable. If it hasn't, say so and stop rather than starting work that
+parks again in ten minutes.
 
 ## 0.6. Check for cross-machine divergence — before reading anything as true
 
@@ -101,10 +89,10 @@ Compare that SHA with what the repo is on now, and compare the hostname with thi
 - **Same machine, SHA is an ancestor of HEAD** — normal. Continue.
 - **Different machine** — normal on a multi-machine install, but say so in the report. It is the
   single best predictor of a handoff describing a tree that no longer exists.
-- **The SHA is not in this repo's history at all**, or the working-docs clone has commits `origin`
-  does not — **stop and report.** Do not merge, do not reset, do not "reconcile" anything. Two
-  machines have written to the same live plan, and `plan.md` is rewritten in place, so no merge
-  strategy can recover the intent. Show the user both sides and let them choose.
+- **The SHA is not in this repo's history**, or the working-docs clone has commits `origin` does
+  not — **stop and report.** Do not merge, reset or "reconcile". Two machines have written to the
+  same live plan, which is rewritten in place, so no merge strategy recovers the intent. Show both
+  sides and let the user choose.
 
 A missing stamp is not a divergence; it means the last save predates this convention. Say so once
 and carry on.
@@ -113,16 +101,15 @@ and carry on.
 
 1. `.claude/$WORK_CURRENT/handoff.md` — the instruction from the last session. This is the primary input.
 2. `.claude/$WORK_CURRENT/plan.md` — the objective and task status.
-3. `.claude/work/decisions.md` — read at least the most recent entries. **Do not re-litigate anything
-   recorded here.** If you think a past decision is wrong, say so explicitly rather than quietly
-   doing something else.
+3. `.claude/work/decisions.md` — at least the most recent entries. **Do not re-litigate anything
+   recorded here**; if you think a past decision is wrong, say so rather than quietly doing
+   something else.
 4. `.claude/work/hotfixes.md` — temporary code you might otherwise mistake for a bug, or delete.
-5. `.claude/work/traps.md` — the workspace gotchas. Cheap to read, and each one is there because it
-   already cost someone a session.
-6. `.claude/work/issues.md` — only to notice what's already logged, so you don't re-report it.
-7. `.claude/work/collab.md`, if it exists — the repo is shared. Read the **Open** items: each one
-   is a decision on one side that overrides work on the other, and acting against an open item is
-   how someone's work gets silently overwritten.
+5. `.claude/work/traps.md` — workspace gotchas. Cheap, and each is there because it already cost
+   someone a session.
+6. `.claude/work/issues.md` — only to notice what's logged, so you don't re-report it.
+7. `.claude/work/collab.md`, if it exists — the **Open** items. Each is a decision on one side that
+   overrides work on the other, and acting against one is how someone's work gets overwritten.
 
 `$WORK_CURRENT/plan_superseded.md` is reference only. Don't read it on load, and never action anything in
 it — it holds the original wording of tasks that are already done.
@@ -131,9 +118,9 @@ If `$WORK_CURRENT/` is empty or has no `plan.md`, there is **no active task**. S
 `/start`. Do not invent one.
 
 **If the repo is shared and this session follows a merge**, read the *tail* of the persistent docs
-before trusting them: they merge with `merge=union`, which never reports a conflict, so two people
-editing the same entry yields both versions interleaved. A doubled or self-contradicting entry is
-a merge artefact to fix, not a decision to follow.
+first: `merge=union` never reports a conflict, so two people editing one entry yields both versions
+interleaved. A doubled or self-contradicting entry is a merge artefact to fix, not a decision to
+follow.
 
 ## 2. Verify the handoff against reality
 
@@ -143,12 +130,10 @@ The handoff may be days old. Treat it as a claim to check, not a fact. Confirm b
   layout. The handoff's manifest may name a branch you are no longer on.
 - **Working tree.** `git status --short` per repo. Files may have been committed, reverted, or
   further edited since. Conflicts recorded as unresolved may now be resolved — or vice versa.
-- **Specific claims.** If the handoff says a file is in a particular state ("unresolved conflict",
-  "stub", "not yet written"), open it and confirm. Cheap, and it's the class of thing that silently
-  goes stale.
-- **`[~]` items in the plan.** These are done-but-unverified. Check whether the verification named
-  in `Verify by:` has since happened. Never promote `[~]` to `[x]` yourself on inference — only on
-  evidence, or on the user telling you they ran it.
+- **Specific claims.** Where the handoff says a file is in some state ("unresolved conflict",
+  "stub", "not yet written"), open it and confirm. Cheap, and exactly the class that goes stale.
+- **`[~]` items.** Done-but-unverified: check whether the `Verify by:` has since happened. Never
+  promote `[~]` to `[x]` on inference — only on evidence, or on the user saying they ran it.
 
 Where reality and the docs disagree, **the repo wins**. Report the discrepancy; don't silently
 patch the docs to match, and don't silently follow the stale version.
@@ -164,9 +149,9 @@ Give the user a short brief:
   in the code you're about to touch, known-broken state.
 - **Blockers** — unanswered open questions in the plan that gate the next action.
 
-Then **wait for the user**. `/load` orients; it does not begin work. If the next action is obvious
-and small, still confirm before starting — the user may have switched priorities since the handoff
-was written, which is exactly the information the docs can't have.
+Then **wait for the user**. `/load` orients; it does not begin work. Confirm even when the next
+action is obvious and small — priorities may have moved since the handoff was written, which is
+exactly what the docs cannot know.
 
 ## Constraints
 

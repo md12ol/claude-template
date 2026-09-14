@@ -1,12 +1,12 @@
 # Issues — work for other people
 
-Staged for the tracker. Two tiers; the difference is whether it has been root-caused.
+Staged for the tracker, in two tiers — the difference is whether it has been root-caused.
 
-Maintained by `/save`. `/done` lists anything still `Filed: not yet` before archiving a task.
-How issues get filed — tool, confirmation rule, target project — lives in `CLAUDE.md`.
+Maintained by `/save`; `/done` lists anything still `Filed: not yet` before archiving. How issues get
+filed — tool, confirmation rule, target project — lives in `CLAUDE.md`.
 
-Once an entry is filed, **the tracker is the source of truth.** Changes go to the tracker in the
-same session; this file must not become a private fork of it.
+Once filed, **the tracker is the source of truth.** Changes go there in the same session; this file
+must not become a private fork of it.
 
 ---
 

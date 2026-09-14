@@ -12,10 +12,10 @@ owner.
 **This is not `/setup`.** `/setup` interviews you about a new project and runs once, ever. This runs
 whenever the number of people changes, and it asks about one thing only: who is joining.
 
-**Do it before they clone, not after.** A person who clones a repo that still says `PEOPLE="solo"`
-gets a session with live tasks at `work/current/` and no owner table, then this skill moves the
-directory under them, and their next `/save` pushes a plan the other person's session has already
-moved. Ten minutes of ordering avoids a genuinely confusing hour.
+**Do it before they clone, not after.** Someone who clones a repo still saying `PEOPLE="solo"` gets
+live tasks at `work/current/` and no owner table; this skill then moves the directory under them,
+and their next `/save` pushes a plan the other session has already moved. Ten minutes of ordering
+avoids a genuinely confusing hour.
 
 ## 1. Check where you are
 
@@ -24,12 +24,11 @@ grep '^PEOPLE=' .claude/project.conf
 git -C .claude status --short
 ```
 
-- **Already `shared`** — this has run, or the repo was never solo. Say so and stop. If someone new
-  is joining an already-shared repo, the whole job is §3: add their line to `work/owners.txt`.
+- **Already `shared`** — this has run, or the repo was never solo. Say so and stop; a third person
+  joining an already-shared repo is §3 alone, one line in `work/owners.txt`.
 - **A dirty `.claude/` tree** — stop and report. This skill moves and restores files, and a
-  half-finished edit underneath that is very hard to read afterwards.
-- **A live task in `work/current/`** — fine, and §4 moves it. Note it now so you can confirm it
-  arrived.
+  half-finished edit underneath is very hard to read afterwards.
+- **A live task in `work/current/`** — fine, §4 moves it. Note it now so you can confirm it arrived.
 
 ## 2. Restore what solo removed
 
@@ -42,8 +41,8 @@ git -C .claude checkout "$sha^" -- work/collab.md work/collab_settled.md \
 mkdir -p .claude/work/meetings
 ```
 
-Confirm each arrived; a `checkout` of a path that was never in that commit fails loudly, but a
-partial restore is worth seeing:
+Confirm each arrived. A `checkout` of a path never in that commit fails loudly, but a partial
+restore is worth seeing:
 
 ```bash
 ls .claude/work/collab.md .claude/work/collab_settled.md .claude/work/owners.txt \
@@ -51,9 +50,9 @@ ls .claude/work/collab.md .claude/work/collab_settled.md .claude/work/owners.txt
 ```
 
 **If that commit is not in history** — a squashed or re-created repository — take the files from the
-template this repo came from. **Do not write a remembered copy**: a seed that drifts from the real
-one is how two versions of the same rules start disagreeing, and this file is the one that governs
-how disagreements get resolved.
+template this repo came from. **Never write a remembered copy**: a seed that drifts from the real
+one is how two versions of the same rules start disagreeing, and these are the rules that govern how
+disagreements get resolved.
 
 `CLAUDE.md`'s deleted sections are in the same commit. Restore them by hand from
 `git -C .claude show "$sha^":CLAUDE.md` — the persistent-docs rows for `collab.md` and
@@ -70,12 +69,12 @@ file was removed when there was only one, so it has nobody in it.
 <git-email>	<directory-name>	<display name>
 ```
 
-**One line per address.** A work address, a personal one and a host `noreply` address are three
-lines pointing at one directory. An address missing here stops that person's session dead, which is
-deliberate — but it should stop them on day one, not on day thirty.
+**One line per address.** Work, personal and host `noreply` addresses are three lines pointing at
+one directory. A missing address stops that person's session dead, which is deliberate — but it
+should stop them on day one, not day thirty.
 
-Get the new person's addresses **from them**, not from `git log`: the address they commit with is
-often not the one their host reports, and guessing produces a table that looks right and fails.
+Get their addresses **from them**, not from `git log`: what someone commits with is often not what
+their host reports, and guessing produces a table that looks right and fails.
 
 ## 4. Move live and parked tasks under their owner
 
@@ -90,7 +89,7 @@ rmdir work/current 2>/dev/null
 
 **`work/archive/` and `work/meetings/` do not move.** A finished task is the project's history and a
 meeting belongs to everyone; only *live* tasks are per-owner. Moving the archive under one person is
-the kind of mistake nobody notices until the other person cannot find last month's work.
+the mistake nobody notices until the other cannot find last month's work.
 
 ## 5. Flip the switch and install the merge driver
 
@@ -107,8 +106,8 @@ git -C .claude check-attr merge -- work/decisions.md work/traps.md
 # expect: decisions.md -> union, traps.md -> unspecified
 ```
 
-`traps.md` staying `unspecified` is not an omission. It is a churn list, where deleting an entry is
-normal, and union merge cannot express a deletion: a delete racing any edit to the same region is
+`traps.md` staying `unspecified` is not an omission: it is a churn list, where deleting an entry is
+normal, and union merge cannot express a deletion — a delete racing any edit to the same region is
 silently discarded and the entry comes back.
 
 ## 6. Check it resolves for both people
@@ -119,8 +118,8 @@ silently discarded and the entry comes back.
 ```
 
 `$WORK_CURRENT` must now be `work/<owner>/current`, and the brief must show your task, not "no
-active task". If the brief says the identity is unrecognised, the address in `work/owners.txt` does
-not match `git config user.email` — fix the table, not the identity.
+active task". An unrecognised identity means the address in `work/owners.txt` doesn't match
+`git config user.email` — fix the table, not the identity.
 
 ## 7. Commit, push, then tell them to clone
 

@@ -5,10 +5,9 @@ description: Go on standby beside a prepared agenda at work/meetings/<YYYY-MM-DD
 
 # Start meeting
 
-Load the prepared agenda, report the map, and then **wait**. People work through the agenda by
-typing an item number and a question; this skill answers it from the sources. It asks nothing,
-decides nothing, and **writes no file** — the `Response` blocks are filled in by hand, by a person,
-in an editor.
+Load the prepared agenda, report the map, then **wait**. People work through it by typing an item
+number and a question; this skill answers from the sources. It asks nothing, decides nothing and
+**writes no file** — the `Response` blocks are filled in by hand, by a person, in an editor.
 
 **This is a research desk, not an interviewer.** An earlier design had this skill walk the items,
 ask each question as a prompt, and write the answer into the file. That inverts who holds the

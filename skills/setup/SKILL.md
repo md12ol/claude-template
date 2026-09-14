@@ -20,20 +20,24 @@ doesn't apply here.
 ## 0. Check it hasn't already run
 
 ```bash
-grep -c 'FILL IN' .claude/CLAUDE.md
+grep -c 'FILL IN —' .claude/CLAUDE.md
 ```
+
+**Match the em dash, not the bare words.** CLAUDE.md's shared-install section discusses "FILL IN
+blocks" in live prose that survives this skill, so a bare `grep 'FILL IN'` reads an already-
+configured project as unfinished — and step 0 would then re-interview it.
 
 - **No `.claude/CLAUDE.md`** → the working docs aren't cloned yet. Say so, point at
   a fresh clone, stop.
-- **Zero `FILL IN` blocks** → setup already ran. **Don't redo it.** Say so, show the section
-  headings that exist, and ask whether they want to revise one specific section. Never regenerate a
-  `CLAUDE.md` that already carries project rules — those rules were earned.
+- **Zero `FILL IN` blocks** → setup already ran. **Don't redo it.** Say so, show the headings that
+  exist, and ask whether to revise one specific section. Never regenerate a `CLAUDE.md` that already
+  carries project rules — those were earned.
 - **Some remain** → continue. A partial run is normal; only fill what's still open.
 
 ## 1. Investigate before asking
 
 **Do this first.** Most of what the FILL IN blocks want is visible in the repo, and a question you
-could have answered yourself is a bad question. Gather:
+could have answered yourself is a bad one. Gather:
 
 **Shape of the project**
 ```bash
@@ -47,9 +51,9 @@ gives you the language, and usually the run/test commands.
 ```bash
 cat .gitmodules 2>/dev/null; find . -name .git -maxdepth 3 -not -path './.git' 2>/dev/null
 ```
-Also check for vendoring manifests (`gitman.yml`, `vendir.yml`, `repo` manifests). If
-work spans more than one repo, block 2 is mandatory — an agent running `git status` at the root
-would otherwise believe it has seen everything.
+Also check vendoring manifests (`gitman.yml`, `vendir.yml`, `repo`). If work spans more than one
+repo, block 2 is mandatory — an agent running `git status` at the root would otherwise believe it
+has seen everything.
 
 **Tracker**
 ```bash
@@ -63,26 +67,26 @@ detail costs an hour when it's missing.
 git check-ignore -v .claude 2>/dev/null || echo "tracked"
 ```
 
-**Existing conventions** — read `CONTRIBUTING.md`, `.editorconfig`, linter configs, an existing
-root `CLAUDE.md` or `AGENTS.md`. If the project already documents a rule, adopt its wording rather
+**Existing conventions** — `CONTRIBUTING.md`, `.editorconfig`, linter configs, an existing root
+`CLAUDE.md` or `AGENTS.md`. Where the project already documents a rule, adopt its wording rather
 than inventing a competing one.
 
-Then say what you found, in a few lines, before asking anything. It gives the user something to
+Then say what you found in a few lines before asking anything: it gives the user something to
 correct instead of something to compose.
 
 ## 2. Ask — always through `AskUserQuestion`, never as prose
 
-**Every question in this step MUST go through the `AskUserQuestion` tool.** Do not ask in prose, do
-not present a numbered list and wait, do not bury a question in a paragraph. The user configures a
-project once and should be able to do it by clicking, not by composing answers to an essay.
+**Every question here MUST go through the `AskUserQuestion` tool** — not prose, not a numbered list
+you wait on. A project is configured once and should be configurable by clicking, not by composing
+answers to an essay.
 
-Batch up to 4 per call, one question per topic, and **repeat the call** until everything is answered.
-Lead every question with your best inference marked `(Recommended)` so the common case is one click,
-and give each option a `description` saying what it actually costs or implies.
+Batch up to 4 per call, one per topic, and **repeat** until everything is answered. Lead each with
+your best inference marked `(Recommended)` so the common case is one click, and give every option a
+`description` saying what it costs or implies.
 
-**The one question you must always ask — block 1, who runs the environment.** Never infer it. The
-repo shows you *what* the commands are; only the user knows which ones an agent must not run. Ask
-concretely, using the commands you actually found:
+**The one question you must always ask — block 1, who runs the environment.** Never infer it: the
+repo shows *what* the commands are, only the user knows which an agent must not run. Ask concretely,
+with the commands you actually found:
 
 > **Question:** I found `docker compose up`, `make test` and `./deploy.sh` in this repo. Which
 > should I run myself, and which do you always run?
@@ -91,9 +95,9 @@ concretely, using the commands you actually found:
 > - *Agent runs everything*
 > - *Agent runs nothing — hands off every command*
 
-Get the **command names**, not a category — the rule is only enforceable if it names binaries. If
-they pick a middle option, follow up with a second question listing the specific commands you found
-so the boundary is exact.
+Get the **command names**, not a category — the rule is enforceable only if it names binaries. On a
+middle option, follow up with a second question listing the commands you found, so the boundary is
+exact.
 
 **The other questions**, asked only when the repo makes them relevant — batch them with the first:
 
@@ -106,9 +110,9 @@ so the boundary is exact.
 
 ### The two shape questions — always ask both, never infer either
 
-These write `PEOPLE` and `MACHINES` into `project.conf`, and between them they decide what the rest
-of this skill wires up. **They are separate questions because they gate different things**, and the
-second is true far more often than people expect.
+These write `PEOPLE` and `MACHINES` into `project.conf` and decide what the rest of this skill wires
+up. **Separate questions, because they gate different things** — and the second is true far more
+often than people expect.
 
 > **Question 1:** Will anyone other than you write to these working docs?
 >
@@ -125,24 +129,22 @@ second is true far more often than people expect.
 > - *Yes* **(Recommended — most people are, and a wrong "no" here fails silently)**
 > - *Just this one machine*
 
-`multi` turns on: `pull_main.sh` at session start, the `Machine:` stamp `/save` writes into
-`handoff.md`, and `/load`'s divergence check. **Do not fold this into question 1.** A solo developer
-with a laptop and a desktop has the full staleness problem and no teammate; a co-located pair on one
-shared machine has the opposite. Inferring one from the other is wrong in both directions.
+`multi` turns on: `pull_main.sh` at session start, the `Machine:` stamp in `handoff.md`, and
+`/load`'s divergence check. **Do not fold this into question 1.** A solo developer with a laptop and
+a desktop has the full staleness problem and no teammate; a co-located pair on one machine has the
+opposite. Inferring either from the other is wrong in both directions.
 
-**If they say `shared`, follow up for the owner table**: each person's git email and a short
-directory name for them. Write those into `work/owners.txt`, one line per address — a person with a
-work address, a personal one and a host `noreply` one gets three lines pointing at one directory.
-An address missing from that file stops that person's session dead, which is the intended behaviour
-and worth saying out loud when you ask.
+**On `shared`, follow up for the owner table**: each person's git email and a short directory name.
+Write them into `work/owners.txt`, one line per address — work, personal and host `noreply`
+addresses get three lines pointing at one directory. An address missing from that file stops that
+person's session dead, which is intended and worth saying out loud as you ask.
 
-**Ask about the tracker** only if a remote exists: does the agent file issues on their behalf, and
-to which project? If they say no, delete block 3 outright.
+**Ask about the tracker** only if a remote exists: does the agent file issues, and to which project?
+No → delete block 3 outright. **Ask about off-limits paths** only if you found vendored/shared
+directories or a multi-repo layout.
 
-**Ask about off-limits paths** only if you found vendored/shared directories or a multi-repo layout.
-
-Don't ask about anything you can settle by reading the repo. Don't ask four questions when the
-project is a single repo with no tracker and the answer to three of them is "delete that block".
+Settle anything you can by reading the repo. Don't ask four questions when the project is a single
+repo with no tracker and three of the answers are "delete that block".
 
 ## 2.5. Write `.claude/project.conf` — before CLAUDE.md, because everything reads it
 
@@ -167,16 +169,15 @@ Read `DOCS_REPO_URL` off the clone rather than asking for it:
 git -C .claude remote get-url origin
 ```
 
-**If `.claude/` is not a clone, stop.** It is meant to be one — this project's working-docs repo,
-cloned into place. A copied directory has no history, no remote, and nothing for `/save` to push
-to, so the work record this whole system exists to keep would live on one machine and nowhere else.
-Say so and point at `.claude/README.md` rather than configuring around it.
+**If `.claude/` is not a clone, stop.** A copied directory has no history, no remote and nothing for
+`/save` to push to, so the work record this system exists to keep would live on one machine and
+nowhere else. Say so and point at `.claude/README.md` rather than configuring around it.
 
 ## 3. Write `.claude/CLAUDE.md`
 
-Edit in place, block by block. **Delete each `FILL IN` comment as you resolve it** — including its
-`<!-- -->` wrapper and the worked example inside. A leftover example is worse than nothing; a future
-session cannot tell the template's `docker compose up` from a real rule.
+Edit in place, block by block. **Delete each `FILL IN` comment as you resolve it**, including its
+`<!-- -->` wrapper and the worked example inside — a future session cannot tell the template's
+`docker compose up` from a real rule.
 
 - **Block 1 — environment.** Write it in the imperative, name the actual commands, and say what to
   do *instead* ("hand off the exact command and the log markers for success/failure"). If the answer
@@ -207,22 +208,21 @@ nothing to configure. **Verify it rather than assume it:**
 .claude/hooks/backup_docs.sh --force
 ```
 
-It should print the destination. Confirm the project name in that path is the one you expect — it
-comes from the directory name, so a checkout called `src` or `repo` produces a useless bucket. If it
-is wrong, set `CLAUDE_DOCS_BACKUP_DIR` in `settings.local.json` under `env`, and say so in the
-report.
+It prints the destination. Check the project name in that path is the one you expect — it comes from
+the directory name, so a checkout called `src` or `repo` produces a useless bucket. If wrong, set
+`CLAUDE_DOCS_BACKUP_DIR` under `env` in `settings.local.json` and say so in the report.
 
-If the user chose to **track `.claude/` in git**, tell them the backup is now belt-and-braces and
-they may delete the two hooks from `settings.json`. Don't delete them unasked.
+If they chose to **track `.claude/` in git**, say the backup is now belt-and-braces and the two
+hooks may be deleted from `settings.json`. Don't delete them unasked.
 
 ## 4. Offer the optional hooks
 
 Read `.claude/hooks/README.md` and offer only the ones that now apply. **Ask about each
 through `AskUserQuestion`** — one question per hook, not a prose list:
 
-- **Block dangerous commands** — offer this whenever the answer to block 1 was anything other than
-  "run everything", and **build the regex from the commands they named**. This is the difference
-  between a rule that is written down and a rule that holds; prose rules do get violated.
+- **Block dangerous commands** — offer whenever block 1 was anything but "run everything", and
+  **build the regex from the commands they named**. This is the difference between a rule written
+  down and a rule that holds.
 - **Show hotfixes before editing owned files** — offer only if block 4 was filled in, with their
   paths in the pattern.
 - **Session-start brief** — offer always. It's cheap and makes stale `[~]` items visible.
@@ -230,8 +230,8 @@ through `AskUserQuestion`** — one question per hook, not a prose list:
   so the brief reflects what the other machine pushed. On a single-machine install it is a network
   call at every session start that can never find anything, so do not offer it at all.
 - **The cloud pair** — mention `hooks/cloud_setup.sh` and `checks/cloud_ready.sh` when
-  `MACHINES="multi"`. Neither is a hook and neither is wired into `settings.json`: they are run by
-  hand on a fresh container. Say what they do and move on.
+  `MACHINES="multi"`. Neither is a hook; both are run by hand on a fresh container. Say what they do
+  and move on.
 
 Merge accepted hooks into `.claude/settings.json`, preserving the two backup hooks, then verify:
 
@@ -257,8 +257,8 @@ preference on one machine, and `settings.json` is shared with everyone else on t
 
 ## 4b. Ask whether this project uses Codex
 
-`codex/` bridges the same workflows to Codex without forking any skill body. It is inert unless
-`codex/install.sh` is run, but an inert directory nobody recognises is still something a reader has
+`codex/` bridges the same workflows to Codex without forking any skill body. Inert unless
+`codex/install.sh` is run — but an inert directory nobody recognises is still something a reader has
 to rule out.
 
 > **Question:** Will anyone run Codex on this project?
@@ -272,9 +272,8 @@ If no:
 git -C .claude rm -qr codex
 ```
 
-Restorable from that commit exactly like the solo removals, and `/add-person` is not needed for it —
-`git checkout <sha>^ -- codex` is the whole job. Say so in the report rather than leaving it to be
-rediscovered.
+Restorable from that commit like the solo removals, and `/add-person` is not needed:
+`git checkout <sha>^ -- codex` is the whole job. Say so in the report.
 
 If yes, tell them the bridge is installed per clone per machine with `.claude/codex/install.sh`, and
 that `check_bridge.sh` must run after any skill is added, removed or renamed.
@@ -290,13 +289,12 @@ for s in make-agenda start-meeting end-meeting; do mv .claude/skills-optional/$s
 mkdir -p .claude/work/meetings
 ```
 
-**Offer them only if the team actually sits down together on a schedule.** Ask; do not assume from
-`PEOPLE="shared"`. Two people who review each other's pull requests and never meet get three
-commands they will never run, and an unused command in the list makes the used ones harder to find.
+**Offer them only if the team actually sits down together on a schedule.** Ask; never assume it from
+`PEOPLE="shared"`. Two people who review each other's PRs and never meet get three commands they
+will never run, and unused commands make the used ones harder to find.
 
-If they decline, leave `skills-optional/` where it is and say it can be moved later. Also leave
-`work/pipeline_backlog.md` in place either way — it is a useful list on its own, and the meeting
-skills are what *process* it, not what justify it.
+If they decline, leave `skills-optional/` where it is and say it can be moved later. Leave
+`work/pipeline_backlog.md` either way — the meeting skills *process* it, they don't justify it.
 
 ## 5. Settle version control
 
@@ -306,25 +304,23 @@ question with more than one sensible answer.
 ### The project must ignore `.claude/` — add the line, then say so
 
 If both repositories track it, every commit touches two of them and the clone stops being
-independent. This is required for the setup to work at all, so **write it rather than asking**:
+independent. Required for the setup to work at all, so **write it rather than asking**:
 
 ```bash
 git check-ignore -q .claude || printf '\n# Working docs — their own repository, cloned into place.\n.claude/\n' >> .gitignore
 ```
 
-Then tell the user you added it, in one line, and show the line. This is a deliberate exception to
-"ask before editing a tracked file": a question whose only correct answer is yes is a worse
-experience than a clear statement of what changed, and a project that tracks `.claude/` twice is
-broken in a way that surfaces later and confusingly.
+Then say you added it, in one line, and show the line. A deliberate exception to "ask before editing
+a tracked file": a question whose only correct answer is yes is worse than a clear statement of what
+changed, and a project tracking `.claude/` twice breaks later and confusingly.
 
 **If `.gitignore` does not exist, create it** with just that entry.
 
 ### Write the project's own root `CLAUDE.md`
 
 `.claude/root_CLAUDE.md.example` is the **only file that still loads when `.claude/` is missing
-entirely** — a machine that never cloned it. No hook can report that case, because `settings.json`
-and the hooks are inside the directory that is not there. Shipping the example without placing it
-means the guard does not exist.
+entirely**. No hook can report that case — `settings.json` and the hooks are inside the directory
+that is not there — so shipping the example without placing it means the guard does not exist.
 
 ```bash
 sed -e "s|<PROJECT>|$PROJECT_NAME|" -e "s|<DOCS_REPO_URL>|$DOCS_REPO_URL|" \
@@ -475,4 +471,5 @@ needs an objective agreed with the user that `/setup` has no way to know.
   — an absent rule is visible, a wrong one isn't.
 - Don't write `decisions.md`, `issues.md`, `hotfixes.md` or `traps.md` entries. They are empty
   because nothing has happened yet.
-- Don't commit or push.
+- **Commit the `.claude/` repository only, per §5b, and don't push.** The project's own repo needs
+  its own explicit instruction, and the user may want to look before anything leaves the machine.

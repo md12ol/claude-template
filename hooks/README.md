@@ -1,28 +1,26 @@
 # Hooks
 
-Five scripts plus a shared library. **Only the backup is enabled by default**; `/setup` offers the
-rest and wires up the ones that apply to how this project is configured.
+Five hooks plus `lib.sh`, which they all source. **`session_brief.sh` and `backup_docs.sh` are
+wired by default**; `/setup` offers the rest and wires the ones that apply to this project.
 
-A hook that never fires fails silently, which is why these ship as real scripts you can run rather
-than as JSON snippets to paste.
+A hook that never fires fails silently, which is why these ship as runnable scripts rather than as
+JSON snippets to paste.
 
 | | Fires on | Needs editing first? |
 |---|---|---|
 | `lib.sh` | — sourced by the others | no — it reads `project.conf` and `work/owners.txt` |
-| `backup_docs.sh` | `Stop`, `SessionEnd` | no — **enabled by default** |
+| `session_brief.sh` | `SessionStart` | no — **wired by default** |
+| `backup_docs.sh` | `Stop`, `SessionEnd` | no — **wired by default** |
 | `block_env_commands.sh` | `PreToolUse(Bash)` | **yes** — the patterns are examples |
 | `show_hotfixes.sh` | `PreToolUse(Edit\|Write)` | no |
 | `pull_main.sh` | `SessionStart` | no — but only wire it when `MACHINES="multi"` |
-| `session_brief.sh` | `SessionStart` | no |
+| `cloud_setup.sh` | — **not a hook**; run by hand on a fresh container | no |
 
-Two more scripts live outside this directory because they are **not** hooks and are never wired into
-`settings.json`: `cloud_setup.sh` here is run by hand on a fresh container, and
-`../checks/cloud_ready.sh` is a read-only PASS/FAIL gate you can run anywhere.
+`../checks/cloud_ready.sh` is the other non-hook: a read-only PASS/FAIL gate, safe to run anywhere.
 
-**`../settings.json` is what actually wires them up** — which hook runs on which event. It carries no
-description of its own because JSON has no comment syntax, and an unknown key risks a strict
-validator rejecting the file, which would silently disable every hook in it. This README is its
-documentation.
+**`../settings.json` is what wires them up.** It carries no description of its own — JSON has no
+comment syntax, and an unknown key risks a strict validator rejecting the file and silently
+disabling every hook in it. This README is that documentation.
 
 Each is testable without a session:
 
@@ -50,20 +48,19 @@ the session start down with it.
 
 ## 1. `block_env_commands.sh` — the only hook that changes what the agent can do
 
-Three tiers. `ALLOW` is checked first and wins; `BLOCK` exits 2 and stops the command; `WARN`
+Three tiers: `ALLOW` is checked first and wins, `BLOCK` exits 2 and stops the command, `WARN`
 proceeds but prints a notice the agent has to read.
 
-**The WARN tier is the one people leave out and then want.** `git push` is legitimate when you asked
-for it and a mistake when you did not — a hard block is wrong because you do ask for pushes, and
-silence is wrong because by the time you notice an unasked push it is already outside the repo.
+**WARN is the tier people leave out and then want.** `git push` is legitimate when you asked for it
+and a mistake when you did not — a hard block is wrong because you do ask for pushes, and silence is
+wrong because an unasked push is already outside the repo by the time you notice.
 
-The shipped patterns span several ecosystems on purpose: they are examples to cut down, not a
-policy. Keep the force-push and hard-reset blocks in every project — those destroy history that
-someone else may already have fetched — and replace the rest with the commands you actually run
-yourself.
+The shipped patterns span several ecosystems on purpose: examples to cut down, not a policy. Keep
+the force-push and hard-reset blocks everywhere — those destroy history someone else may already
+have fetched — and replace the rest with the commands you run yourself.
 
-**Watch for false positives when you edit.** A hook that blocks `make test` or `npm view` is a hook
-someone disables, and then every real block it would have caught is gone too.
+**Watch for false positives.** A hook that blocks `make test` or `npm view` is a hook someone
+disables, and then every real block it would have caught is gone too.
 
 ```json
 "PreToolUse": [
@@ -83,9 +80,9 @@ without them reading the diff.
 ## 3. `pull_main.sh` — fast-forward before a stale session starts
 
 Fires first in `SessionStart`, before the brief, so the brief reflects whatever the other machine
-pushed. It pulls the working-docs clone unconditionally (it is always on its own branch, so there is
-no "am I mid-task" question) and the code repo only when its default branch is what is checked out —
-read from `origin/HEAD` rather than assumed to be `main`.
+pushed. It pulls the working-docs clone unconditionally — always on its own branch, so there is no
+"am I mid-task" question — and the code repo only when its default branch is checked out, read from
+`origin/HEAD` rather than assumed to be `main`.
 
 **Only ever fast-forwards.** Local commits not on origin, or a working-tree change origin's version
 would overwrite, and it prints one line and does nothing. It never merges, rebases, stashes or
@@ -106,25 +103,24 @@ network call at every session start that can never find anything.
 ## 4. `session_brief.sh` — orientation without `/load`
 
 Prints the handoff's *Start here*, the counts that go stale silently (open `[ ]`, unverified `[~]`,
-unfiled issues, traps), every parked task with what it is blocked on, and one line per other owner
-with work in flight. No editing needed — it reads the shape from `lib.sh`.
+unfiled issues, traps), every parked task with what blocks it, and one line per other owner with
+work in flight. No editing needed — it reads the shape from `lib.sh`.
 
-It does **not** replace `/load`, which verifies the handoff against the repo. It makes a rotting
-item visible at zero cost.
+It does **not** replace `/load`, which verifies the handoff against the repo; it makes a rotting item
+visible at zero cost.
 
-On an incomplete `.claude/` it prints the clone command and stops. That is the only missing-clone
-case a hook can catch: if the directory were absent entirely, `settings.json` and this script would
-be absent with it. The total case is covered by the project's root `CLAUDE.md` — see
-`root_CLAUDE.md.example`.
+On an incomplete `.claude/` it prints the clone command and stops — the only missing-clone case a
+hook can catch, since a directory absent entirely takes `settings.json` and this script with it. The
+total case is covered by the project's root `CLAUDE.md`; see `root_CLAUDE.md.example`.
 
 ## 5. `backup_docs.sh` — the one that is on by default
 
-Snapshots the working docs to `~/.claude-backups/<project>/<date>/`. Same-disk and same-machine, so
-it is a safety net against an accidental delete, not against a lost laptop, and it cannot tell you
-*when* a doc went stale. Version control is the real answer; this is what you have until then.
+Snapshots the working docs to `~/.claude-backups/<project>/<date>/`. Same-disk and same-machine: a
+safety net against an accidental delete, not a lost laptop, and it cannot tell you *when* a doc went
+stale. Version control is the real answer; this is what you have until then.
 
 ## Changing any of these
 
-**Hook and settings changes go through review**, on every layout and every team size. They execute
-on everyone else's machine at session start, before they have read anything. This is the one part of
-`.claude/` where "it is just docs" is false.
+**Hook and settings changes go through review**, on every layout and team size. They execute on
+everyone else's machine at session start, before anyone has read them. The one part of `.claude/`
+where "it is just docs" is false.
