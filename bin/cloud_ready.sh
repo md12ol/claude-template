@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-# Is this machine set up to work on this project? One PASS/FAIL line per criterion.
-# Exits non-zero if any line FAILs, so it can gate a cold-session test.
+# Is this machine set up to work on this project? One PASS/FAIL line per criterion, non-zero exit
+# if any line FAILs, so it can gate a cold-session test.
 #
-#     .claude/checks/cloud_ready.sh
+#     .claude/bin/cloud_ready.sh
 #
 # READ-ONLY: builds nothing, installs nothing, writes nothing — which is why it needs no
 # CLAUDE_CODE_REMOTE guard the way cloud_setup.sh does. Safe on a laptop and useful there. When a
 # line FAILs the fix is cloud_setup.sh or an edit to project.conf, never this script.
+#
+# Test:  .claude/bin/cloud_ready.sh
 set -uo pipefail
 
 # shellcheck source=../hooks/lib.sh
@@ -46,20 +48,21 @@ claude_complete() {
 }
 
 hooks_runnable() {
-  local bad=""
-  for h in "$CLAUDE_DIR"/hooks/*.sh; do
+  local bad="" n=0
+  for h in "$CLAUDE_DIR"/hooks/*.sh "$CLAUDE_DIR"/bin/*.sh; do
     [[ -f "$h" ]] || continue
+    n=$((n + 1))
     bash -n "$h" 2>/dev/null || bad="$bad $(basename "$h")"
   done
   [[ -z "$bad" ]] || { echo "syntax errors in:$bad"; return 1; }
-  echo "$(find "$CLAUDE_DIR/hooks" -name '*.sh' | wc -l | tr -d ' ') scripts parse"
+  echo "$n scripts parse"
 }
 
 # CRLF is the failure that looks like a missing file: a shebang naming `bash\r`, which does not
 # exist. gitattributes.multi-writer prevents it; this catches a checkout made before that landed.
 no_crlf() {
   local bad
-  bad="$(grep -rlU $'\r' "$CLAUDE_DIR/hooks" "$CLAUDE_DIR/checks" 2>/dev/null | head -3)"
+  bad="$(grep -rlU $'\r' "$CLAUDE_DIR/hooks" "$CLAUDE_DIR/bin" 2>/dev/null | head -3)"
   [[ -z "$bad" ]] || { echo "CRLF line endings in: $bad"; return 1; }
   echo "all LF"
 }
@@ -82,7 +85,7 @@ tracker() {
 echo "cloud_ready: $PROJECT_NAME  (people=$PEOPLE machines=$MACHINES host=$HOST)"
 check "git identity"        identity
 check ".claude complete"    claude_complete
-check "hook scripts parse"  hooks_runnable
+check "shell scripts parse" hooks_runnable
 check "line endings"        no_crlf
 check "working docs"        docs_clean
 check "tracker CLI"         tracker

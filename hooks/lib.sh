@@ -130,3 +130,28 @@ other_owners() {
         }
     ' "$table"
 }
+
+# --- helpers for bin/ ------------------------------------------------------------------------------
+# Only bin/ scripts call these. A hook that exits non-zero can take the session start with it, so
+# `die` deliberately has no caller among the hooks.
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+# Stop rather than guess when a shared install does not recognise this address. Writing into someone
+# else's work/ directory is silent, and surfaces only when they open a directory they did not expect
+# to have work in.
+require_owner() {
+    [[ -n "${WORK_CURRENT+x}" ]] || resolve_owner
+    [[ -n "$WORK_CURRENT" ]] && return 0
+    die "unknown git user.email '${OWNER_EMAIL:-unset}' — add it to work/owners.txt; never guess"
+}
+
+# handoff.md's stamp: which machine wrote the save, when, and the CODE repo's HEAD at the time.
+# Silent on a single-machine install, where the line carries no information.
+machine_stamp() {
+    is_multi_machine || return 0
+    local host sha
+    host="$(hostname -s 2>/dev/null || uname -n 2>/dev/null || echo unknown)"
+    sha="$(git -C "$PROJECT_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    printf '**Machine:** %s · saved %s · %s\n' "$host" "$(date '+%Y-%m-%d %H:%M')" "$sha"
+}
