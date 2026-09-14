@@ -31,7 +31,7 @@ done
 if [[ -n "$PY" ]]; then
     "$PY" -m json.tool "$BRIDGE/hooks.json" >/dev/null 2>&1 || fail "codex/hooks.json is not valid JSON"
 else
-    echo "SKIP: no Python 3 found (tried python3, python, py) — hooks.json not JSON-checked"
+    echo "SKIP: no Python 3 found (tried python3, python, py); hooks.json not JSON-checked"
 fi
 
 # Both directions matter: a missing wrapper means Codex cannot reach the workflow, an orphaned one
@@ -40,12 +40,12 @@ for canonical in "$CLAUDE_DIR"/skills/*/SKILL.md; do
     [[ -f "$canonical" ]] || continue
     name="$(basename "$(dirname "$canonical")")"
     wrapper="$BRIDGE/skills/$name/SKILL.md"
-    [[ -f "$wrapper" ]] || { fail "no Codex wrapper for skill '$name' — run generate_wrappers.sh"; continue; }
+    [[ -f "$wrapper" ]] || { fail "no Codex wrapper for skill '$name'; run generate_wrappers.sh"; continue; }
 
     [[ "$(frontmatter name "$wrapper")" == "$name" ]] \
         || fail "wrapper '$name' has a mismatched name in its frontmatter"
     [[ "$(frontmatter description "$wrapper")" == "$(frontmatter description "$canonical")" ]] \
-        || fail "wrapper '$name' has a stale description — run generate_wrappers.sh"
+        || fail "wrapper '$name' has a stale description; run generate_wrappers.sh"
     grep -q "skills/$name/SKILL.md" "$wrapper" \
         || fail "wrapper '$name' does not point at its canonical file"
     grep -q 'ADAPTER.md' "$wrapper" \
@@ -56,7 +56,7 @@ for wrapper in "$BRIDGE"/skills/*/; do
     [[ -d "$wrapper" ]] || continue
     name="$(basename "$wrapper")"
     [[ -f "$CLAUDE_DIR/skills/$name/SKILL.md" ]] \
-        || fail "orphaned Codex wrapper '$name' — no canonical skill. Run generate_wrappers.sh"
+        || fail "orphaned Codex wrapper '$name': no canonical skill. Run generate_wrappers.sh"
 done
 
 # The entrypoints, if the bridge has been installed in this clone.

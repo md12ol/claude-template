@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Apply project.conf to the tree: the file moves and edits /setup would otherwise do by hand.
-# /setup runs it AFTER writing project.conf and editing CLAUDE.md, and asks nothing — the answers
+# /setup runs it AFTER writing project.conf and editing CLAUDE.md, and asks nothing: the answers
 # are already in project.conf, and the commit is /setup's.
 #
 #     .claude/bin/setup_apply.sh [--dry-run]
@@ -26,8 +26,8 @@ cd "$CLAUDE_DIR" || die "setup_apply: cannot enter $CLAUDE_DIR"
 # 1. .claude/ is a clone with somewhere to push. /save pushes the live task directory, and that push
 #    is the whole reason the directory is tracked; a clone with no origin fails at exactly the
 #    moment the work matters.
-[[ -d .git ]] || die "setup_apply: .claude/ is not a git clone — it must be one"
-git remote 2>/dev/null | grep -qx origin || die "setup_apply: .claude/ has no origin — /save would have nowhere to push"
+[[ -d .git ]] || die "setup_apply: .claude/ is not a git clone; it must be one"
+git remote 2>/dev/null | grep -qx origin || die "setup_apply: .claude/ has no origin; /save would have nowhere to push"
 
 # 2. The project must ignore .claude/, or every commit touches two repositories. Run with .claude/
 #    present: a trailing-slash pattern only matches a directory that exists.
@@ -35,19 +35,19 @@ cd "$PROJECT_DIR" || die "setup_apply: cannot enter $PROJECT_DIR"
 if git check-ignore -q .claude 2>/dev/null; then
     say ".gitignore: .claude/ is already ignored"
 elif ! would "add .claude/ to $PROJECT_DIR/.gitignore"; then
-    printf '\n# Working docs — their own repository, cloned into place.\n.claude/\n' >> .gitignore
+    printf '\n# Working docs: their own repository, cloned into place.\n.claude/\n' >> .gitignore
     say ".gitignore: added .claude/"
 fi
 
-# 3. The project's root CLAUDE.md — the only file that still loads when .claude/ is missing
+# 3. The project's root CLAUDE.md: the only file that still loads when .claude/ is missing
 #    entirely, which is the one failure no hook can report.
 ex="$CLAUDE_DIR/root_CLAUDE.md.example"
 gen() { sed -e "s|<PROJECT>|$PROJECT_NAME|" -e "s|<DOCS_REPO_URL>|$DOCS_REPO_URL|" "$ex" \
         | awk 'drop && /^-->$/ {drop=0; next} !drop' drop=1; }
 if [[ ! -f "$ex" ]]; then
-    say "root CLAUDE.md: root_CLAUDE.md.example is missing — nothing written"
+    say "root CLAUDE.md: root_CLAUDE.md.example is missing; nothing written"
 elif [[ -f CLAUDE.md ]]; then
-    say "root CLAUDE.md: already exists and was NOT touched — add this pointer block by hand:"
+    say "root CLAUDE.md: already exists and was NOT touched; add this pointer block by hand:"
     gen
 elif ! would "write $PROJECT_DIR/CLAUDE.md from root_CLAUDE.md.example"; then
     gen > CLAUDE.md
@@ -78,7 +78,7 @@ else
     elif ! would "git rm -qrf ${gone[*]}"; then
         # -f because /setup may have edited one of these; plain `git rm` refuses on a modified file
         # and the removal then silently does not happen.
-        git rm -qrf "${gone[@]}" || die "setup_apply: the solo removal failed — resolve by hand"
+        git rm -qrf "${gone[@]}" || die "setup_apply: the solo removal failed; resolve by hand"
         say "solo: removed ${gone[*]}"
     fi
 fi

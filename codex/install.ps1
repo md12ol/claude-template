@@ -6,7 +6,7 @@
 # Developer Mode or an elevated prompt, and failing on that would make the bridge unavailable to
 # exactly the people who cannot enable it.
 #
-# Re-run it if the same checkout moves between WSL and native Windows — the two create different
+# Re-run it if the same checkout moves between WSL and native Windows: the two create different
 # link types and only one is meaningful to the environment launching Codex.
 
 $ErrorActionPreference = 'Stop'

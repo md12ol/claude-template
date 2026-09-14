@@ -76,7 +76,7 @@ clone_hint() {
 #   WORK_CURRENT path to the live task dir, relative to CLAUDE_DIR
 #   WORK_PARKED  path to the parked task dir, relative to CLAUDE_DIR
 #
-# On a solo install there is no table and no owner in the path — the whole difference, handled here
+# On a solo install there is no table and no owner in the path: the whole difference, handled here
 # so no caller has to branch on it.
 resolve_owner() {
     [[ -n "${CLAUDE_DIR:-}" ]] || claude_paths
@@ -121,7 +121,7 @@ resolve_owner() {
 }
 
 # Every person in the table but the current one, as "dir<TAB>name" lines. Reports other owners'
-# parked work without hardcoding how many people there are — two is not special.
+# parked work without hardcoding how many people there are; two is not special.
 other_owners() {
     [[ -n "${CLAUDE_DIR:-}" ]] || claude_paths
     is_shared || return 0
@@ -152,7 +152,7 @@ die() { printf '%s\n' "$*" >&2; exit 1; }
 require_owner() {
     [[ -n "${WORK_CURRENT+x}" ]] || resolve_owner
     [[ -n "$WORK_CURRENT" ]] && return 0
-    die "unknown git user.email '${OWNER_EMAIL:-unset}' — add it to work/owners.txt; never guess"
+    die "unknown git user.email '${OWNER_EMAIL:-unset}': add it to work/owners.txt, never guess"
 }
 
 # optional/github/ ships disabled. Both /setup and /add-person install the workflow the same way, so

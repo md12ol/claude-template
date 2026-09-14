@@ -1,16 +1,16 @@
 <!--
-WHAT THIS FILE IS: a starting point for the PROJECT's own root CLAUDE.md — the signpost that points
+WHAT THIS FILE IS: a starting point for the PROJECT's own root CLAUDE.md: the signpost that points
 at .claude/ and survives its absence. It is not used from here. Copy it to the project's root as
 CLAUDE.md, filling in the two <angle-bracket> values from .claude/project.conf and deleting this
 comment; `/setup` does exactly that for you.
 
 It is the one file that still loads when `.claude/` is missing entirely, the single failure this
 system cannot otherwise catch: a SessionStart hook cannot report it, because settings.json and the
-hooks are inside the directory that is not there. Keep it SHORT — a signpost, not a second copy of
+hooks are inside the directory that is not there. Keep it SHORT, a signpost and not a second copy of
 the rules, since anything duplicated here drifts from `.claude/CLAUDE.md` and then contradicts it.
 -->
 
-# <PROJECT> — working rules
+# <PROJECT>: working rules
 
 **The working rules for this project are not in this file.** They live in `.claude/`, which is a
 separate repository cloned into place:
@@ -28,7 +28,7 @@ is there, `.claude/CLAUDE.md` is the authority and this file says nothing furthe
 1. **Don't commit or push unless asked.** Every commit, push and pull request needs its own explicit
    instruction, each time. Agreeing to a plan that says "open the PR" is not that instruction.
 2. **Never mark work done that you have not seen verified.** If it only compiled, it is not done.
-3. **Ask before anything outward-facing or hard to undo** — publishing, deleting, force-pushing,
+3. **Ask before anything outward-facing or hard to undo**: publishing, deleting, force-pushing,
    anything that reaches a shared environment.
 4. **Write state into the file that owns it**, not into a memory store: what happened, why, what is
    temporary, what is someone else's. `.claude/` has a file for each, and a second auto-loading copy

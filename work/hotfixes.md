@@ -1,4 +1,4 @@
-# Hotfixes — temporary code in the tree
+# Hotfixes: temporary code in the tree
 
 Every band-aid, stub, sleep, hardcoded value and workaround currently in the working tree; each
 needs an exit condition or it lives forever. Maintained by `/save`, and `/done` stamps
@@ -13,16 +13,16 @@ it replace the entry.
 
 ---
 
-## <theme — e.g. blocked on upstream, blocked on someone's work, ours to fix>
+## <theme: e.g. blocked on upstream, blocked on someone's work, ours to fix>
 
 ### <what was hacked>
 - **Owner:** who put it there and who removes it.
-- **Machine:** `owner's working tree, uncommitted` · `committed — in every tree` · `branch <name>`.
+- **Machine:** `owner's working tree, uncommitted` · `committed, in every tree` · `branch <name>`.
   This is what tells everyone else whether to expect the code locally.
-- **Where:** `path` or symbol name — prefer function names over line numbers, they survive edits.
+- **Where:** `path` or symbol name; prefer function names over line numbers, they survive edits.
 - **What it does:** the mechanism, if not obvious from the title. Optional.
 - **Why it's a hotfix:** the problem it papers over, and why the proper fix wasn't done here.
 - **Real fix:** what would make this unnecessary, and **who owns it** if it's someone else.
 - **Remove when:** the concrete condition that makes it unnecessary.
-- **Added:** <YYYY-MM-DD> — <short-slug of this hotfix, so the line is unique>
+- **Added:** <YYYY-MM-DD> - <short-slug of this hotfix, so the line is unique>
 - **Last checked:** <YYYY-MM-DD>

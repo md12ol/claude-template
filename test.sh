@@ -21,7 +21,7 @@ trap 'rm -rf "$TMP"' EXIT
 #
 # `git clone "$ROOT"` would clone the last commit, so an uncommitted edit to a skill or a hook would
 # be silently untested and the suite would pass on code nobody is running. Snapshot what is on disk
-# instead, commit it into a scratch repo, and let every test project clone from that — which also
+# instead, commit it into a scratch repo, and let every test project clone from that, which also
 # gives each .claude/ a real origin to push to, the way a project's does.
 ORIGIN="$TMP/origin"
 mkdir -p "$ORIGIN"
@@ -33,7 +33,7 @@ git -C "$ORIGIN" add -A
 git -C "$ORIGIN" commit -qm "working tree under test"
 
 # The machinery that actually ships as a project's working docs. Excludes .git/, this script, the
-# CI files and TEMPLATE.md — those are the template's own scaffolding, which /setup offers to
+# CI files and TEMPLATE.md: those are the template's own scaffolding, which /setup offers to
 # delete and which is allowed to talk about the template.
 SHIPPED=(CLAUDE.md README.md project.conf comment_style.md settings.json root_CLAUDE.md.example
          gitattributes.multi-writer skills skills-optional hooks bin codex work reference
@@ -58,7 +58,7 @@ newproj() {  # newproj <name> [people] [machines] -> echoes the path
     mkdir -p "$d/.claude/work/current" "$d/.claude/work/parked" \
              "$d/.claude/work/ada/current" "$d/.claude/work/ada/parked"
     # A configured install: /setup has run and resolved the FILL IN blocks. Almost every test below
-    # is about a working install, not a fresh unconfigured clone — the one test that wants the
+    # is about a working install, not a fresh unconfigured clone; the one test that wants the
     # unconfigured case puts the marker back itself.
     sed -i 's/FILL IN/[filled in]/g' "$d/.claude/CLAUDE.md"
     echo "$d"
@@ -87,7 +87,14 @@ pin="$(scan 'TEMPLATE_VERSION|template_version|checks? for updates')"
 is "no template version pin or update check" "${pin:-clean}" "clean"
 
 # ---------------------------------------------------------------------------------------------
-section "3. the repo root IS a .claude/ — clone it and it works"
+section "2c. no em dash survives anywhere in the tree"
+# The house rule is a comma, a colon, parentheses or a new sentence, never an em dash, and it binds
+# prose, scripts and seeds alike. The byte form keeps this file itself out of its own match.
+dash="$(git -C "$ROOT" grep -l "$(printf '\xe2\x80\x94')" || true)"
+is "no tracked file contains an em dash" "${dash:-clean}" "clean"
+
+# ---------------------------------------------------------------------------------------------
+section "3. the repo root IS a .claude/: clone it and it works"
 d="$(newproj clone)"
 for f in CLAUDE.md project.conf comment_style.md settings.json hooks/lib.sh work/owners.txt; do
     [[ -e "$d/.claude/$f" ]] && ok "clone provides $f" || bad "clone provides $f"
@@ -151,7 +158,7 @@ printf '# Plan\n- [x] done\n' > "$d/.claude/work/current/plan.md"
 out="$(cd "$d" && .claude/hooks/session_brief.sh)"
 # The zero-count bug: `grep -c … || echo 0` appended a second zero and broke the line in three.
 # The bug produced "open [ ]: 0 / 0   unverified [~]: 0 / 0", so the tell is a line that is a
-# bare number. Counting lines containing the marker does NOT catch it — only one line still has it.
+# bare number. Counting lines containing the marker does NOT catch it: only one line still has it.
 stray="$(grep -cE '^[0-9]+([[:space:]]|$)' <<<"$out")"
 is "no stray count line when a count is zero" "$stray" "0"
 has "counts render" "open \[ \]: 0   unverified \[~\]: 0" "$out"
@@ -182,14 +189,14 @@ sed -i '/^TRACKER_FIRST=/d' "$d/.claude/project.conf"
 out="$(cd "$d" && .claude/hooks/session_brief.sh)"
 has "the file-based install keeps it" "unfiled issues" "$out"
 
-# Incomplete .claude/ — the only missing-clone case a hook can catch.
+# Incomplete .claude/: the only missing-clone case a hook can catch.
 mv "$d/.claude/skills" "$d/.claude/skills.bak"
 out="$(cd "$d" && .claude/hooks/session_brief.sh)"
 has "incomplete .claude/ is reported" "incomplete" "$out"
 mv "$d/.claude/skills.bak" "$d/.claude/skills"
 
 # ---------------------------------------------------------------------------------------------
-section "7. block_env_commands — three tiers"
+section "7. block_env_commands: three tiers"
 d="$(newproj block)"
 tier() {  # tier <command> -> allow | warn | block
     local out rc
@@ -414,7 +421,7 @@ section "15b. the solo removal leaves a working install"
 # quietly read one of them and now fails at session start, which is the worst place to find out.
 d="$(newproj solo_strip solo single)"
 # The removal is setup_apply.sh's, not a copy of it here: a re-implementation in the suite tests
-# the suite. Its `git rm -f` matters — the fixture modified owners.txt after cloning, plain
+# the suite. Its `git rm -f` matters: the fixture modified owners.txt after cloning, plain
 # `git rm` refuses on a modified file, and the removals then silently do not happen.
 out="$(cd "$d" && .claude/bin/setup_apply.sh 2>&1)"
 has "setup_apply reports the solo removal" "solo: removed" "$out"
@@ -433,7 +440,7 @@ out="$(printf '{"tool_input":{"command":"git push --force"}}' | "$d/.claude/hook
 has "the command hook still blocks" "rc=2" "$out"
 (cd "$d" && .claude/codex/check_bridge.sh >/dev/null 2>&1) && ok "codex bridge still validates" || bad "codex bridge still validates"
 
-# session_brief and cloud_setup DO name owners.txt, and that is correct — they read it only when
+# session_brief and cloud_setup DO name owners.txt, and that is correct; they read it only when
 # PEOPLE=shared. What matters is that every executable still runs clean with the file absent, so
 # assert behaviour rather than the absence of a mention: a script may refer to a file it tolerates.
 # The scripts that take no arguments. task.sh, setup_apply.sh and add_person.sh do, and have their
@@ -515,7 +522,7 @@ done < <(cd "$ROOT" && git ls-files)
 # ---------------------------------------------------------------------------------------------
 section "17. a configured install is not reported as unconfigured"
 # The setup guard greps CLAUDE.md for its FILL IN blocks. CLAUDE.md used to discuss "FILL IN
-# blocks" in LIVE PROSE as well, in the shared-install section — which /setup deletes on a solo
+# blocks" in LIVE PROSE as well, in the shared-install section, which /setup deletes on a solo
 # install and keeps on a shared one. So a configured SHARED project reported "not configured yet"
 # at every session start, forever, and /setup's own step-0 gate read it as unfinished. Invisible
 # solo, which is why it survived. Strip the comment blocks the way /setup does, then assert.
@@ -536,7 +543,7 @@ STRIP
 done
 
 # ---------------------------------------------------------------------------------------------
-section "18. bin/task.sh — paths, start, park, unpark, archive"
+section "18. bin/task.sh: paths, start, park, unpark, archive"
 d="$(newproj task shared multi)"
 t() { (cd "$d" && .claude/bin/task.sh "$@" 2>&1); }
 trc() { (cd "$d" && .claude/bin/task.sh "$@" >/dev/null 2>&1); echo $?; }
@@ -581,7 +588,7 @@ is "pull leaves the code repo exactly as it was" "$(cd "$d" && git status --porc
 rm -rf "$WC"
 out="$(t start "rename the API")"
 is "start prints the live path" "$out" "work/ada/current"
-has "start seeds history.md with the objective" "^# History — rename the API" "$(cat "$WC/history.md")"
+has "start seeds history.md with the objective" "^# History: rename the API" "$(cat "$WC/history.md")"
 has "the seed says who maintains it" "Maintained by" "$(cat "$WC/history.md")"
 [[ -f "$WC/handoff.md" ]] && bad "start must not write handoff.md" || ok "start does not write handoff.md"
 is "start refuses a non-empty directory" "$(trc start "another thing")" "1"
@@ -653,7 +660,7 @@ is "archive refuses an existing archive directory" "$(trc archive "api-rename")"
 has "and suggests a suffix rather than overwriting" "api-rename-2" "$(t archive api-rename)"
 
 # ---------------------------------------------------------------------------------------------
-section "18b. bin/task.sh — stamp, check-stamp, audit, commit"
+section "18b. bin/task.sh: stamp, check-stamp, audit, commit"
 is "stamp prints nothing on a single-machine install" \
    "$( (cd "$(newproj stamp1 solo single)" && .claude/bin/task.sh stamp 2>&1) )" ""
 # The stamp carries the CODE repo's HEAD, so the fixture project needs one.
@@ -705,9 +712,9 @@ has "saying how far ahead" "origin lacks" "$out"
 
 # audit
 a="$d/.claude/work/audit_fixture.md"
-printf '## 2026-01-01 10:00 — Ada — one\n- **Body:** a real sentence\n' > "$a"
+printf '## 2026-01-01 10:00 - Ada - one\n- **Body:** a real sentence\n' > "$a"
 is "a clean file exits 0" "$(trc audit work/audit_fixture.md)" "0"
-printf '## 2026-01-01 10:00 — Ada — one\n- **Body:**\n## 2026-01-02 11:00 — Ada — two\n- **Body:**\n' > "$a"
+printf '## 2026-01-01 10:00 - Ada - one\n- **Body:**\n## 2026-01-02 11:00 - Ada - two\n- **Body:**\n' > "$a"
 is "a duplicated line exits 1" "$(trc audit work/audit_fixture.md)" "1"
 has "and prints the line two entries could collapse onto" "Body" "$(t audit work/audit_fixture.md)"
 # The splice union merge can make and `uniq -d` cannot see: a heading that is no longer at column 0.
@@ -760,8 +767,8 @@ hasnt "and does not search the docs repo" "task.sh" "$(t temporary)"
 
 # commit, against the bare origin set up above.
 printf 'saved\n' >> "$WC/plan.md"
-out="$(t commit "save: task — a line")"
-has "commit reports the SHA and the message" "save: task — a line" "$out"
+out="$(t commit "save: task, a line")"
+has "commit reports the SHA and the message" "save: task, a line" "$out"
 has "commit pushes when there is an origin" "pushed" "$out"
 is "the push actually landed" \
    "$(git -C "$d/.claude" rev-parse HEAD)" "$(git -C "$BARE" rev-parse main)"
@@ -889,7 +896,7 @@ git -C "$d/.claude" remote remove origin
     || ok "setup_apply refuses with no origin"
 
 # ---------------------------------------------------------------------------------------------
-section "20. bin/add_person.sh — solo, then shared"
+section "20. bin/add_person.sh: solo, then shared"
 d="$(newproj addperson solo single)"
 printf 'HOST="github"\n' >> "$d/.claude/project.conf"
 (cd "$d" && .claude/bin/setup_apply.sh >/dev/null 2>&1)

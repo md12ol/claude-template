@@ -1,11 +1,11 @@
-# <PROJECT> — working rules
+# <PROJECT>: working rules
 
 **The rules for working on this project, loaded automatically at the start of every session.** They
 say how work is tracked, which file owns which kind of fact, and what needs asking first. Where this
-file and the repository disagree, the repository wins — report it, don't follow the stale one.
+file and the repository disagree, the repository wins; report it, don't follow the stale one.
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
-     FILL IN — 1. WHO RUNS THE ENVIRONMENT
+     FILL IN: 1. WHO RUNS THE ENVIRONMENT
 
      Name the binaries the agent hands back to you, not the category; delete this block if it may
      run everything. Shape to copy:
@@ -22,19 +22,19 @@ file and the repository disagree, the repository wins — report it, don't follo
      ══════════════════════════════════════════════════════════════════════════════════════════ -->
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
-     FILL IN — 2. REPO LAYOUT
+     FILL IN: 2. REPO LAYOUT
 
      Delete if the project is one repo on one branch; fill it in if work spans submodules, sibling
      checkouts or vendored repos, which `git status` at the root says nothing about:
 
-         Work spans three repos, each on its own branch — read the branch, never assume:
+         Work spans three repos, each on its own branch; read the branch, never assume:
 
          | Path | Repo | Branch (as of <YYYY-MM-DD>) |
          |---|---|---|
          | `.`           | app  | `feature-x` |
          | `vendor/lib`  | lib  | `feature-x` |
 
-         Everything under `vendor/` is shared — **do not modify** without saying so first.
+         Everything under `vendor/` is shared: **do not modify** without saying so first.
          Key paths:  core logic `path/to/thing.py` · entrypoint `path/to/run.py`
 
      Date the branch column: an undated table quietly becomes a lie. Name the few paths that matter.
@@ -54,10 +54,10 @@ Two files decide the shape of everything below. **Read them; never guess from wh
 eval "$(.claude/bin/task.sh paths)"   # OWNER_DIR, WORK_CURRENT, WORK_PARKED and every key above
 ```
 
-**`PEOPLE`** — `solo` keeps live tasks at `work/current/`; `shared` moves them to
+**`PEOPLE`**: `solo` keeps live tasks at `work/current/`; `shared` moves them to
 `work/<owner>/current/`, turns on the union merge driver, and makes `work/owners.txt` load-bearing:
 an address missing from it stops that person's session dead, deliberately. **`MACHINES`** is a
-separate question, true far more often than people expect — `multi` wires `pull_main.sh`, stamps
+separate question, true far more often than people expect. `multi` wires `pull_main.sh`, stamps
 `Machine:` into `handoff.md` and turns on `/load`'s divergence check, and gates nothing else, the
 task directory being tracked, committed and pushed on every install. A laptop plus a desktop is
 `multi`; so is a cloud container. **Never hardcode a repo name, a clone URL or an email anywhere
@@ -70,28 +70,28 @@ Session state lives in `.claude/`; `$WORK_CURRENT` marks a path that depends on 
 
 | File | |
 |---|---|
-| `$WORK_CURRENT/plan.md` | objective + tasks. `[ ]` pending · `[x]` done **and verified** · `[~]` done, NOT verified. **A task list, not a record** — see the size rules below |
+| `$WORK_CURRENT/plan.md` | objective + tasks. `[ ]` pending · `[x]` done **and verified** · `[~]` done, NOT verified. **A task list, not a record**; see the size rules below |
 | `$WORK_CURRENT/plan_superseded.md` | original wording of tasks now done. Reference only, never actionable |
 | `$WORK_CURRENT/history.md` | append-only session log for this task |
-| `$WORK_CURRENT/handoff.md` | prompt for the next session — **read this first**. On a multi-machine install it carries `**Machine:** <host> · saved <YYYY-MM-DD HH:MM> · <sha>`, that `<sha>` being the code repo's short HEAD; once parked it also carries `**Blocked on:**` |
+| `$WORK_CURRENT/handoff.md` | prompt for the next session: **read this first**. On a multi-machine install it carries `**Machine:** <host> · saved <YYYY-MM-DD HH:MM> · <sha>`, that `<sha>` being the code repo's short HEAD; once parked it also carries `**Blocked on:**` |
 
-**Persistent** — these describe the *code*, not the work, so they outlive the task:
+**Persistent**: these describe the *code*, not the work, so they outlive the task:
 
 | File | |
 |---|---|
 | `decisions.md` | append-only: what was chosen and why |
 | `issues.md` | staged for the tracker, for other people. *Removed when `TRACKER_FIRST=yes`* |
 | `hotfixes.md` | temporary code in the tree, each with a `Remove when:` and an `Owner:`. *Removed when `TRACKER_FIRST=yes`* |
-| `traps.md` | permanent gotchas about this workspace — the things that bite every session |
-| `deferred.md` | **not yet** — wanted, out of scope for now. Sits between your design's non-goals (*never*) and the tracker (*now*). No dates, no ordering, no priority, or it becomes a second build order. *Removed when `TRACKER_FIRST=yes`* |
+| `traps.md` | permanent gotchas about this workspace: the things that bite every session |
+| `deferred.md` | **not yet**: wanted, out of scope for now. Sits between your design's non-goals (*never*) and the tracker (*now*). No dates, no ordering, no priority, or it becomes a second build order. *Removed when `TRACKER_FIRST=yes`* |
 | `issue_style.md` + `templates/` | what a filed issue **says**, and the skeleton to paste. The filing rules themselves are below |
 | `traps_retired.md` | traps whose failure has been fixed, each naming the fix. Retire when the mechanism could return; delete when it is simply gone |
 | `pipeline_backlog.md` | small changes to *this working-docs system* that block nobody. A churn list, batched to the next sitting if there is a team |
-| `reference/` *(outside `work/`)* | how a dependency or toolchain actually behaves — too long for `traps.md`, wrong shape for `decisions.md` because nothing was decided |
+| `reference/` *(outside `work/`)* | how a dependency or toolchain actually behaves; too long for `traps.md`, wrong shape for `decisions.md` because nothing was decided |
 | `collab.md` | running agenda between the people who share this repo: anything on one side that conflicts with or overrides the other's work. *Delete this row if you work alone* |
 | `collab_settled.md` | the archive half of `collab.md`. Item numbers run as one sequence across both files. *Delete if you work alone* |
 
-Each opens with the template its entries follow — match it rather than inventing a shape. Finished
+Each opens with the template its entries follow; match it rather than inventing a shape. Finished
 tasks land in `work/archive/<YYYY-MM>_<slug>/` and meetings in `work/meetings/`, both with **no owner
 in the path**: finished work is the project's history, and only *live* tasks are per-owner.
 
@@ -111,11 +111,11 @@ own the same facts, and none of the four consequences below applies:
   the ruling in `decisions.md` with the option not taken, amendments to every doc it binds, and a
   linked follow-up issue. A session asked to add an entry to a removed file stops and says so.
 
-### Keep `plan.md` small — it is a task list, not a record
+### Keep `plan.md` small: it is a task list, not a record
 
-- **Completed item: ≤ 3 lines**, compressed **when you tick it** — what was done, the one piece of
+- **Completed item: ≤ 3 lines**, compressed **when you tick it**: what was done, the one piece of
   evidence verifying it, and where the detail lives. Never paste the evidence in.
-- **Open item: ≤ 20 lines** — what to do, the verify-by, and any constraint that causes harm if
+- **Open item: ≤ 20 lines**: what to do, the verify-by, and any constraint that causes harm if
   forgotten. Longer reasoning goes in `decisions.md`, linked.
 - **Soft cap ~600 lines**; over it, compress the biggest completed items before appending. The
   session brief warns you. **Amalgamate** duplicate items rather than keeping both.
@@ -133,7 +133,7 @@ symptom is an empty `archive/` beside a plan nobody can afford to re-read.
 *Delete this whole section if you work alone.* It applies when `project.conf` says `PEOPLE="shared"`,
 several people cloning this working-docs repository onto their own machines. Four non-obvious rules.
 
-**1. Three docs merge by union — so stamp every entry with an author and a time.** `/setup` copies
+**1. Three docs merge by union, so stamp every entry with an author and a time.** `/setup` copies
 `gitattributes.multi-writer` over `.gitattributes` **in this repository**, giving `decisions.md`,
 `collab.md` and `collab_settled.md`, and nothing else, `merge=union`: both sides' appended lines
 survive with no conflict markers, and nothing ever conflicts, which is the catch. **Byte-identical**
@@ -148,13 +148,13 @@ merge, where a concurrent append conflicts and is resolved by hand.
 An entry's **first and last lines are what a merge treats as shared context**, so those must be
 unique. Four rules, all load-bearing:
 
-1. **A unique heading** with author and time: `## <YYYY-MM-DD> <HH:MM> — <name> — <title>`, or
+1. **A unique heading** with author and time: `## <YYYY-MM-DD> <HH:MM> - <name> - <title>`, or
    `### 7. <the item>` in `collab.md`.
-2. **A closing stamp repeating both** — `*#7 · raised <YYYY-MM-DD> <HH:MM> — <name>.*`; the number
+2. **A closing stamp repeating both**: `*#7 · raised <YYYY-MM-DD> <HH:MM> - <name>.*`; the number
    and the `HH:MM` are two independent guards against a byte-identical last line.
 3. **Never a bare `---` to close an entry**: headings delimit them already, and a repeated rule is
    exactly the identical boundary line rule 1 warns about.
-4. **No bare structural labels** — `- **Body:** <first sentence>`, never `- **Body:**` alone, and
+4. **No bare structural labels**: `- **Body:** <first sentence>`, never `- **Body:**` alone, and
    append the entry's slug to `- **Added:** <date>`. Keep the body distinctive too.
 
 **Audit after every merge that touches these files;** `.claude/bin/task.sh audit` runs both:
@@ -192,16 +192,16 @@ reduces to one test and one habit. Run `.claude/bin/comment_audit.sh <file>` ove
    compiling and independently pushable**, or the plan says why it cannot be split that way.
 2. Work: one task, run its `Verify by:`, **stop and report**. The stop is the review point, not a
    courtesy check-in: a push with no human reading the code is what it prevents.
-3. **`/save`**, last thing before you stop — update every doc, write the next-session prompt, commit
+3. **`/save`**, last thing before you stop: update every doc, write the next-session prompt, commit
    and push.
-4. **`/load [slug]`**, first thing when you return — read the handoff, check it against the repo,
+4. **`/load [slug]`**, first thing when you return: read the handoff, check it against the repo,
    report. With no slug it resolves what to do: the live task, naming any parked one and its blocker;
    the single parked task when the desk is clear; otherwise it asks, or points at `/start`.
-5. **`/done <slug>`** — settle every loose end, then archive `$WORK_CURRENT` into
+5. **`/done <slug>`**: settle every loose end, then archive `$WORK_CURRENT` into
    `work/archive/<YYYY-MM>_<slug>/`. It accepts a **parked** slug and unparks it itself; once the
    branch is merged it deletes both copies (`task.sh branch-done`), reporting while the PR is open.
 
-**Blocked, not finished** — **`/park <slug>`** saves, stamps what would unblock it, then sets the
+**Blocked, not finished**: **`/park <slug>`** saves, stamps what would unblock it, then sets the
 task down in `$WORK_PARKED/<slug>/` so `/start` is free; `/load <slug>` picks it up again, parking
 whatever is live to make room. **The `Blocked on:` line must name an event someone else could
 recognize as having happened**: "waiting on review" is not one, "PR #482 merging" is. The session
@@ -214,7 +214,7 @@ Behind all of it, in `.claude/bin/`: `task.sh` (the task lifecycle), `setup_appl
 go stale between sessions, and where they and the repo disagree the repo wins.
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
-     FILL IN — 3. FILING ISSUES
+     FILL IN: 3. FILING ISSUES
 
      Delete if the agent never files issues for you. Filing notifies real people and cannot be
      cleanly undone, so this is about consent more than mechanics. Cover the tool (GitHub/`gh`,
@@ -223,7 +223,7 @@ go stale between sessions, and where they and the repo disagree the repo wins.
      them. Then the rule this block exists for:
 
              **Confirm before every single file action.** Print the exact title, body, assignee,
-             labels and target project, then wait for an OK. One confirmation per issue — never a
+             labels and target project, then wait for an OK. One confirmation per issue, never a
              batch, never opportunistically mid-task.
 
      Plus the **target project** and whether it varies by component (if not, say so once and loudly:
@@ -236,7 +236,7 @@ go stale between sessions, and where they and the repo disagree the repo wins.
      ══════════════════════════════════════════════════════════════════════════════════════════ -->
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
-     FILL IN — 4. FILES OUTSIDE YOUR SCOPE
+     FILL IN: 4. FILES OUTSIDE YOUR SCOPE
 
      Delete if you own the whole tree; fill it in if the working tree carries deliberate edits to
      other people's components, or some directories are off-limits. Name the paths and point at
@@ -252,7 +252,7 @@ go stale between sessions, and where they and the repo disagree the repo wins.
      ══════════════════════════════════════════════════════════════════════════════════════════ -->
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
-     FILL IN — 5. REVIEW ROUTING
+     FILL IN: 5. REVIEW ROUTING
 
      Always fill this in. Route by "does this change what runs", not by which directory it is in,
      and keep the table short enough that nobody re-derives a row. Shape to copy:
@@ -280,7 +280,7 @@ go stale between sessions, and where they and the repo disagree the repo wins.
 
 - **Never mark work `[x]` you have not seen verified.** If it only compiled, or only ran somewhere
   that doesn't count, it is `[~]`. Work that looks done and isn't is this system's worst failure.
-- **Every task needs a `Verify by:`** — the command, the log line, the artifact to inspect. A task
+- **Every task needs a `Verify by:`** (the command, the log line, the artifact to inspect). A task
   with no verification method is how `[~]` items become false `[x]`s later.
 - **Don't commit or push unless asked**, with one exception: **a skill commits and pushes what it
   wrote in `.claude/`, and never code.** `/setup` commits its configuration (no push); `/save`,
@@ -315,8 +315,8 @@ go stale between sessions, and where they and the repo disagree the repo wins.
 - Date rules when you change them, and supersede rather than overwrite: strike the old line through
   and add the new one with its date and reason. The reversal trail beats a tidy file.
 
-<!-- FILL IN — house style: language or formatting rules an agent would otherwise get wrong.
-     e.g. "No column alignment — don't pad spaces to line up `=` or arguments."
+<!-- FILL IN: HOUSE STYLE. Language or formatting rules an agent would otherwise get wrong.
+     e.g. "No column alignment: don't pad spaces to line up `=` or arguments."
           "Screenshots: when asked to look at an image without a path, read the most recent file
            in <your screenshot directory>." -->
 

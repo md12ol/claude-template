@@ -74,7 +74,7 @@ tracker items by milestone, soonest first. Deviate only for a reason stated in t
 ## 4. Write the file
 
 ```markdown
-# Meeting — <YYYY-MM-DD>
+# Meeting: <YYYY-MM-DD>
 **Present:** <names>
 **Source:** `work/collab.md` at `<SHA>`, items <list>; issues <numbers, or "tracker skipped">
 **Status:** prepared
@@ -85,7 +85,7 @@ tracker items by milestone, soonest first. Deviate only for a reason stated in t
 
 ## <N>. <item title>
 **Status:** Decide
-**Raised:** <date> — <author>
+**Raised:** <date> - <author>
 <A brief PROPORTIONATE to the decision: two lines for a small one; for a large one, what is at
 stake, what has been tried, what each option costs. Never a summary that sends a reader to the source.>
 **Question:** <answerable by picking>   (a) <option>   (b) <option>

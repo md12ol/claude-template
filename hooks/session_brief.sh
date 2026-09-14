@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SessionStart — orient even when /load isn't typed.
+# SessionStart: orient even when /load isn't typed.
 #
 # Prints the handoff's "Start here" plus the counts that go stale silently: unverified [~] items,
 # open [ ] items, unfiled issues (dropped when the tracker holds them), traps, and a warning when
@@ -19,13 +19,13 @@ rule_top="─── .claude ─────────────────�
 rule_bot="───────────────────────────────────────────────────────────"
 
 # --- setup guard ---------------------------------------------------------------------------------
-# The PARTIAL case — .claude/ is there but missing the pieces that matter — is the only missing-
+# The PARTIAL case, .claude/ there but missing the pieces that matter, is the only missing-
 # clone case a hook CAN catch: absent entirely, settings.json and this script go with it. The
 # project's root CLAUDE.md, the one file that still loads, covers the total case.
 if [[ ! -d "$CLAUDE_DIR/skills" || ! -d "$CLAUDE_DIR/work" ]]; then
     load_conf
     echo "$rule_top"
-    echo "STOP — .claude/ is incomplete: skills/ or work/ is missing."
+    echo "STOP: .claude/ is incomplete, skills/ or work/ is missing."
     echo "It is a clone of $DOCS_REPO_NAME, not part of this repository."
     echo
     if [[ -n "$DOCS_REPO_URL" ]]; then
@@ -42,11 +42,11 @@ fi
 load_conf
 
 # /setup has not run yet if CLAUDE.md still carries its FILL IN blocks; /start would write a plan
-# against rules nobody has agreed. Match the em-dash heading every block opens with, never the bare
+# against rules nobody has agreed. Match the colon heading every block opens with, never the bare
 # words: a project rule that merely quotes them would otherwise read as unconfigured forever.
-if grep -q 'FILL IN —' "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null; then
+if grep -q 'FILL IN:' "$CLAUDE_DIR/CLAUDE.md" 2>/dev/null; then
     echo "$rule_top"
-    echo "This .claude/ has not been configured yet — CLAUDE.md still has FILL IN blocks."
+    echo "This .claude/ has not been configured yet: CLAUDE.md still has FILL IN blocks."
     echo "Run /setup first. It writes project.conf and CLAUDE.md, wires the hooks that apply,"
     echo "and adds .claude/ to this project's .gitignore. Then /start your first task."
     echo "$rule_bot"
@@ -56,10 +56,10 @@ fi
 resolve_owner
 
 # On a shared install an unrecognised identity is ambiguous, and writing into the wrong person's
-# directory is silent. Say so and stop — but exit 0: a hook that blocks a session is worse.
+# directory is silent. Say so and stop, but exit 0: a hook that blocks a session is worse.
 if is_shared && [[ -z "$OWNER_DIR" ]]; then
     echo "$rule_top"
-    echo "Unrecognised git user.email (${OWNER_EMAIL:-unset}) — cannot tell whose work/ directory this is."
+    echo "Unrecognised git user.email (${OWNER_EMAIL:-unset}): cannot tell whose work/ directory this is."
     echo "Add it to .claude/work/owners.txt (one line, no other file needs editing), then re-run."
     echo "$rule_bot"
     exit 0
@@ -73,7 +73,7 @@ count() {  # count <pattern> <file>
     echo "${n:-0}"
 }
 
-# Parked tasks, with what each is blocked on — the question you actually ask on return.
+# Parked tasks, with what each is blocked on: the question you actually ask on return.
 parked_report() {
     [[ -n "$WORK_PARKED" && -d "$WORK_PARKED" ]] || return 0
     local dir slug blocked
@@ -102,11 +102,11 @@ echo "$rule_top"
 
 if [[ ! -f "$WORK_CURRENT/plan.md" ]]; then
     if [[ -n "$(parked_report)" ]]; then
-        echo "No active task in .claude/$WORK_CURRENT/ — these are parked:"
+        echo "No active task in .claude/$WORK_CURRENT/; these are parked:"
         parked_report
         echo "Resume one with /load <slug>, or start something new with /start."
     else
-        echo "No active task in .claude/$WORK_CURRENT/ — start one with /start."
+        echo "No active task in .claude/$WORK_CURRENT/; start one with /start."
     fi
     others_report
     echo "$rule_bot"

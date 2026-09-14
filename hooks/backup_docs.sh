@@ -2,7 +2,7 @@
 # Back up this project's .claude/ working docs.
 #
 # Insurance for a .claude/ that is not its own clone; with one, the hooks calling it can go.
-# Snapshots land in ~/.claude-backups/<project>/<YYYY-MM-DD>/ — one per day, overwritten within the
+# Snapshots land in ~/.claude-backups/<project>/<YYYY-MM-DD>/, one per day, overwritten within the
 # day, pruned beyond RETAIN_DAYS. The project name is the directory containing .claude/, so nothing
 # needs configuring per project.
 #
@@ -36,7 +36,7 @@ THROTTLE_SECS="${CLAUDE_DOCS_BACKUP_THROTTLE:-900}"
 if [[ "${1:-}" != "--force" && -d "$DEST" && "$THROTTLE_SECS" -gt 0 ]]; then
     age=$(( $(date +%s) - $(stat -c %Y "$DEST") ))
     if (( age < THROTTLE_SECS )); then
-        echo "backup skipped — snapshot is ${age}s old (throttle ${THROTTLE_SECS}s)"
+        echo "backup skipped: snapshot is ${age}s old (throttle ${THROTTLE_SECS}s)"
         exit 0
     fi
 fi

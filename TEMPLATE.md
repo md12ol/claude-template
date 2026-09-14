@@ -1,7 +1,7 @@
 # About this template
 
 *This file is about the template itself, not about your project. Once you have run `/setup` you can
-delete it — nothing depends on it.*
+delete it; nothing depends on it.*
 
 This repository is a starting point for tracking work with
 [Claude Code](https://claude.com/claude-code). Its root **is** a `.claude/` directory: make your own
@@ -26,7 +26,7 @@ git clone <your-copy-url> .claude
 outright: you cannot fork your own repository into your own account on GitHub, which is what
 `<you>/claude-template` → `<you>/myproject-claude` would be; and a fork of a public repository is
 always public, while this one will hold your plans, decisions and session notes. A fork's upstream
-link buys nothing here either — nothing is expected to flow back. **Prerequisite, once:** the source
+link buys nothing here either: nothing is expected to flow back. **Prerequisite, once:** the source
 repository must be marked a *template repository* in its settings, or the button does not appear and
 `--template` is rejected; in a fresh copy that is already done. **On another host, or none:** clone
 this repository, delete its `.git`, and push the result somewhere new.
@@ -34,7 +34,7 @@ this repository, delete its `.git`, and push the result somewhere new.
 `optional/` holds pieces only some projects want, inert until `/setup` copies them into place.
 
 `/setup` reads the repo, asks what it cannot infer, writes `project.conf` and `CLAUDE.md`, wires the
-hooks that apply, adds `.claude/` to the project's `.gitignore`, and removes whatever cannot apply —
+hooks that apply, adds `.claude/` to the project's `.gitignore`, and removes whatever cannot apply:
 a solo project does not keep the coordination files, and a project that will never run Codex does
 not keep the bridge. Then `/start` your first task. **Step 3 is the only step with a decision in
 it**; the rest is one copy and one clone.
@@ -54,7 +54,7 @@ when this commit landed" is a timestamp lookup rather than one SHA.
 
 ## Your copy is yours, and diverges
 
-Once cloned it diverges — rewrite a skill, delete one, change the rules, rename files. **Nothing
+Once cloned it diverges: rewrite a skill, delete one, change the rules, rename files. **Nothing
 here expects changes to come back**, nothing checks for updates, and nothing goes stale because the
 template moved on. If you ever *want* something from a newer version, it is a merge you choose:
 
@@ -72,7 +72,7 @@ git fetch upstream && git merge upstream/main     # only when you actually want 
 
 CI runs both on push, for GitHub and GitLab alike, because the template must not assume a host.
 **Every case corresponds to a defect actually found, or to a claim the README makes.** When you fix
-a bug, add the case that would have caught it — and check it fails before the fix, since a check
+a bug, add the case that would have caught it, and check it fails before the fix, since a check
 that cannot fail is worse than none.
 
 MIT licence.

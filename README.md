@@ -1,4 +1,4 @@
-# `.claude/` — how work is tracked in this project
+# `.claude/`: how work is tracked in this project
 
 Claude Code sessions are stateless. This directory is the memory: what is being built, what was
 decided, what is temporarily hacked, and where the last session stopped. Six slash commands maintain
@@ -7,7 +7,7 @@ project that gitignores it, so the work record never enters the project's histor
 inside a build, and never freezes on whatever branch is checked out.
 
 ```
-/setup   once per project, right after cloning this in — fills in CLAUDE.md and project.conf
+/setup   once per project, right after cloning this in; fills in CLAUDE.md and project.conf
 /start   at the beginning of a piece of work
 /save    last thing before you stop, every session
 /load    first thing when you come back
@@ -31,12 +31,12 @@ Cloned this into a project and not set up yet? Run `/setup`.
                             finished? ──▶ /done <slug> ──▶ archive/
 ```
 
-- **`/setup`** runs once, ever: it inspects the repo, asks what it cannot infer — above all *which
-  commands you run yourself and the agent must not* — and turns `CLAUDE.md`'s placeholder blocks
+- **`/setup`** runs once, ever: it inspects the repo, asks what it cannot infer, above all *which
+  commands you run yourself and the agent must not*, and turns `CLAUDE.md`'s placeholder blocks
   into this project's rules. **`/start`** then agrees the objective and writes the task's `plan.md`
   **before any code**, refusing to run while an unfinished task is still live.
 - **`/save`** is the important one. It re-reads the session for what was *discussed but never
-  landed* — agreed then diverted, noticed in passing, asked and unanswered — asks about what it
+  landed* (agreed then diverted, noticed in passing, asked and unanswered), asks about what it
   cannot settle, then updates every doc, writes the next-session prompt, and commits and pushes the
   task directory so the next machine has it. **`/load`** reads that prompt and **checks it against
   the repo** before trusting it: where stale docs disagree with the code, the code wins.
@@ -59,7 +59,7 @@ issue that removes it, and a finding noticed mid-task is reported rather than st
 ## How this directory is configured
 
 `project.conf` holds this project's identity and two switches; `work/owners.txt` holds the
-email-to-directory table on a shared install. **Everything else reads them** — nothing hardcodes a
+email-to-directory table on a shared install. **Everything else reads them**: nothing hardcodes a
 repo name, a clone URL or anyone's email.
 
 | Switch | |
@@ -68,7 +68,7 @@ repo name, a clone URL or anyone's email.
 | `MACHINES=single\|multi` | whether `handoff.md` carries a `Machine:` stamp, `pull_main.sh` is wired, and `/load` checks for cross-machine divergence |
 
 Separate questions: one person with two computers is `solo` + `multi`. The task directory is tracked
-and pushed either way. Unsure which applies? Ask before writing into a task directory — on a shared
+and pushed either way. Unsure which applies? Ask before writing into a task directory: on a shared
 install, writing into the wrong person's is silent.
 
 ## Where the rest lives

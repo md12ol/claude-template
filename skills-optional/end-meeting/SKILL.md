@@ -1,6 +1,6 @@
 ---
 name: end-meeting
-description: Read the answers written by hand into a meeting agenda, compile them into an action list, ask any clarifying questions in one round, then execute — amending the working docs, applying code and documentation changes, and filing tracker issues, routing each through the review path its own file requires. Use once every item in the agenda has a written response.
+description: Read the answers written by hand into a meeting agenda, compile them into an action list, ask any clarifying questions in one round, then execute: amending the working docs, applying code and documentation changes, and filing tracker issues, routing each through the review path its own file requires. Use once every item in the agenda has a written response.
 ---
 
 # End meeting

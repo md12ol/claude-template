@@ -1,6 +1,6 @@
 ---
 name: done
-description: Close out the finished task — run a final save, settle every loose end, then archive $WORK_CURRENT to work/archive/<YYYY-MM>_<slug>/ and leave a clean desk. Use when the user says a task is done, finished or wrapped up, or wants to start a new task.
+description: Close out the finished task: run a final save, settle every loose end, then archive $WORK_CURRENT to work/archive/<YYYY-MM>_<slug>/ and leave a clean desk. Use when the user says a task is done, finished or wrapped up, or wants to start a new task.
 model: sonnet
 ---
 
@@ -20,11 +20,11 @@ eval "$(.claude/bin/task.sh paths)" && .claude/bin/task.sh pull
 ```
 
 Both paths are inside the `.claude/` repository, never the branch you are coding on. On a shared
-install an unrecognised git email stops here — ask whose it is, never guess.
+install an unrecognised git email stops here; ask whose it is, never guess.
 
 ## 1. Read the argument for intent
 
-Normally the argument is the **archive slug** — what follows `<YYYY-MM>_`. `/done api-migration` →
+Normally the argument is the **archive slug**, what follows `<YYYY-MM>_`. `/done api-migration` →
 `work/archive/2026-07_api-migration/`. Lowercase it, spaces and underscores to hyphens, strip
 anything outside `[a-z0-9-]`. Unless it clearly is not a slug:
 
@@ -33,7 +33,7 @@ anything outside `[a-z0-9-]`. Unless it clearly is not a slug:
 - A path, or an existing archive directory → they mean *that* directory; ask before writing into it.
 - A sentence or directive (`just the teardown work`, `don't archive yet, only save`) → scope, not a
   name: follow it, and derive the slug from the plan's objective.
-- Empty → derive it from the `# Plan —` line, and **show it for confirmation** before archiving.
+- Empty → derive it from the `# Plan:` line, and **show it for confirmation** before archiving.
 
 In doubt, say which slug you are about to use and why, then proceed.
 
@@ -72,13 +72,13 @@ Ask whether each is done, abandoned, or moving to the next task. Never archive o
 - **Findings**: `issues.md` entries still `Filed: not yet`, or on a tracker-first install every
   finding this task reported and never filed, from `history.md` and this session. File them now;
   once the task is archived nobody looks again.
-- `traps.md` — drop any entry no longer true (the tool was fixed, the path changed).
-- `collab.md`, if it exists — mark what this task settled, flag any Open item its outcome overtook,
+- `traps.md`: drop any entry no longer true (the tool was fixed, the path changed).
+- `collab.md`, if it exists: mark what this task settled, flag any Open item its outcome overtook,
   and never delete an item.
-- `decisions.md` — append a `## Task complete: <slug> — <YYYY-MM-DD>` marker, so later entries are
+- `decisions.md`: append a `## Task complete: <slug>, <YYYY-MM-DD>` marker, so later entries are
   attributable to the right task.
 
-## 4. GATE — do not archive until everything outstanding is dispositioned
+## 4. GATE: do not archive until everything outstanding is dispositioned
 
 A hard stop, and the last moment anyone looks at this task's loose ends. Collect them as one
 numbered list: unfiled findings; temporary code whose removal condition now looks met, and anything

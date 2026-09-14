@@ -1,7 +1,7 @@
 # Codex adapter
 
 **How to read this project's Claude Code workflows when running under Codex.** It translates
-host-specific mechanics only — tool names, invocation syntax, frontmatter that does not apply — and
+host-specific mechanics only (tool names, invocation syntax, frontmatter that does not apply) and
 never changes what a workflow means or which of its stops are required. The selected
 `.claude/skills/<name>/SKILL.md` is **canonical**: read it completely, then follow its intent and
 safety boundaries, translating only what is listed here.
@@ -12,7 +12,7 @@ safety boundaries, translating only what is listed here.
   canonical workflow means *load that workflow*; it does not permit its side effects.
 - **`AskUserQuestion` means Codex's structured user-input mechanism**, or the same concise question
   as plain text where there is none. **Preserve every required stop, confirmation and
-  one-action-at-a-time boundary** — what is most easily lost in translation, and costliest to lose.
+  one-action-at-a-time boundary**: what is most easily lost in translation, and costliest to lose.
 - **`$CLAUDE_PROJECT_DIR` means the project root.** Never rename a variable in a canonical hook.
 - **Repository operations:** prefer a connected host integration; fall back to the configured CLI
   (`project.conf`, `TRACKER_CLI`) where the workflow needs what the integration does not expose.

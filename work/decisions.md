@@ -7,7 +7,7 @@ Maintained by `/save`; survives `/done`, since decisions constrain the codebase 
 
 ---
 
-## <YYYY-MM-DD> <HH:MM> — <author> — <short title>
+## <YYYY-MM-DD> <HH:MM> - <author> - <short title>
 **Chose:** what we're doing.
 **Why:** the reasoning, in the terms it was actually argued.
 **Rejected:** the alternatives considered, and what ruled them out.

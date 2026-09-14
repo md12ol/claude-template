@@ -49,7 +49,7 @@ report "looks like commented-out code" \
 
 [[ $hits -eq 0 ]] && echo "  clean: $file"
 
-# <!-- FILL IN — the shapes that keep coming back in THIS project's reviews.
+# <!-- FILL IN: the shapes that keep coming back in THIS project's reviews.
 #
 # One `report` line each, in the same form as the generic ones above: a label naming what to do
 # instead, then an extended regex. The ones worth adding are the corrections a reviewer here has

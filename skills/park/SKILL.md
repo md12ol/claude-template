@@ -1,6 +1,6 @@
 ---
 name: park
-description: Park a blocked task — run /save, stamp what would unblock it, then set the task down in $WORK_PARKED/<slug>/ so another task can start without losing this one's plan, history and handoff. Use when a task cannot proceed and you want to work on something else meanwhile.
+description: Park a blocked task: run /save, stamp what would unblock it, then set the task down in $WORK_PARKED/<slug>/ so another task can start without losing this one's plan, history and handoff. Use when a task cannot proceed and you want to work on something else meanwhile.
 model: sonnet
 ---
 
@@ -25,7 +25,7 @@ install an unrecognised git email stops here: ask whose it is, never guess.
 `[a-z0-9-]` only; with no argument, propose one from the plan's objective and confirm it. **Parked
 slugs carry no date prefix**: only `work/archive/` is a chronological record.
 
-## 2. Save first — the whole of `/save`, not a subset
+## 2. Save first, the whole of `/save`, not a subset
 
 Run `/save` to completion first, and if it stops to ask something, let it. The loose-thread sweep
 matters more here than in an ordinary save: whatever is half-decided is about to sit untouched for
@@ -50,7 +50,7 @@ warns, still parks, and the brief then shows "no blocker recorded".
 
 ```bash
 .claude/bin/task.sh park <slug>
-.claude/bin/task.sh commit "park: <slug> — blocked on <the event>"
+.claude/bin/task.sh commit "park: <slug>, blocked on <the event>"
 ```
 
 `park` refuses a slug already parked (ask for another; never merge two task directories), a slug

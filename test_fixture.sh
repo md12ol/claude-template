@@ -184,7 +184,7 @@ cp "$TMP/handoff.bak" "$WC/handoff.md"
 
 # --- 4. the docs repo round-trips through its origin ----------------------------------------------
 section "4. commit and push the task directory; pull_main fast-forwards both repos"
-out="$(tsk commit "save: fixture — the real task directory")"
+out="$(tsk commit "save: fixture, the real task directory")"
 has "task.sh commit reports the commit" "save: fixture" "$out"
 has "and pushes to the bed's origin" "pushed" "$out"
 is "the push landed" "$(git -C "$DOCS" rev-parse HEAD)" "$(git -C "$DOCS_ORIGIN" rev-parse main)"

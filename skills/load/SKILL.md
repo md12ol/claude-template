@@ -1,12 +1,12 @@
 ---
 name: load
-description: Pick up the current task — read $WORK_CURRENT/handoff.md, plan.md, decisions.md and traps.md, check them against the actual repo state, and report where things stand before doing any work. Use at the start of a session, when resuming a task, or when the user asks where things are.
+description: Pick up the current task: read $WORK_CURRENT/handoff.md, plan.md, decisions.md and traps.md, check them against the actual repo state, and report where things stand before doing any work. Use at the start of a session, when resuming a task, or when the user asks where things are.
 model: sonnet
 ---
 
 # Load
 
-`/save` wrote `$WORK_CURRENT/handoff.md` for you. Consume it, **check it is still true**, report —
+`/save` wrote `$WORK_CURRENT/handoff.md` for you. Consume it, **check it is still true**, report,
 then stop and wait. `/load` orients; it does not begin work.
 
 `/load <slug>` resumes a parked task instead of what is live.
@@ -18,7 +18,7 @@ eval "$(.claude/bin/task.sh paths)" && .claude/bin/task.sh pull
 ```
 
 Both paths are inside the `.claude/` repository, never the branch you are coding on. On a shared
-install an unrecognised git email stops here — ask whose it is, never guess.
+install an unrecognised git email stops here; ask whose it is, never guess.
 
 ## 1. Resolve which task, before reading anything as true
 
@@ -72,16 +72,16 @@ of a handoff describing a tree that no longer exists.
 
 ## 3. Read, in this order
 
-1. `$WORK_CURRENT/handoff.md` — the instruction from the last session. The primary input.
-2. `$WORK_CURRENT/plan.md` — objective and task status.
-3. `work/decisions.md` — the recent entries at least. **Do not re-litigate anything recorded here**;
+1. `$WORK_CURRENT/handoff.md`: the instruction from the last session. The primary input.
+2. `$WORK_CURRENT/plan.md`: objective and task status.
+3. `work/decisions.md`: the recent entries at least. **Do not re-litigate anything recorded here**;
    if you think one is wrong, say so rather than quietly doing something else.
 4. `work/hotfixes.md`, or `.claude/bin/task.sh temporary` where `TRACKER_FIRST="yes"`: temporary
    code you might otherwise mistake for a bug, or delete.
-5. `work/traps.md` — each one is there because it already cost someone a session.
+5. `work/traps.md`: each one is there because it already cost someone a session.
 6. `work/issues.md`, or the tracker's open list where `TRACKER_FIRST="yes"` (the CLI is
    `TRACKER_CLI` in `project.conf`), only to notice what is logged, so you don't re-report it.
-7. `work/collab.md`, if it exists — the **Open** items. Each is a decision on one side that
+7. `work/collab.md`, if it exists: the **Open** items. Each is a decision on one side that
    overrides work on the other, and acting against one is how someone's work gets overwritten.
 
 On a shared install run `.claude/bin/task.sh audit` and report what it prints: open items nobody has
@@ -98,13 +98,13 @@ interleaved. A doubled or self-contradicting entry is a merge artefact, not a de
 
 The handoff may be days old. Treat it as a claim to check:
 
-- **Branches** — `git branch --show-current` for every repo the work spans. The manifest may name a
+- **Branches**: `git branch --show-current` for every repo the work spans. The manifest may name a
   branch you are no longer on.
-- **Working tree** — `git status --short` per repo. Files may have been committed, reverted or
+- **Working tree**: `git status --short` per repo. Files may have been committed, reverted or
   edited since; recorded conflicts may now be resolved, or the reverse.
-- **Specific claims** — where the handoff says a file is in some state ("unresolved conflict",
+- **Specific claims**: where the handoff says a file is in some state ("unresolved conflict",
   "stub", "not yet written"), open it. Cheap, and exactly the class that goes stale.
-- **`[~]` items** — check whether the `Verify by:` has since happened. Never promote `[~]` to `[x]`
+- **`[~]` items**: check whether the `Verify by:` has since happened. Never promote `[~]` to `[x]`
   on inference; only on evidence, or on the user saying they ran it.
 
 Where reality and the docs disagree, **the repo wins**. Report the discrepancy; don't silently patch
@@ -114,7 +114,7 @@ the docs to match, and don't silently follow the stale version.
 
 - **Where things stand**: 2–4 sentences, corrected by what you verified, and **what changed**
   since it was written, explicitly, or "nothing changed".
-- **Start here** — the next concrete action the handoff names, or the first `[ ]` item in the plan.
+- **Start here**: the next concrete action the handoff names, or the first `[ ]` item in the plan.
 - **Live traps**: `[~]` items oldest first with their age, hotfixes or `TEMPORARY (` markers in
   the code you are about to touch, and the plan's open questions that gate the next action.
 - **Parked tasks and any swap**: one line each, slug, blocker, and whether it now looks unblocked.

@@ -3,12 +3,12 @@
 #     <git-email>	<directory-name>	<display name>
 #
 # Tab or spaces between fields; # comments and blank lines are ignored. THIS IS THE ONLY COPY of
-# the table — hooks and scripts read it through hooks/lib.sh, so adding a person is a one-line edit
+# the table: hooks and scripts read it through hooks/lib.sh, so adding a person is a one-line edit
 # here and nowhere else. Give each of a person's addresses (work, personal, a host's noreply) its
 # own line pointing at the same directory: an address missing here stops that session dead, which
 # is the point. <directory-name> becomes the path in work/<owner>/ on a SHARED install, so keep it
 # short, stable and filesystem-safe. On a SOLO install nothing reads this file and /setup deletes
-# it; /add-person restores it. Example — delete these lines and add your own:
+# it; /add-person restores it. Example, delete these lines and add your own:
 #
 # ada@example.com	ada	Ada Lovelace
 # 1234567+ada@users.noreply.github.com	ada	Ada Lovelace

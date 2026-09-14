@@ -2,13 +2,13 @@
 
 **This binds every comment written or edited in this project.** It is short on purpose: the whole of
 it reduces to one test and one habit, and everything else is that test applied to shapes that keep
-recurring. Where this file and a comment in the tree disagree, this file is the intent — fix the
+recurring. Where this file and a comment in the tree disagree, this file is the intent; fix the
 comment. It is deliberately language-neutral: answer the block at the end for your project, and
 delete any section that does not apply to how your language actually works.
 
 ## 1. The test
 
-**Would deleting this make a competent reader — new to *this code*, not new to the field — more
+**Would deleting this make a competent reader, new to *this code* rather than new to the field, more
 likely to misunderstand or break it?**
 
 No → delete it. That is the whole rule. **The default is no comment**; one line is the norm, a
@@ -26,18 +26,18 @@ documentation · prose.**
 A comment explaining what `d` holds is worse than renaming it; one warning that the caller must call
 `init()` first is worse than a runtime check, or a type that makes it impossible; one describing the
 three cases handled here is worse than three tests named after them. Reach for prose only when none
-of the above can carry it — mostly for **why**, almost never for **what**.
+of the above can carry it: mostly for **why**, almost never for **what**.
 
 ## 3. What earns a comment
 
 - **A reason not visible from the code.** Why this algorithm and not the obvious one, why this
   constant, why the order of these two lines matters. The most valuable comment there is, and the
   one most often missing.
-- **A precondition the type system cannot express** — one line, stating the failure, not the rule:
+- **A precondition the type system cannot express**: one line, stating the failure, not the rule:
   "panics if the slice is empty" beats "the slice must not be empty".
 - **A caller-visible effect that is easy to miss**: a parameter mutated in place, a global touched.
 - **A deliberate divergence from a sibling.** Where two similar functions differ on purpose, the odd
-  one out says why — otherwise the next person "fixes" it.
+  one out says why, or the next person "fixes" it.
 - **A workaround for someone else's bug**, with enough detail to retire it: what breaks, and what
   would have to change for this to go away. Cross-reference it where temporary code is tracked.
 
@@ -45,10 +45,10 @@ of the above can carry it — mostly for **why**, almost never for **what**.
 
 - **Anything that narrates the next line** (`// increment the counter` above `counter += 1`), and
   anything that restates a name: if the comment is the name in a sentence, delete the comment.
-- **Counts and roll-calls that rot.** "the three supported backends", "all five callers" — say "each
+- **Counts and roll-calls that rot.** "the three supported backends", "all five callers". Say "each
   backend", "every caller". A number is wrong the moment someone adds a sixth, and nothing tells you.
 - **Commented-out code.** Version control already has it, with a date and an author.
-- **A comment describing a state of the world** — "currently unused", "will be replaced next
+- **A comment describing a state of the world**: "currently unused", "will be replaced next
   quarter". Say what the thing is *for*; that does not rot.
 - **A pointer to a document the reader cannot open.** Shipped source citing an internal planning
   doc, a private tracker or a design file outside the repo is a dead end downstream: state the
@@ -76,7 +76,7 @@ of the above can carry it — mostly for **why**, almost never for **what**.
 ## 6. Extension markers
 
 When adding a feature means touching several places in a fixed order, mark each site with a literal,
-greppable token — `ADD A <THING> STEP <n>` — rather than describing the sequence in prose somewhere
+greppable token, `ADD A <THING> STEP <n>`, rather than describing the sequence in prose somewhere
 else, so that one command finds every site at once:
 
 ```bash
@@ -135,10 +135,10 @@ Two things carry over that a test sweep will be tempted to drop. **Fixture build
 functions** and their preconditions are ordinary preconditions. And **§6's marker prefix binds test
 comments too**: a test that repeats one in prose puts a non-marker into the chain the grep produces.
 
-<!-- FILL IN — delete this block once you have answered it.
+<!-- FILL IN: delete this block once you have answered it.
 
 Doc-comment form:  e.g. `///` and `//!`, docstrings, JSDoc, KDoc. Which form is used for what, and
-  whether generated docs are published anywhere — a doc comment is read by people who will never
+  whether generated docs are published anywhere; a doc comment is read by people who will never
   open this file, so it has a different audience from an inline one.
 
 Spelling and voice:  e.g. Canadian spelling in prose, imperative mood, no first person.
@@ -146,5 +146,5 @@ Spelling and voice:  e.g. Canadian spelling in prose, imperative mood, no first 
 What this project bans outright:  the shapes that keep coming back in review here.
 
 Where the design rationale lives, and whether source may cite it:  if that document is outside the
-  shipped tree, the answer is no — see §4.
+  shipped tree, the answer is no; see §4.
 -->
