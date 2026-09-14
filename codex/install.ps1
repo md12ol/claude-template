@@ -2,12 +2,12 @@
 #
 #     .\.claude\codex\install.ps1
 #
-# Uses HARD LINKS for files and a DIRECTORY JUNCTION for the wrappers, not symlinks: a Windows
-# symlink needs Developer Mode or an elevated prompt, and failing on that would make the bridge
-# unavailable to exactly the people who cannot enable it. Hard links and junctions need neither.
+# Uses HARD LINKS for files and a DIRECTORY JUNCTION for the wrappers: a Windows symlink needs
+# Developer Mode or an elevated prompt, and failing on that would make the bridge unavailable to
+# exactly the people who cannot enable it.
 #
-# Re-run this if the same checkout moves between WSL and native Windows — the two create different
-# link types and only one of them is meaningful to the environment launching Codex.
+# Re-run it if the same checkout moves between WSL and native Windows — the two create different
+# link types and only one is meaningful to the environment launching Codex.
 
 $ErrorActionPreference = 'Stop'
 

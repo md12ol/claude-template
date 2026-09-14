@@ -6,16 +6,16 @@
 # A wrapper is three lines pointing at the canonical SKILL.md, plus that skill's own name and
 # description so Codex can offer it. Nothing is forked: change a workflow once and both hosts see it.
 #
-# Run this after adding, removing or renaming a canonical skill. check_bridge.sh verifies the
-# result and is what tells you a wrapper has gone stale.
+# Run it after adding, removing or renaming a canonical skill; check_bridge.sh is what tells you a
+# wrapper has gone stale.
 set -euo pipefail
 
 BRIDGE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$(dirname "$BRIDGE")"
 mkdir -p "$BRIDGE/skills"
 
-# Drop wrappers whose canonical skill is gone. A wrapper with no target is the silent failure this
-# whole script exists to prevent: Codex offers the command and it does nothing.
+# Drop wrappers whose canonical skill is gone. A wrapper with no target is the silent failure:
+# Codex offers the command and it does nothing.
 for w in "$BRIDGE"/skills/*/; do
     [[ -d "$w" ]] || continue
     n="$(basename "$w")"
