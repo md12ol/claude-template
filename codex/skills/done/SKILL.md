@@ -1,6 +1,6 @@
 ---
 name: done
-description: Close out the finished task — run a final save, then archive .claude/$WORK_CURRENT/ to .claude/work/archive/<YYYY-MM>_<slug>/ and start a clean current/. Use when the user says a task is done, finished, wrapped up, or wants to start a new task.
+description: Close out the finished task — run a final save, settle every loose end, then archive $WORK_CURRENT to work/archive/<YYYY-MM>_<slug>/ and leave a clean desk. Use when the user says a task is done, finished or wrapped up, or wants to start a new task.
 ---
 
 Read [the shared Codex adapter](../../ADAPTER.md), then read and execute the complete canonical

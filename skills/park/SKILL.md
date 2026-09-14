@@ -1,142 +1,70 @@
 ---
 name: park
-description: Park a blocked task — run /save, then move the live task directory into work/parked/<slug>/ so another task can start without losing this one's plan, history and handoff. Use when a task cannot proceed (waiting on a review, an unmerged change, an unanswered question, someone else's deploy) and you want to work on something else meanwhile.
+description: Park a blocked task — run /save, stamp what would unblock it, then set the task down in $WORK_PARKED/<slug>/ so another task can start without losing this one's plan, history and handoff. Use when a task cannot proceed and you want to work on something else meanwhile.
 ---
 
 # Park
 
-Set a blocked task down without losing it. `/park <slug>` saves the session, then moves
-`$WORK_CURRENT` to `$WORK_PARKED/<slug>/`, leaving the live directory empty for the next `/start`.
+Set a blocked task down without losing it. `/park <slug>` saves the session, stamps the blocker and
+moves `$WORK_CURRENT` to `$WORK_PARKED/<slug>/`, leaving the live directory empty for `/start`.
+**This is not `/done`.** `/done` is for finished work; everything `/park` moves comes back via
+`/load <slug>`. The alternatives are a blocked task squatting in the live directory, or an archive
+README claiming an outcome that never happened.
 
-**This is not `/done`.** `/done` is for finished work and archives to `work/archive/`, which is
-shared history. `/park` is for **unfinished** work that cannot proceed right now, and everything it
-moves is expected to come back via `/load <slug>`.
-
-**The alternative is worse than it looks.** Without it a blocked task either sits in the live
-directory blocking `/start`, so the next piece of work happens with no plan at all, or is closed
-with `/done`, which writes an archive README claiming an outcome that never happened. Both silent.
-
-## 0. Resolve where work lives — read it, do not assume it
-
-Live task paths depend on how this `.claude/` is configured. **Read the configuration; never guess
-from what is on disk.**
+## 0. Where work lives
 
 ```bash
-. .claude/hooks/lib.sh && load_conf && resolve_owner
-echo "$WORK_CURRENT"      # work/current  OR  work/<owner>/current
-echo "$WORK_PARKED"       # work/parked   OR  work/<owner>/parked
+eval "$(.claude/bin/task.sh paths)" && .claude/bin/task.sh pull
 ```
 
-On a **shared** install the owner is `git config user.email` matched against `work/owners.txt`, the
-only copy of that table. An empty `WORK_CURRENT` means the address is missing: **stop and ask**,
-never pick the likeliest person — writing into someone else's directory is silent, and surfaces only
-when they open a directory they didn't expect to have work in.
-
-Everything below writes `$WORK_CURRENT` and `$WORK_PARKED`, and every one of those paths is inside
-the **`.claude/` repository**, not the branch this session is coding on. Pull it first; the main
-tree's checked-out branch is never switched, stashed or touched.
-
-```bash
-git -C .claude pull --ff-only
-```
+Both paths are inside the `.claude/` repository, never the branch you are coding on. On a shared
+install an unrecognised git email stops here — ask whose it is, never guess.
 
 ## 1. Name the slug
 
-`/park <slug>`. With no argument, propose one from the plan's objective and confirm it.
-
-**Parked slugs carry no date prefix.** `work/archive/` uses `<YYYY-MM>_<slug>` because it is a
-chronological record; a parked task is live and takes its date from the plan it still carries. A
-date in the name would say when it was parked, which is the least useful fact about it.
-
-Refuse a slug that already exists in `$WORK_PARKED` and ask for another. Never merge two task
-directories.
+`[a-z0-9-]` only; with no argument, propose one from the plan's objective and confirm it. **Parked
+slugs carry no date prefix** — `work/archive/` is a chronological record, but a parked task is live
+and takes its date from the plan it still carries.
 
 ## 2. Save first — the whole of `/save`, not a subset
 
-Run `/save` to completion before moving anything. Every part of it earns its place here:
-
-- The **loose-thread sweep** matters more when parking than in an ordinary save. Whatever is
-  half-decided in this session is about to sit untouched for days, and the sweep is the only thing
-  that catches it.
-- `history.md` gets the session entry, so the record does not stop mid-thought.
-- `handoff.md` gets written for a reader who has forgotten everything — which, after a park, is
-  exactly who shows up.
-
-If `/save` stops to ask you something, let it. Parking on top of an incomplete save is how a task
-comes back missing the reason it was parked.
+Run `/save` to completion first, and if it stops to ask something, let it. The loose-thread sweep
+matters more here than in an ordinary save — whatever is half-decided is about to sit untouched for
+days — and `handoff.md` gets written for a reader who has forgotten everything.
 
 ## 3. Stamp `handoff.md` with what would unblock it
 
-Add this line, right under the heading:
+Add `**Blocked on:** <the concrete event that would make this workable again>` directly under the
+handoff's heading.
 
-```
-**Blocked on:** <the concrete event that would make this workable again>
-```
+**Name an event, not a feeling.** "Waiting on review" is not a blocker; "PR #482 merging" is. The
+test: could someone else read the line and tell you the moment it came true? The session brief
+prints it beside the slug at every session start, so a bad one is noise until the task returns. If
+nothing concrete would unblock it, the task is deprioritized rather than blocked — `/done` with an
+honest outcome, or `work/deferred.md`.
 
-**Name an event, not a feeling.** "Waiting on review" is not a blocker; "PR #482 merging, or its
-author saying the API is final" is. The test: could someone else read the line and tell you the
-moment it came true? The session brief prints it beside every parked slug, so a bad one is noise at
-every session start until the task returns.
-
-If nothing concrete would unblock it, the task is not blocked but deprioritized — which means
-`/done` with an honest outcome, or an entry in `work/deferred.md`.
-
-## 4. Move it
+## 4. Move it, then commit
 
 ```bash
-mkdir -p "$WORK_PARKED"
-mv "$WORK_CURRENT" "$WORK_PARKED/<slug>"
-mkdir -p "$WORK_CURRENT"      # left empty, so /start has somewhere to write
+.claude/bin/task.sh park <slug>
+.claude/bin/task.sh commit "park: <slug> — blocked on <the event>"
 ```
 
-Check the parked copy is a task directory and not a directory containing one — if `<slug>` already
-existed, `mv` will have nested it silently:
+`park` refuses a slug already parked (ask for another; never merge two task directories), a slug
+outside `[a-z0-9-]`, and a `$WORK_CURRENT` with no `plan.md`. `commit` pushes when the docs clone
+has an `origin`: a park that never reaches it looks parked here and simply missing on the other
+machine. **On a rejected push, do not force** — report and stop.
 
-```bash
-ls "$WORK_PARKED/<slug>"      # expect plan.md and handoff.md, not another directory
-```
+## 5. Report, then stop
 
-That last `mkdir` is why **`/load <slug>` must `rmdir` before moving the task back**: unparking into
-an existing directory nests it one level down, and nothing errors. `/load` §0.5 handles it — don't
-hand-roll the reverse of this step.
-
-Then confirm the live directory is genuinely empty. `/start` refuses to run while it is not, and a
-stray `plan_superseded.md` is the usual culprit:
-
-```bash
-ls -A "$WORK_CURRENT"
-```
-
-## 5. Commit and push, if the directory is tracked
-
-Same narrow exception as `/save` §10: `$WORK_CURRENT` and `$WORK_PARKED` only, and only when
-tracked. A park that never reaches `origin` is worse than an unsaved one — the task looks parked
-here and simply missing on the other machine.
-
-```bash
-git -C .claude add -A "$WORK_CURRENT" "$WORK_PARKED"
-git -C .claude commit -m "park: <slug> — blocked on <the event>"
-git -C .claude push
-```
-
-## 6. Report, then stop
-
-Four lines:
-
-- what was parked, and the slug it is under
-- what it is blocked on, quoted from the stamp
-- what else is parked, so the pile is visible before it becomes a surprise
-- that `/start` is now free, and `/load <slug>` brings this one back
-
-Do not start the next task as part of `/park`. They are two decisions, and running them together is
-how the next task inherits the last one's framing.
+Four lines: what was parked and under which slug; what it is blocked on, quoted from the stamp;
+what else is parked, so the pile is visible before it is a surprise; and that `/start` is free while
+`/load <slug>` brings this one back. Do not start the next task as part of `/park` — running the two
+decisions together is how the next task inherits the last one's framing.
 
 ## Constraints
 
-- **Never park without saving.** The whole value is that the task comes back intact.
-- **Never park a finished task.** If the work is done, it is `/done` — a parked task that is
-  actually complete will be re-read as unfinished by whoever finds it.
-- **Never park into another owner's directory**, on a shared install. If `resolve_owner` came back
-  empty, stop and ask.
+- **Never park without saving**, and **never park a finished task** — whoever finds it will read it
+  as unfinished. Finished work is `/done`.
 - **Do not edit `plan.md` to reflect being blocked.** The plan stays a task list; the blocker lives
-  in `handoff.md`, which is where `/load` and the session brief both look for it.
+  in `handoff.md`, where `/load` and the session brief both look for it.
