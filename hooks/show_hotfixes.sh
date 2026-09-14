@@ -4,6 +4,8 @@
 #   1. Files outside your scope — paths carrying deliberate working-tree edits, whose disposition is
 #      per-file and only hotfixes.md knows. EDIT THE PATH PATTERN BELOW BEFORE ENABLING; it is an
 #      example. Per-machine override: CLAUDE_SCOPED_PATHS (an ERE) in settings.local.json.
+#      On a TRACKER_FIRST install there is no hotfixes.md: it lists the file's own TEMPORARY (
+#      markers instead, which is where temporary code records itself there.
 #   2. The .claude/ machinery itself. settings.json and hooks/*.sh execute on everyone ELSE's machine
 #      at session start, without them reading the diff. Needs no configuring; keep it even solo.
 #
@@ -15,7 +17,11 @@
 
 set -uo pipefail
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+claude_paths
+load_conf
+DIR="$CLAUDE_DIR"
 
 FILE="$(python3 -c 'import json,sys
 try:
@@ -31,7 +37,19 @@ except Exception:
 SCOPED="${CLAUDE_SCOPED_PATHS:-(^|/)(vendor|third_party)/}"
 
 if grep -qE "$SCOPED" <<<"$FILE"; then
-    cat <<EOF
+    if is_tracker_first; then
+        cat <<EOF
+
+⚠  $FILE is outside your scope; someone else may have live work in it.
+
+CLAUDE.md: temporary code here is a TEMPORARY ( marker plus the issue whose closure removes it.
+Read the markers below and their issues BEFORE editing, staging or reverting.
+EOF
+        for p in "$FILE" "$PROJECT_DIR/$FILE"; do
+            [[ -f "$p" ]] && { grep -n "TEMPORARY (" "$p" | sed 's/^/  /' | head -20; break; }
+        done
+    else
+        cat <<EOF
 
 ⚠  $FILE is outside your scope — someone else may have live work in it.
 
@@ -39,8 +57,9 @@ CLAUDE.md: read hotfixes.md BEFORE editing, staging or reverting here, and check
 The rules are per-file — one may have to be committed, another never — and only the entry knows.
 hotfixes.md entries (heading · owner · where · remove-when):
 EOF
-    grep -nE '^### |^- \*\*(Owner|Machine|Where|Remove when):' "$DIR/work/hotfixes.md" 2>/dev/null \
-        | sed 's/^/  /' | head -60
+        grep -nE '^### |^- \*\*(Owner|Machine|Where|Remove when):' "$DIR/work/hotfixes.md" 2>/dev/null \
+            | sed 's/^/  /' | head -60
+    fi
 
     if [[ -f "$DIR/work/collab.md" ]]; then
         echo

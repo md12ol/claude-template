@@ -235,6 +235,33 @@ cp "$DOCS/work/collab.md" "$TMP/collab.bak"
 sed -i '0,/^### [0-9]/s//spliced text ### 999/' "$DOCS/work/collab.md"
 is "a spliced item heading is caught" "$( (cd "$PROJ" && .claude/bin/task.sh audit work/collab.md >/dev/null 2>&1); echo $? )" "1"
 cp "$TMP/collab.bak" "$DOCS/work/collab.md"
+# Item numbers run as one sequence across the open file and its archive, and this pair is long.
+next="$(tsk collab-next)"
+[[ "$next" =~ ^[0-9]+$ && "$next" -gt 100 ]] && ok "collab-next reads both real files ($next)" \
+    || bad "collab-next reads both real files" "$next"
+# Both collab reports are REPORTS: saying something is missing must not turn a clean union-merge
+# audit into a failure. The two files audited here are the two the suite already proves clean; the
+# archive has genuine collisions of its own and is read for the reports regardless of the arguments.
+out="$(tsk audit work/decisions.md work/collab.md)"; rc=$?
+is "the collab reports leave the audit's exit code alone" "$rc" "0"
+[[ "$(grep -c '^unanswered: #' <<<"$out")" -ge 1 ]] \
+    && ok "an open item with no appended reply is named" \
+    || bad "an open item with no appended reply is named" "$out"
+n_items="$(grep -c '^### [0-9]' "$DOCS/work/collab_settled.md")"
+is "every item in this archive recorded a disposition" "$(grep -c '^no disposition: ' <<<"$out")" "0"
+# So prove the other half by taking one away: this archive's real shape, one ruling short.
+cp "$DOCS/work/collab_settled.md" "$TMP/settled.bak"
+sed -i '0,/^\*\*\(Settled\|Closed\|Superseded\|Moved here from Open\)/s///' "$DOCS/work/collab_settled.md"
+out="$(tsk audit work/decisions.md work/collab.md)"; rc=$?
+is "a missing disposition still does not fail the audit" "$rc" "0"
+[[ "$(grep -c '^no disposition: ' <<<"$out")" -eq 1 ]] \
+    && ok "and exactly one of $n_items real items is named" \
+    || bad "and exactly one of $n_items real items is named" "$out"
+cp "$TMP/settled.bak" "$DOCS/work/collab_settled.md"
+# The marker inventory, read from the CODE repo. Nothing here fails when there are no markers.
+out="$(tsk temporary)"; rc=$?
+is "temporary exits 0 on the real code repo" "$rc" "0"
+hasnt "and never reports an error" "fatal:" "$out"
 
 # --- 8. the rest of the machinery runs clean on the bed -------------------------------------------------
 section "8. backup, hotfix warning, codex bridge"

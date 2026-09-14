@@ -69,6 +69,9 @@ resolve_owner
 [[ "$WORK_CURRENT" == "work/$me/current" ]] || die "add_person: resolve_owner gives '$WORK_CURRENT', not work/$me/current — fix work/owners.txt, not your git identity"
 echo "shared: $WORK_CURRENT resolves, merge driver verified"
 
+# 6b. There are two people now, so the assign-the-other-owner workflow has something to do.
+[[ "$HOST" == "github" ]] && install_gh_workflow
+
 # 7. CLAUDE.md's sections went in the same commit and cannot be restored wholesale — the file has
 #    been edited since, and those edits are this project's. Name them for the skill to put back.
 echo "restore these CLAUDE.md sections by hand from: git show ${sha}^:CLAUDE.md"

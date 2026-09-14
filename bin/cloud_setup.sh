@@ -63,7 +63,13 @@ else
   name="$(awk '{$1=""; $2=""; sub(/^  */,""); print}' <<<"$line")"
   git config --global user.email "$email"
   git config --global user.name "${name:-$want}"
-  say "identity" "set to ${name:-$want} <$email>"
+  # A per-repo value shadows the global one and is exactly what an earlier session may have left
+  # behind, so clear it in both repositories rather than setting three copies that can disagree.
+  for r in "$PROJECT_DIR" "$CLAUDE_DIR"; do
+    git -C "$r" config --unset user.name  2>/dev/null || true
+    git -C "$r" config --unset user.email 2>/dev/null || true
+  done
+  say "identity" "set globally to ${name:-$want} <$email>"
 fi
 
 # 2. Commit signing off, globally. A container has no access to your signing key, and a repo

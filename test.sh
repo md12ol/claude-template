@@ -37,7 +37,7 @@ git -C "$ORIGIN" commit -qm "working tree under test"
 # delete and which is allowed to talk about the template.
 SHIPPED=(CLAUDE.md README.md project.conf comment_style.md settings.json root_CLAUDE.md.example
          gitattributes.multi-writer skills skills-optional hooks bin codex work reference
-         output-styles)
+         output-styles optional)
 scan() { grep -rniE "$1" "${SHIPPED[@]/#/$ROOT/}" 2>/dev/null || true; }
 
 . "$ROOT/test_lib.sh"
@@ -165,6 +165,23 @@ sed -i 's/MACHINES="single"/MACHINES="multi"/' "$d/.claude/project.conf"
 out="$(cd "$d" && .claude/hooks/session_brief.sh)"
 has "Machine: stamp shown on a multi-machine install" "Machine:" "$out"
 
+# The plan's own size is a scoping signal, and nothing else surfaces the cap.
+out="$(cd "$d" && .claude/hooks/session_brief.sh)"
+hasnt "no size warning under the cap" "cap ~600" "$out"
+{ printf '# Plan\n'; seq 700 | sed 's/^/- [x] step /'; } > "$d/.claude/work/current/plan.md"
+out="$(cd "$d" && .claude/hooks/session_brief.sh)"
+has "an oversized plan is reported" "plan.md is 70[0-9] lines (cap ~600)" "$out"
+printf '# Plan\n- [x] done\n' > "$d/.claude/work/current/plan.md"
+
+# Tracker-first drops the unfiled field rather than printing a permanent zero.
+printf 'TRACKER_FIRST="yes"\n' >> "$d/.claude/project.conf"
+out="$(cd "$d" && .claude/hooks/session_brief.sh)"
+hasnt "tracker-first drops the unfiled issues field" "unfiled issues" "$out"
+has "and still prints the rest of the counts" "open \[ \]: 0   unverified \[~\]: 0   traps:" "$out"
+sed -i '/^TRACKER_FIRST=/d' "$d/.claude/project.conf"
+out="$(cd "$d" && .claude/hooks/session_brief.sh)"
+has "the file-based install keeps it" "unfiled issues" "$out"
+
 # Incomplete .claude/ — the only missing-clone case a hook can catch.
 mv "$d/.claude/skills" "$d/.claude/skills.bak"
 out="$(cd "$d" && .claude/hooks/session_brief.sh)"
@@ -209,6 +226,24 @@ is "a description mentioning publish does not block a test" \
    "$(pair 'npm test' 'checks before we npm publish')"  allow
 is "the command still decides on its own" \
    "$(pair 'git push --force' 'routine')"               block
+
+# ---------------------------------------------------------------------------------------------
+section "7b. show_hotfixes: hotfixes.md, or the file's own markers when the tracker holds them"
+d="$(newproj hotfix solo single)"
+hf() { printf '{"tool_input":{"file_path":"%s"}}' "$1" | "$d/.claude/hooks/show_hotfixes.sh" 2>&1; }
+printf '\n### a live hotfix\n- **Owner:** Ada\n' >> "$d/.claude/work/hotfixes.md"
+mkdir -p "$d/vendor"
+printf 'x = 1  # TEMPORARY (2026-09-14) until issue 9 closes\n' > "$d/vendor/x.py"
+out="$(hf vendor/x.py)"
+has "a scoped path lists the hotfixes.md entries" "a live hotfix" "$out"
+printf 'TRACKER_FIRST="yes"\n' >> "$d/.claude/project.conf"
+out="$(hf vendor/x.py)"
+has "tracker-first lists the file's own markers instead" "TEMPORARY (2026-09-14)" "$out"
+hasnt "and not a hotfixes.md that is not supposed to exist" "a live hotfix" "$out"
+has "the heading says where temporary code lives now" "TEMPORARY ( marker" "$out"
+is "it still never blocks" \
+   "$( printf '{"tool_input":{"file_path":"vendor/x.py"}}' | "$d/.claude/hooks/show_hotfixes.sh" >/dev/null 2>&1; echo $? )" "0"
+has "the .claude/ warning is unchanged either way" "runs on everyone else" "$(hf .claude/hooks/session_brief.sh)"
 
 # ---------------------------------------------------------------------------------------------
 section "8. park and unpark round trip"
@@ -299,6 +334,50 @@ has "cloud_setup refuses off a container" "not a cloud session" "$out"
 out="$(cd "$d" && .claude/bin/cloud_ready.sh 2>&1)"
 hasnt "cloud_ready reports no failures" "^FAIL" "$out"
 
+# cloud_env_setup: the reviewed half of a hosted environment's two-line setup field.
+s="$(newproj cloudenv shared single)"
+mkdir -p "$TMP/fakehome"
+out="$( (cd "$s" && env CLAUDE_CODE_REMOTE= .claude/bin/cloud_env_setup.sh nobody 2>&1); echo "rc=$?" )"
+has "an owner the table does not know is refused" "name your own owner directory" "$out"
+has "with exit 2 rather than a guess" "rc=2" "$out"
+has "and the known directories are listed" "ada" "$out"
+out="$( (cd "$s" && env CLAUDE_CODE_REMOTE= .claude/bin/cloud_env_setup.sh 2>&1); echo "rc=$?" )"
+has "so is no owner at all on a shared install" "rc=2" "$out"
+# It exports CLAUDE_CODE_REMOTE itself, which is the guard cloud_setup checks; a throwaway HOME so
+# nothing this suite runs can reach a real global git config.
+out="$( (cd "$s" && env HOME="$TMP/fakehome" CLAUDE_CODE_REMOTE= .claude/bin/cloud_env_setup.sh ada 2>&1); echo "rc=$?" )"
+has "a known owner gets past the guard and runs cloud_setup" "cloud_setup:" "$out"
+has "then cloud_ready, reported rather than gating" "cloud_ready:" "$out"
+has "and it exits 0" "rc=0" "$out"
+has "the header carries the two-line environment snippet" "exec .claude/bin/cloud_env_setup.sh" \
+    "$(cat "$ROOT/bin/cloud_env_setup.sh")"
+# Solo installs have no table to check against, so the argument is optional there.
+s="$(newproj cloudenvsolo solo single)"
+out="$( (cd "$s" && env HOME="$TMP/fakehome" CLAUDE_CODE_REMOTE= .claude/bin/cloud_env_setup.sh 2>&1); echo "rc=$?" )"
+has "solo needs no owner argument" "rc=0" "$out"
+
+# ---------------------------------------------------------------------------------------------
+section "13b. bin/comment_audit.sh"
+f="$TMP/audit_hits.txt"
+{ printf '# increment the counter\n'; printf 'i = i + 1\n'
+  printf '// all five callers do this\n'
+  printf '# see design/plan.md for why\n'
+  printf '// doThing(arg);\n'; } > "$f"
+ca() { (cd "$ROOT" && ./bin/comment_audit.sh "$@" 2>&1); }
+out="$(ca "$f")"
+has "narration is reported" "narrates the next line" "$out"
+has "a count that rots is reported" "roll-call that rots" "$out"
+has "a pointer to an unopenable document is reported" "downstream reader cannot open" "$out"
+has "commented-out code is reported" "commented-out code" "$out"
+hasnt "a file with hits is not called clean" "clean:" "$out"
+is "findings never fail a build" "$( (cd "$ROOT" && ./bin/comment_audit.sh "$f" >/dev/null 2>&1); echo $? )" "0"
+clean="$TMP/audit_clean.txt"
+printf '# Why the lock is taken before the read, and nothing else.\nlock_then_read()\n' > "$clean"
+has "a clean file says so" "clean: $clean" "$(ca "$clean")"
+is "a file it cannot read is the one refusal" \
+   "$( (cd "$ROOT" && ./bin/comment_audit.sh "$TMP/nope.txt" >/dev/null 2>&1); echo $? )" "1"
+has "it carries a FILL IN block for this project's own patterns" "FILL IN" "$(cat "$ROOT/bin/comment_audit.sh")"
+
 # ---------------------------------------------------------------------------------------------
 section "14. every skill has usable frontmatter"
 for f in "$ROOT"/skills/*/SKILL.md "$ROOT"/skills-optional/*/SKILL.md; do
@@ -319,6 +398,15 @@ fi
 s="$(cat "$ROOT/settings.json")"
 has "session_brief is wired by default" "session_brief" "$s"
 hasnt "block_env is NOT wired by default" "block_env" "$s"
+# Agent co-attribution is off at the harness rather than remembered in prose.
+if command -v python3 >/dev/null; then
+    att="$(python3 -c 'import json;a=json.load(open("'"$ROOT"'/settings.json"))["attribution"];print(repr(a["commit"]),repr(a["pr"]),a["sessionUrl"])')"
+    is "settings.json ships the attribution block, all three fields off" "$att" "'' '' False"
+    ev="$(python3 -c 'import json;print(" ".join(sorted(json.load(open("'"$ROOT"'/codex/hooks.json"))["hooks"])))')"
+    is "codex/hooks.json wires the same four events" "$ev" "PreToolUse SessionEnd SessionStart Stop"
+    has "and the Codex backup hooks use the toplevel form" "rev-parse --show-toplevel.*backup_docs" \
+        "$(cat "$ROOT/codex/hooks.json")"
+fi
 
 # ---------------------------------------------------------------------------------------------
 section "15b. the solo removal leaves a working install"
@@ -457,6 +545,18 @@ is "paths gives the owner's live directory" "$WORK_CURRENT" "work/ada/current"
 is "paths gives the parked directory"       "$WORK_PARKED"  "work/ada/parked"
 is "paths is eval-able and carries both switches" "$PEOPLE/$MACHINES" "shared/multi"
 is "paths exits 0" "$(trc paths)" "0"
+# The tracker keys come from project.conf through lib.sh, so a skill never greps the file itself.
+is "paths defaults TRACKER_FIRST" "$TRACKER_FIRST" "no"
+is "paths defaults the needs-ruling label" "$NEEDS_RULING_LABEL" "needs-ruling"
+is "paths defaults the branch pattern" "$BRANCH_PATTERN" "<owner>_<slug>"
+is "paths defaults LABELS_DERIVED" "$LABELS_DERIVED" "no"
+is "paths defaults the kind labels" "$KIND_LABELS" "bug enhancement task investigation"
+printf 'TRACKER_FIRST="yes"\nKIND_LABELS=""\nBRANCH_PATTERN="wip/<slug>"\n' >> "$d/.claude/project.conf"
+eval "$(t paths)"
+is "project.conf overrides reach paths" "$TRACKER_FIRST/$BRANCH_PATTERN" "yes/wip/<slug>"
+is "an empty kind-label set survives the quoting" "[$KIND_LABELS]" "[]"
+sed -i '/^TRACKER_FIRST=\|^KIND_LABELS=\|^BRANCH_PATTERN=/d' "$d/.claude/project.conf"
+eval "$(t paths)"
 WC="$d/.claude/$WORK_CURRENT"; WP="$d/.claude/$WORK_PARKED"
 
 # An unrecognised address stops every command. Never a guess: the wrong directory is silent.
@@ -486,13 +586,43 @@ has "the seed says who maintains it" "Maintained by" "$(cat "$WC/history.md")"
 [[ -f "$WC/handoff.md" ]] && bad "start must not write handoff.md" || ok "start does not write handoff.md"
 is "start refuses a non-empty directory" "$(trc start "another thing")" "1"
 has "and lists what is in the way" "history.md" "$(t start "another thing")"
+# A parked task is invisible from the live directory, and resuming one is often the better session.
+mkdir -p "$WP/older-thing"
+printf '# Plan\n' > "$WP/older-thing/plan.md"
+printf '# Next session\n**Blocked on:** the API freeze lifting\n' > "$WP/older-thing/handoff.md"
+mkdir -p "$WP/no-note"; printf '# Plan\n' > "$WP/no-note/plan.md"
+out="$(t start "a third thing")"
+has "start lists a parked task and its blocker" "parked: older-thing  the API freeze lifting" "$out"
+has "and says so when no blocker was recorded" "parked: no-note  no blocker recorded" "$out"
+rm -rf "$WC"
+out="$(t start "rename the API again")"
+is "the created path is still the last line" "$(tail -1 <<<"$out")" "work/ada/current"
+rm -rf "$WP/older-thing" "$WP/no-note"
 
 # park / unpark
 printf '# Plan\n' > "$WC/plan.md"
-printf '# Next session\n**Blocked on:** PR #482 merging\n' > "$WC/handoff.md"
+{ printf '# Next session\n'
+  printf '**Machine:** here · saved 2026-09-14 10:00 · abc1234\n'
+  printf '**Blocked on:** PR #482 merging\n'; } > "$WC/handoff.md"
 is "park refuses a slug with spaces" "$(trc park "api rename")" "1"
 is "park refuses an uppercase slug"  "$(trc park "API")"        "1"
 is "park exits 0" "$(trc park api-rename)" "0"
+# The handoff now describes a task nobody is holding: it says so, and says how to pick it up.
+ph="$(cat "$WP/api-rename/handoff.md")"
+has "park rewrites saved to parked in the stamp" "^\*\*Machine:\*\* here · parked 2026-09-14 10:00 · abc1234$" "$ph"
+has "and appends the resume line under Blocked on" "^Resume with .\/load api-rename.\.$" "$ph"
+is "the resume line sits directly after the blocker" \
+   "$(grep -A1 '^\*\*Blocked on:' "$WP/api-rename/handoff.md" | tail -1)" 'Resume with `/load api-rename`.'
+# With no blocker the resume line goes under the first heading, and park says so on stderr only:
+# the brief will show "no blocker recorded", which is a gap in the handoff rather than an error.
+printf '# Plan\n' > "$WC/plan.md"
+printf '# Next session\nnotes\n' > "$WC/handoff.md"
+sout="$( (cd "$d" && .claude/bin/task.sh park bare-handoff 2>"$TMP/park.err") )"
+is "park's stdout is still only the parked path" "$sout" "work/ada/parked/bare-handoff"
+has "and it warns about the missing blocker" "no Blocked on line" "$(cat "$TMP/park.err")"
+is "the resume line goes under the first heading instead" \
+   "$(sed -n '2p' "$WP/bare-handoff/handoff.md")" 'Resume with `/load bare-handoff`.'
+rm -rf "$WP/bare-handoff"
 [[ -f "$WP/api-rename/plan.md" ]] && ok "park puts plan.md at the top of the parked dir" \
     || bad "park puts plan.md at the top of the parked dir"
 is "park leaves the live directory empty" "$(ls -A "$WC" | wc -l | tr -d ' ')" "0"
@@ -533,14 +663,31 @@ has "stamp is the Machine: line on multi" "^\*\*Machine:\*\* .* · saved [0-9-]*
 has "stamp carries the code repo's HEAD" "$(git -C "$d" rev-parse --short HEAD)" "$out"
 is "stamp is one line" "$(wc -l <<<"$out" | tr -d ' ')" "1"
 
-# check-stamp: the question /load asks before trusting a handoff.
+# check-stamp: the question /load asks before trusting a handoff. It also reports an unsaved docs
+# clone, so give the fixture a bare origin it can push to and a clean tree first: otherwise the
+# suite's own setup edits look exactly like the previous session's unfinished save. The suite's
+# shared ORIGIN has main checked out and refuses a push into it; a real docs repo is bare anyway.
+BARE="$TMP/task_origin.git"
+git clone -q --bare "$d/.claude" "$BARE"
+git -C "$d/.claude" remote set-url origin "$BARE"
+git -C "$d/.claude" fetch -q origin
+saveclone() { (cd "$d/.claude" && git add -A && git commit -qm "$1" && git push -q origin main); }
 printf '# Next session\n' > "$WC/handoff.md"
+saveclone "fixture state"
 out="$(t check-stamp)"
 has "no stamp is reported, not treated as divergence" "no stamp" "$out"
 is "and exits 0" "$(trc check-stamp)" "0"
 { printf '# Next session\n'; t stamp; } > "$WC/handoff.md"
+saveclone "stamped"
 is "a stamp this machine just wrote exits 0" "$(trc check-stamp)" "0"
 has "and says so" "same machine" "$(t check-stamp)"
+# An unfinished save outranks the handoff: it is the state the last session actually left behind.
+printf 'unsaved\n' >> "$d/.claude/work/traps.md"
+out="$(t check-stamp)"
+is "an uncommitted docs clone exits 1" "$(trc check-stamp)" "1"
+has "saying a previous session ended before its push" "uncommitted change" "$out"
+(cd "$d/.claude" && git checkout -q -- work/traps.md)
+is "and exits 0 again once it is committed" "$(trc check-stamp)" "0"
 # Backticks and a missing time are both real: handoffs written before the format settled have them.
 printf '# Next session\n**Machine:** `elsewhere` · saved 2026-09-11 · `f466d98`\n' > "$WC/handoff.md"
 out="$(t check-stamp)"
@@ -548,9 +695,10 @@ is "a foreign SHA exits 1" "$(trc check-stamp)" "1"
 has "naming the SHA it cannot find" "f466d98" "$out"
 has "and refusing to merge or reset" "never merge or reset" "$out"
 has "a stamp from another machine is reported as such" "written on elsewhere" "$out"
-# A docs clone with commits origin lacks is the other half of the divergence.
+# A docs clone with commits origin lacks is the other half of the divergence. The tree goes back to
+# what was committed above, so the commit is --allow-empty: it is the unpushed commit that matters.
 { printf '# Next session\n'; t stamp; } > "$WC/handoff.md"
-(cd "$d/.claude" && git add -A && git commit -qm "local only")
+(cd "$d/.claude" && git add -A && git commit -q --allow-empty -m "local only")
 out="$(t check-stamp)"
 is "a docs clone ahead of origin exits 1" "$(trc check-stamp)" "1"
 has "saying how far ahead" "origin lacks" "$out"
@@ -569,12 +717,48 @@ has "and is named as a splice, not a duplicate" "mid-line" "$(t audit work/audit
 rm -f "$a"
 is "the default file list is the union-merged three" "$(trc audit)" "0"
 
-# commit. The suite's shared ORIGIN has main checked out and refuses a push into it, so give this
-# clone a bare origin — which is what a real docs repo has anyway.
-BARE="$TMP/task_origin.git"
-git clone -q --bare "$d/.claude" "$BARE"
-git -C "$d/.claude" remote set-url origin "$BARE"
-git -C "$d/.claude" fetch -q origin
+# Two REPORTS the audit also makes on a shared install: a question nobody answered, and an archived
+# item with no recorded disposition. Neither is a collision, so neither may change the exit code.
+cp "$d/.claude/work/collab.md" "$TMP/collab.seed"
+cp "$d/.claude/work/collab_settled.md" "$TMP/settled.seed"
+{ printf '# Collaboration log\n\n## Open\n\n'
+  printf '### 7. the merge driver on release branches\n\nWhich files it covers.\n\n*#7 · raised 2026-09-01 09:00 by Ada.*\n\n'
+  printf '### 8. whether to keep the backup hook\n\nIt costs a second at session end.\n\n*#8 · raised 2026-09-02 09:00 by Ada.*\n'
+  printf '> *#8 · answered 2026-09-03 10:00 by Grace.*\n\n## Agreed\n'; } > "$d/.claude/work/collab.md"
+{ printf '# Settled\n\n### 5. an item that recorded what was decided\n\nThe first archived body.\n\n'
+  printf '**Settled 2026-08-01:** we kept it.\n\n'
+  printf '### 6. an item that did not\n\nThe second archived body.\n'; } > "$d/.claude/work/collab_settled.md"
+out="$(t audit)"
+is "the collab reports do not change the exit code" "$(trc audit)" "0"
+has "an unanswered open item is reported" "unanswered: #7 the merge driver on release branches" "$out"
+hasnt "an answered one is not" "unanswered: #8" "$out"
+has "a settled item with no disposition is reported" "no disposition: ### 6. an item that did not" "$out"
+hasnt "one that recorded a disposition is not" "no disposition: ### 5" "$out"
+# Solo installs have neither file and must not grow a report about them.
+sed -i 's/^PEOPLE=.*/PEOPLE="solo"/' "$d/.claude/project.conf"
+hasnt "solo says nothing about collab items" "unanswered:" "$(cd "$d" && .claude/bin/task.sh audit 2>&1)"
+sed -i 's/^PEOPLE=.*/PEOPLE="shared"/' "$d/.claude/project.conf"
+
+# collab-next: item numbers run as one sequence across both files, so the answer reads both.
+is "collab-next is one past the highest number in either file" "$(t collab-next)" "9"
+rm -f "$d/.claude/work/collab.md"
+is "and still works with only the archive" "$(t collab-next)" "7"
+rm -f "$d/.claude/work/collab_settled.md"
+is "with neither file it prints nothing" "$(t collab-next)" ""
+is "and exits 0 anyway" "$(trc collab-next)" "0"
+cp "$TMP/collab.seed" "$d/.claude/work/collab.md"
+cp "$TMP/settled.seed" "$d/.claude/work/collab_settled.md"
+
+# temporary: the inventory of temporary code, read from the CODE repo and nowhere else.
+is "temporary is silent when there are no markers" "$(t temporary)" ""
+is "and exits 0" "$(trc temporary)" "0"
+mkdir -p "$d/src"
+printf 'x = 1  # TEMPORARY (2026-09-14) removed by issue 41\n' > "$d/src/thing.py"
+(cd "$d" && git add -A src && git commit -qm "a marker")
+has "temporary finds a marker in the code repo" "src/thing.py:1:.*TEMPORARY (2026-09-14)" "$(t temporary)"
+hasnt "and does not search the docs repo" "task.sh" "$(t temporary)"
+
+# commit, against the bare origin set up above.
 printf 'saved\n' >> "$WC/plan.md"
 out="$(t commit "save: task — a line")"
 has "commit reports the SHA and the message" "save: task — a line" "$out"
@@ -600,6 +784,58 @@ is "commit with no origin exits 0" "$(trc commit "save: still no origin")" "0"
 has "and says it committed locally only" "locally only" "$out"
 
 # ---------------------------------------------------------------------------------------------
+section "18c. bin/task.sh: commit covers the docs repo, branch-done retires a merged branch"
+d="$(newproj taskc shared multi)"
+BARE2="$TMP/taskc_origin.git"
+git clone -q --bare "$d/.claude" "$BARE2"
+git -C "$d/.claude" remote set-url origin "$BARE2"
+git -C "$d/.claude" fetch -q origin
+eval "$(t paths)"
+WC="$d/.claude/$WORK_CURRENT"; WP="$d/.claude/$WORK_PARKED"
+mkdir -p "$WC"
+printf '# Plan\n' > "$WC/plan.md"
+printf '# Next session\n**Blocked on:** the release tag\n' > "$WC/handoff.md"
+t commit "save: the fixture" >/dev/null
+# The docs repo holds no code, so a save takes all of it: a trap written and left unstaged is a
+# save that lied about what it saved.
+printf '\n### a trap nobody staged\n' >> "$d/.claude/work/traps.md"
+out="$(t commit "save: a trap")"
+has "commit reports the commit" "save: a trap" "$out"
+has "and it carries the persistent doc, not just the task directory" "work/traps.md" \
+    "$(git -C "$d/.claude" show --name-only --format= HEAD)"
+# unpark's move is a delete plus an add. Staging only the task directories left the delete behind,
+# so the parked copy came back on the next machine; staging the whole repo is what closes it.
+t park the-task >/dev/null
+t commit "park: the-task" >/dev/null
+t unpark the-task >/dev/null
+t commit "load: the-task" >/dev/null
+tracked="$(git -C "$d/.claude" ls-files)"
+has "unpark's restore is committed" "$WORK_CURRENT/plan.md" "$tracked"
+hasnt "and the parked copy leaves the index with it" "$WORK_PARKED/the-task" "$tracked"
+
+# branch-done, in the CODE repo. `-d` only: refusing an unmerged branch is the whole safety property.
+git -C "$d" commit -q --allow-empty -m "first commit"
+git -C "$d" checkout -q -B main
+git -C "$d" branch ada_merged
+git -C "$d" checkout -q -b ada_open
+git -C "$d" commit -q --allow-empty -m "work in progress"
+is "branch-done refuses the branch you are standing on" "$(trc branch-done ada_open)" "1"
+has "and says which" "is checked out" "$(t branch-done ada_open)"
+git -C "$d" checkout -q main
+out="$(t branch-done ada_open)"
+is "an unmerged branch is refused" "$(trc branch-done ada_open)" "1"
+has "leaving both copies, because its PR is still open" "is NOT merged, leaving both copies" "$out"
+[[ -n "$(git -C "$d" branch --list ada_open)" ]] && ok "the unmerged branch survives" \
+    || bad "branch-done deleted an unmerged branch"
+out="$( (cd "$d" && .claude/bin/task.sh branch-done ada_merged 2>&1) )"; rc=$?
+is "a merged branch exits 0" "$rc" "0"
+has "it is deleted locally" "deleted ada_merged locally" "$out"
+has "and a missing remote copy is tolerated, not an error" "remote copy already gone" "$out"
+is "the local branch is gone" "$(git -C "$d" branch --list ada_merged)" ""
+hasnt "branch-done never force-deletes" "branch -D" "$(cat "$ROOT/bin/task.sh")"
+is "branch-done needs a branch name" "$(trc branch-done)" "1"
+
+# ---------------------------------------------------------------------------------------------
 section "19. bin/setup_apply.sh"
 d="$(newproj apply shared single)"
 out="$(cd "$d" && .claude/bin/setup_apply.sh 2>&1)"
@@ -610,6 +846,35 @@ is "decisions.md union-merges after setup_apply" \
 is "traps.md still does not" \
    "$(git -C "$d/.claude" check-attr merge -- work/traps.md | sed 's/.*: //')" "unspecified"
 is "bin/ is executable afterwards" "$( [[ -x "$d/.claude/bin/task.sh" ]] && echo yes )" "yes"
+hasnt "a file-based install keeps the three churn files" "tracker-first: removed" "$out"
+[[ -f "$d/.claude/work/issues.md" ]] && ok "issues.md survives without TRACKER_FIRST" \
+    || bad "issues.md survives without TRACKER_FIRST"
+# The assign-the-other-owner workflow needs a host that runs workflows AND a second person.
+hasnt "no GitHub extra without HOST=github" "assign-owner" "$out"
+
+# Tracker-first: the three churn files have no job left, and the workflow has something to assign.
+d="$(newproj trackerfirst shared single)"
+printf 'PEOPLE="shared"\nHOST="github"\nTRACKER_CLI="gh"\nTRACKER_FIRST="yes"\n' > "$d/.claude/project.conf"
+out="$(cd "$d" && .claude/bin/setup_apply.sh --dry-run 2>&1)"
+has "--dry-run reports the tracker-first removal" "would git rm .*work/issues.md" "$out"
+[[ -f "$d/.claude/work/issues.md" ]] && ok "--dry-run removes nothing" || bad "--dry-run removed a file"
+has "--dry-run reports the workflow it would install" "would install .github/workflows/assign-owner.yml" "$out"
+out="$(cd "$d" && .claude/bin/setup_apply.sh 2>&1)"
+has "setup_apply reports the tracker-first removal" "tracker-first: removed" "$out"
+still="$(cd "$d/.claude" && ls work/issues.md work/hotfixes.md work/deferred.md 2>/dev/null || true)"
+is "all three are gone" "${still:-gone}" "gone"
+is "and gone from the index, so the commit is the way back" \
+   "$(git -C "$d/.claude" ls-files work/issues.md work/hotfixes.md work/deferred.md)" ""
+[[ -f "$d/.claude/.github/workflows/assign-owner.yml" ]] && ok "the GitHub workflow is installed" \
+    || bad "the GitHub workflow is installed"
+has "the placeholder is still there for /setup to fill" "__OWNER_LOGINS__" \
+    "$(cat "$d/.claude/.github/workflows/assign-owner.yml")"
+has "and CODEOWNERS is pointed at the code repo, with the plan caveat" "CODEOWNERS" "$out"
+out="$(cd "$d" && .claude/bin/setup_apply.sh 2>&1)"
+has "a second run leaves the installed workflow alone" "already exists, left alone" "$out"
+has "and says there is nothing left to remove" "tracker-first: nothing left to remove" "$out"
+out="$(cd "$d" && .claude/hooks/session_brief.sh 2>&1)"
+hasnt "the brief does not error with the three files gone" "No such file" "$out"
 # --dry-run is the safe read: it must change nothing at all.
 d="$(newproj applydry solo single)"
 before="$(cd "$d/.claude" && git status --porcelain; cd "$d" && git status --porcelain)"
@@ -626,6 +891,7 @@ git -C "$d/.claude" remote remove origin
 # ---------------------------------------------------------------------------------------------
 section "20. bin/add_person.sh — solo, then shared"
 d="$(newproj addperson solo single)"
+printf 'HOST="github"\n' >> "$d/.claude/project.conf"
 (cd "$d" && .claude/bin/setup_apply.sh >/dev/null 2>&1)
 (cd "$d/.claude" && git add -A && git commit -qm "setup: solo")
 ap() { (cd "$d" && .claude/bin/add_person.sh "$@" 2>&1); }
@@ -657,6 +923,11 @@ has "the live task is under its owner now" "work/ada/current" "$out"
 got="$(cd "$d" && . .claude/hooks/lib.sh && load_conf && resolve_owner && echo "$WORK_CURRENT")"
 is "resolve_owner now gives the per-owner path" "$got" "work/ada/current"
 has "the CLAUDE.md sections to restore are named" "restore these CLAUDE.md sections by hand" "$out"
+# There are two people now, so the assign-the-other-owner workflow finally has something to do.
+has "the GitHub workflow is installed with the second person" "installed .github/workflows/assign-owner.yml" "$out"
+[[ -f "$d/.claude/.github/workflows/assign-owner.yml" ]] && ok "and the file is there" \
+    || bad "and the file is there"
+has "with CODEOWNERS pointed at the code repo" "CODEOWNERS goes at the CODE repo" "$out"
 is "add_person commits nothing" "$(cd "$d/.claude" && git log --oneline -1 --format=%s)" "setup: solo"
 is "running it again on a shared install is refused" \
    "$(aprc ada@example.com ada Ada grace@example.org grace Grace)" "1"
