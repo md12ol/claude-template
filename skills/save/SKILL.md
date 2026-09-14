@@ -1,6 +1,7 @@
 ---
 name: save
 description: Save this session into the .claude/ working docs — sweep the conversation for loose threads, update the plan, append what was decided and learned, and write the next-session handoff. Use when the user asks to save, wrap up, checkpoint or hand off the session.
+model: sonnet
 ---
 
 # Save
@@ -26,8 +27,8 @@ install an unrecognised git email stops here — ask whose it is, never guess.
 - `git status --short` and `git diff --stat` for **every repo this project spans** — see
   `CLAUDE.md`'s repo layout; don't assume the root repo is the only one.
 - Each repo's branch, read with `git branch --show-current`, never assumed.
-- `$WORK_CURRENT/plan.md`, and the tops of `decisions.md`, `issues.md`, `hotfixes.md` and
-  `traps.md`, so you match their format and don't duplicate an entry that is already there.
+- `$WORK_CURRENT/plan.md`, and the tops of `decisions.md`, `traps.md` and, on a file-based install,
+  `issues.md` and `hotfixes.md`, so you match their format and don't duplicate an entry.
 
 ## 2. Sweep the session for loose threads
 
@@ -50,7 +51,7 @@ loud and dropped when the conversation moved on.
 - **Work started but not finished** — a file half-edited, a check run but not acted on.
 - **New traps** — anything that cost you time this session and will cost it again. → `traps.md`.
 - **Wanted, ruled out for now** — agreed worth doing, out of scope for this milestone.
-  → `deferred.md`, where it stops being remembered only by you.
+  → `deferred.md`, or a tracker issue on a tracker-first install, where it stops being yours alone.
 
 Then dispose of every item, strictly. **Can be captured now** → write it into the right file in the
 steps below; actually do it, don't just report it. **Needs the user** → ask, below. Never guess a
@@ -94,48 +95,62 @@ the closing brief.
 
 One entry per real decision, appended at the **bottom**, matching the template at the top of the
 file. Only log what a cold reader could not re-derive from the code. **Never edit a past entry:** if
-this session reversed one, write a new entry that names and supersedes it — the reversal trail is
-the value.
+this session reversed one, write a new entry naming and superseding it; the reversal trail is the
+value.
+
+### Tracker-first installs: this replaces §5, §6 and §8
+
+Where `project.conf` says `TRACKER_FIRST="yes"` there is no `issues.md`, `hotfixes.md` or
+`deferred.md`, and **`/save` files nothing**: filing needs a confirmation per issue and is its own
+deliberate step, never a side effect of saving.
+
+- **Report every finding**, in the closing brief and in `history.md`, with enough detail that filing
+  it later needs no re-derivation: what is wrong, where, and what the observable is. Say plainly
+  that it is unfiled.
+- **Temporary code needs both halves**: a `TEMPORARY (<YYYY-MM-DD>)` comment at the site and an
+  issue whose `Done when:` names its removal. `.claude/bin/task.sh temporary` lists the markers in
+  the code; report either half that is missing.
+- **Wanted, but not now** is an issue too, or it is dropped. Nothing stages it here.
+
+Read §5, §6 and §8 only on a file-based install; §7, `traps.md`, applies either way.
 
 ## 5. `issues.md` — work for other people
 
 Anything found this session that belongs to someone else or is out of scope. Two tiers, per the
-templates at the top of the file: **parked** (noticed, not investigated — cheap to write, so nothing
-is lost just because chasing it would derail the task) and **ready to file** (root-caused and
-evidenced, so the body pastes into the tracker unchanged). Promote parked → ready only when the
-investigation actually happened, and **never fabricate an evidence field** to make something look
-file-ready. Once filed, the tracker is the source of truth and this file must not fork it: drop
-entries whose issue is closed, and put later changes in the tracker the same session.
+templates at the top of the file: **parked** (noticed, not investigated, so nothing is lost just
+because chasing it would derail the task) and **ready to file** (root-caused and evidenced, so the
+body pastes into the tracker unchanged). Promote parked → ready only when the investigation actually
+happened, and **never fabricate an evidence field**. Once filed, the tracker is the source of truth
+and this file must not fork it: drop entries whose issue is closed, and put later changes in the
+tracker the same session.
 
 ## 6. `hotfixes.md` — temporary code in the tree
 
 Every band-aid, stub, sleep, hardcoded value and workaround still in the tree, matching the template
 at the top of the file. Each needs a concrete `Remove when:` or it lives forever. Mark anything
 load-bearing ⚠️ so nobody deletes it on a tidying pass, group entries by what unblocks them, and if
-a hotfix in someone else's file must never be committed, say so **in the entry** — that is what a
-future session reads before touching the file. Remove entries whose code is genuinely gone, verified
-by reading the file rather than assumed.
+a hotfix in someone else's file must never be committed, say so **in the entry**: that is what a
+future session reads before touching the file. Remove entries whose code is gone, verified by
+reading the file rather than assumed.
 
 ## 7. `traps.md` — permanent workspace gotchas
 
 A hotfix is *code you added and want to remove*; a trap is *how this workspace behaves and always
-will* — a flag that must always be passed, a command that silently does the wrong thing, a path that
+will*: a flag that must always be passed, a command that silently does the wrong thing, a path that
 is not what it looks like. Match the template at the top of the file.
 
 **Verify a trap before recording it.** They are stated as fact and trusted for months, so run the
 reproducer and put it in the entry. They belong here rather than in `handoff.md`, which is
-overwritten every save.
-
-**Retire, don't delete.** If this session removed a trap's cause, move the entry to
-`traps_retired.md` with a `Fixed by:` line naming the change — revert that and the trap is back
-exactly as written. Delete outright only when the mechanism is gone for good.
+overwritten every save. **Retire, don't delete:** if this session removed a trap's cause, move the
+entry to `traps_retired.md` with a `Fixed by:` line naming the change, so reverting that change
+brings the trap back exactly as written. Delete outright only when the mechanism is gone for good.
 
 ## 8. `deferred.md` — wanted, deliberately not now
 
 Where a "yes, but not this milestone" goes, so it stops living in one person's head. An entry names
 the change and what would have to be true to admit it; no dates, no ordering, no priority, or it
-becomes a second build order competing with the tracker. Anything with a shape someone would
-plausibly start this month is an issue instead.
+becomes a second build order competing with the tracker. Anything someone would plausibly start
+this month is an issue instead.
 
 ## 9. `$WORK_CURRENT/history.md` — append a session entry
 
@@ -190,15 +205,20 @@ session cannot mistake the queue for the instruction.
 mid-line. Fix anything it prints before committing: union merge never reports a conflict, so this is
 the only thing that will tell you.
 
-`commit` commits `$WORK_CURRENT` and `$WORK_PARKED` and pushes when the docs clone has an `origin`.
-A save that never reaches `origin` fails silently — you find out on the other machine, usually a day
-late. **On a rejected push, do not force it**: report and stop. It usually means the other machine
-saved first, which is the divergence `/load` exists to catch, and resolving it needs a human looking
-at both plans.
+On a shared install it also **reports** open `collab.md` items nobody has answered, oldest first,
+and archived items with no recorded disposition. Pass those on and **never settle one yourself**:
+how an item closed is the owners' to state. Before appending a new item take its number from
+`.claude/bin/task.sh collab-next`, which reads both collab files; guessing from the end of one is
+how a number gets used twice.
 
-This is a deliberate, narrow exception to "don't commit or push unless asked" and it does not widen:
-source code, the persistent docs and any design document each need their own explicit instruction,
-every time. A `/save` that finds uncommitted source **leaves it alone and says so**.
+`commit` stages **everything changed in the docs repository**, not only the task directories, and
+pushes when the docs clone has an `origin`; that repository holds no code, so nothing of the project
+can ride along. It is the whole of the exception to "don't commit or push unless asked": a skill
+commits and pushes what it wrote in `.claude/`, and code never. A `/save` that finds uncommitted
+source **leaves it alone and says so**. A save that never reaches `origin` fails silently and you
+find out on the other machine a day late, so **on a rejected push, do not force it**: report and
+stop. It usually means the other machine saved first, which is the divergence `/load` exists to
+catch, and resolving it needs a human looking at both plans.
 
 ## 12. Close with a brief the user can answer
 
@@ -212,8 +232,8 @@ by now; the brief reports what came of them and does not re-litigate them.
 **Settled this save:** <one line per loose thread the questions resolved, and where it landed>
 
 **Outstanding**
-- ⚠️ <N> issues unfiled: <titles>            ← only if any are `Filed: not yet`
-- ⚠️ <N> hotfixes still in the tree: <the ones touched or relied on this session>
+- ⚠️ <N> findings unfiled: <titles>          ← tracker-first; file mode reads `Filed: not yet`
+- ⚠️ <N> hotfixes or `TEMPORARY (` markers still in the tree: <the ones touched this session>
 - <N> `[~]` unverified, oldest first: <what needs running, by whom, and since when>
 - <blockers / open questions from plan.md>
 
@@ -221,9 +241,9 @@ by now; the brief reports what came of them and does not re-litigate them.
 ```
 
 - **Only list what is genuinely outstanding.** Nothing unfiled and nothing unverified? Say so in one
-  line — a brief that always looks the same gets skipped.
-- Unfiled issues and unverified `[~]` items go **first**; those two go stale silently.
-- List the hotfixes this session added, touched or leaned on, not all of them every time.
+  line: a brief that always looks the same gets skipped.
+- Unfiled findings and unverified `[~]` items go **first**; those two go stale silently. List the
+  temporary code this session added, touched or leaned on, not all of it every time.
 - Make each line answerable: name the thing, say what it is waiting on. The user may reply with
   dispositions ("file that one", "that can wait") — act on them and update the docs before finishing.
 
@@ -234,9 +254,9 @@ End by asking — **never do it yourself, and never assume the answer:**
 > Everything is captured in the docs. Want to `/clear` and start fresh? Next session picks up with
 > `/load`.
 
-`/clear` is a CLI command only the user can type. A save is the one moment when clearing is safe,
-because the state now lives in the files. Mid-task they will often decline: ask once, take the
-answer, don't press.
+`/clear` is a CLI command only the user can type, and a save is the one moment when clearing is
+safe, because the state now lives in the files. Mid-task they will often decline: ask once, take
+the answer, don't press.
 
 ### If work continues after the save, the save is stale
 

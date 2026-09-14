@@ -35,6 +35,11 @@ It restores what the solo install removed (`collab.md`, `collab_settled.md`, `ow
 `work/current` and `work/parked` under your own directory, flips `PEOPLE` to `shared`, installs and
 verifies the merge driver, and checks that the paths now resolve. It does not commit.
 
+On `HOST="github"` it also copies `optional/github/assign-owner.yml` into this repository's
+`.github/workflows/`, so every pull request asks the other owner for the review. Its companion
+`optional/github/CODEOWNERS` is for the **code** repo's root, and on plans where CODEOWNERS is a
+paid feature it sits there doing nothing, silently: check before relying on it.
+
 It refuses, changing nothing, when: the install is already `shared` (a third person is one more line
 in `work/owners.txt` and nothing else); the docs tree is dirty; fewer than two people were given; or
 your own git email is not among them. It also refuses when the commit that removed those files is
