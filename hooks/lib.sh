@@ -3,9 +3,9 @@
 #
 #     . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 #
-# It exists so that project identity, the owner table and the solo/shared switches are read from
-# ONE place. Everything here is defensive: a hook that dies takes the session start with it, so
-# every function degrades to a usable default rather than failing.
+# One place reads project identity, the owner table and the solo/shared switches. Everything here is
+# defensive: a hook that dies takes the session start with it, so every function degrades to a
+# usable default rather than failing.
 #
 # Test:  bash -c '. .claude/hooks/lib.sh && claude_paths && echo "$CLAUDE_DIR / $OWNER_DIR"'
 
@@ -58,7 +58,7 @@ clone_hint() {
 }
 
 # --- owners --------------------------------------------------------------------------------------
-# THE owner table lives in work/owners.txt and nowhere else. Resolves the current git identity to a
+# THE owner table lives in work/owners.txt and nowhere else. Resolves the git identity to a
 # directory name, and sets:
 #
 #   OWNER_DIR    directory name, or "" when unresolved
@@ -67,8 +67,8 @@ clone_hint() {
 #   WORK_CURRENT path to the live task dir, relative to CLAUDE_DIR
 #   WORK_PARKED  path to the parked task dir, relative to CLAUDE_DIR
 #
-# On a solo install there is no table to consult and no owner in the path — that is the whole
-# difference, and it is handled here so no caller has to branch on it.
+# On a solo install there is no table and no owner in the path — the whole difference, handled here
+# so no caller has to branch on it.
 resolve_owner() {
     [[ -n "${CLAUDE_DIR:-}" ]] || claude_paths
     [[ -n "${PEOPLE:-}" ]] || load_conf
@@ -111,8 +111,8 @@ resolve_owner() {
     export OWNER_DIR OWNER_NAME OWNER_EMAIL WORK_CURRENT WORK_PARKED
 }
 
-# Every person in the table except the current one, as "dir<TAB>name" lines. Used to report the
-# other owners' parked work without hardcoding how many people there are — two is not special.
+# Every person in the table but the current one, as "dir<TAB>name" lines. Reports other owners'
+# parked work without hardcoding how many people there are — two is not special.
 other_owners() {
     [[ -n "${CLAUDE_DIR:-}" ]] || claude_paths
     is_shared || return 0
