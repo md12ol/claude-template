@@ -8,13 +8,9 @@ the stale version.
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
      FILL IN — 1. WHO RUNS THE ENVIRONMENT
 
-     The most valuable rule in this file, and the one most projects omit until an agent breaks
-     something. State plainly which commands the agent may run and which it must hand back to you.
-     Be specific: name the binaries, not the category.
-
-     Delete this whole block if the agent may run everything.
-
-     Shape to copy:
+     The most valuable rule here, and the one most projects omit until an agent breaks something.
+     Name the binaries the agent must hand back to you, not the category. Delete this block if the
+     agent may run everything. Shape to copy:
 
          ## <Name> runs the environment. You do not.
 
@@ -24,29 +20,22 @@ the stale version.
          **Instead:** make the code/config/doc changes, then hand off the **exact command** to run
          and the **log markers that indicate success or failure**. Then stop and wait.
 
-         **What you may still do:**
-         - Read already-generated output — logs, reports, result directories.
-         - Read-only local analysis that touches nothing shared.
-         - Any git, grep, or file inspection.
+         **You may still** read generated output (logs, reports, result directories), run read-only
+         local analysis, and use git, grep and file inspection. The line is: **inspecting artifacts
+         is fine; starting the stack is not.**
 
-         The line is: **inspecting artifacts is fine; starting the stack is not.**
-
-     Two things make that work, and are worth copying:
-       - it lists the actual command names, so there is nothing to interpret;
-       - it says what the agent should do INSTEAD, so the rule doesn't dead-end.
-
-     If you want this enforced rather than merely written down, settings.json ships a commented-out
-     PreToolUse hook that blocks matching Bash commands. Prose alone gets violated.
+     Two things make that work: it names actual commands, so there is nothing to interpret, and it
+     says what to do INSTEAD. To enforce it rather than merely write it down, wire
+     `hooks/block_env_commands.sh` — prose alone gets violated.
      ══════════════════════════════════════════════════════════════════════════════════════════ -->
 
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
      FILL IN — 2. REPO LAYOUT
 
-     Delete this section entirely if the project is a single repo on one branch.
-
-     Fill it in if work spans submodules, sibling checkouts, or vendored repos — the agent cannot
-     otherwise know that `git status` at the root tells it nothing about most of the work.
+     Delete this if the project is a single repo on one branch. Fill it in if work spans submodules,
+     sibling checkouts or vendored repos — the agent cannot otherwise know that `git status` at the
+     root tells it nothing about most of the work.
 
          Work spans three repos, each on its own branch — always read the branch, never assume:
 
@@ -57,9 +46,8 @@ the stale version.
 
          Everything else under `vendor/` is shared — **do not modify** without saying so first.
 
-     Date the branch column. Branches move; an undated table quietly becomes a lie.
-
-     Then list the 3–5 paths that matter most, so an agent doesn't have to search for them:
+     Date the branch column — branches move, and an undated table quietly becomes a lie. Then list
+     the 3–5 paths that matter most, so an agent doesn't have to search for them:
 
          Key paths:
          - Core logic: `path/to/thing.py`
@@ -82,24 +70,24 @@ echo "$WORK_CURRENT"          # work/current  OR  work/<owner>/current
 ```
 
 **`PEOPLE`** — `solo` keeps live tasks at `work/current/`. `shared` puts them at
-`work/<owner>/current/`, turns on the union merge driver for the append-only docs, and makes
-`work/owners.txt` load-bearing: an address missing from it stops that person's session dead, which
-is deliberate. Writing into someone else's directory is silent, and surfaces only when they open a
-directory they did not expect to have anything in.
+`work/<owner>/current/`, turns on the union merge driver, and makes `work/owners.txt` load-bearing:
+an address missing from it stops that person's session dead, deliberately. Writing into someone
+else's directory is silent, and surfaces only when they open a directory they didn't expect to have
+anything in.
 
-**`MACHINES`** — `multi` turns on `pull_main.sh`, the `Machine:` stamp `/save` writes into
-`handoff.md`, and `/load`'s divergence check. **It is not the same question as `PEOPLE`.** One
-person with a laptop and a desktop is `multi`; so is anyone working in a cloud container. The
-failure it prevents is a stale doc, which needs two machines, not two people.
+**`MACHINES`** — `multi` turns on `pull_main.sh`, the `Machine:` stamp in `handoff.md`, and
+`/load`'s divergence check. **Not the same question as `PEOPLE`.** One person with a laptop and a
+desktop is `multi`; so is anyone in a cloud container. The failure it prevents is a stale doc, which
+needs two machines, not two people.
 
 **Layout** — `.claude/` is a **clone of this project's working-docs repository**, gitignored by the
-project itself. Every `work/` path is inside *that* repository, never this one, and the two never
-appear in the same commit. That is the accepted cost: a decision entry can land while the code it
-describes is still under review.
+project. Every `work/` path is inside *that* repository, never this one, and the two never appear in
+the same commit. The accepted cost: a decision entry can land while the code it describes is still
+under review.
 
-**Never hardcode any of this anywhere else.** Not a repo name, not a clone URL, not a person's
-email. Each belongs in one of the two files above, and every hook, check and skill reads them
-through `hooks/lib.sh`.
+**Never hardcode any of this anywhere else** — not a repo name, a clone URL or a person's email.
+Each belongs in one of the two files above, which every hook, check and skill reads through
+`hooks/lib.sh`.
 
 ## Working docs
 
@@ -137,11 +125,11 @@ notes sit in `work/meetings/` for the same reason.
 
 ### Keep `plan.md` small — it is a task list, not a record
 
-Left alone it grows without bound. In the project this template came from it reached **1432 lines**
-and had to be halved by hand. Evidence, rationale and superseded wording had all piled up in it, and
-each of those already has a file that owns it: what happened → `work/current/history.md` · why →
-`decisions.md` · original wording of a finished task → `work/current/plan_superseded.md` · temporary code
-→ `hotfixes.md` · someone else's work → `issues.md`.
+Left alone it grows without bound; in the project this template came from it reached 1432 lines and
+had to be halved by hand. Evidence, rationale and superseded wording had all piled up in it, and
+each already has a file that owns it: what happened → `work/current/history.md` · why →
+`decisions.md` · original wording of a finished task → `work/current/plan_superseded.md` ·
+temporary code → `hotfixes.md` · someone else's work → `issues.md`.
 
 - **Completed item: ≤ 3 lines**, compressed **when you tick it** — what was done, the one piece of
   evidence that verifies it, and where the detail lives. Never paste the evidence in.
@@ -153,20 +141,20 @@ each of those already has a file that owns it: what happened → `work/current/h
 ### Keep one task per task
 
 `/done` exists and should actually fire. A task whose objective needs six lettered sections is a
-*program*, not a task — split it, and let each section close on its own gate. The symptom of getting
-this wrong is an empty `archive/` next to a plan and history that no longer fit in context, so every
-session pays to re-read them before doing any work.
+*program*, not a task — split it, and let each section close on its own gate. The symptom is an
+empty `archive/` beside a plan and history that no longer fit in context, so every session pays to
+re-read them before doing any work.
 
 ## More than one person uses this `.claude/`
 
 *Delete this whole section if you work alone.* It applies when `project.conf` says
 `PEOPLE="shared"` — several people cloning this same working-docs repository onto their own
-machines. Four rules follow, and all four are non-obvious.
+machines. Four rules, all non-obvious.
 
 **1. Three docs merge by union — so stamp every entry with an author and a time.**
 `decisions.md`, `collab.md` and `collab_settled.md` are append-only, so everyone writes to the tail
-of the same file, which is the most conflict-prone shape in git. `/setup` installs the rule by
-copying `gitattributes.multi-writer` to `.gitattributes` **in this repository**, not in the project:
+of the same file, the most conflict-prone shape in git. `/setup` installs the rule by copying
+`gitattributes.multi-writer` to `.gitattributes` **in this repository**, not in the project:
 
 ```gitattributes
 work/decisions.md merge=union
@@ -175,43 +163,38 @@ work/collab_settled.md merge=union
 ```
 
 Both sides' lines then survive with no conflict markers. Measured on two branches each appending one
-entry:
-
-- Entries with **distinct** text merge **correctly** — both survive whole and in order. The only
-  damage is that the blank line between them is eaten, being common to both sides. Cosmetic.
-- Lines that are **byte-identical** on both sides are **deduplicated**, and the two entries
-  interleave into one block that reads as a single coherent entry and is not. Silent, and the
-  reason boilerplate-only entries are dangerous.
+entry: **distinct** text merges correctly, losing only the blank line between the entries; lines
+**byte-identical** on both sides are **deduplicated**, interleaving the two entries into one block
+that reads as coherent and is not. That silent case is why boilerplate-only entries are dangerous.
 
 **`traps.md`, `issues.md`, `hotfixes.md` and `pipeline_backlog.md` are deliberately NOT union-merged.**
-They are **churn lists**, where deleting an entry is a normal operation, and union merge cannot
-express a deletion: a delete that races any edit to the same region is silently discarded and the
-entry comes back. Those take git's ordinary 3-way merge, so a concurrent append **conflicts** and is
-resolved by hand. Loud and occasional beats silent and wrong.
+They are **churn lists**, where deleting an entry is normal, and union merge cannot express a
+deletion: a delete that races any edit to the same region is silently discarded and the entry comes
+back. Those take git's ordinary 3-way merge, so a concurrent append **conflicts** and is resolved by
+hand. Loud and occasional beats silent and wrong.
 
 ### Formatting for union merge
 
-An entry's **first and last lines are the ones a merge treats as shared context**, so those are
-what must be unique. Four rules, all load-bearing:
+An entry's **first and last lines are what a merge treats as shared context**, so those must be
+unique. Four rules, all load-bearing:
 
 1. **The heading is unique** and carries the author and a time:
    `## <YYYY-MM-DD> <HH:MM> — <name> — <title>`, or `### 7. <the item>` in `collab.md`.
 2. **The closing stamp repeats that identity and carries a time** —
-   `*#7 · raised <YYYY-MM-DD> <HH:MM> — <name>.*`. Two independent guards: the item's own number,
-   and the `HH:MM`, which makes a byte-identical stamp essentially impossible even for two entries
-   by the same author on the same day. A bare `*Raised <YYYY-MM-DD> — <name>.*` collides the moment
-   one person raises two items in a day — in the project this template came from, that collision
-   was live nine times over before anyone noticed.
+   `*#7 · raised <YYYY-MM-DD> <HH:MM> — <name>.*`. Two guards: the item's own number, and the
+   `HH:MM`, which makes a byte-identical stamp near-impossible even for two entries by the same
+   author on one day. A bare `*Raised <YYYY-MM-DD> — <name>.*` collides the moment someone raises
+   two items in a day.
 3. **Never close an entry with a bare `---`.** Headings delimit entries; a repeated horizontal rule
    is exactly the identical boundary line rule 1 warns about.
-4. **No bare structural labels.** Write `- **Body:** <first sentence>`, not `- **Body:**` alone —
-   a label with nothing after it is byte-identical in every entry that uses it. Same for
+4. **No bare structural labels.** Write `- **Body:** <first sentence>`, not `- **Body:**` alone — a
+   label with nothing after it is byte-identical in every entry that uses it. Same for
    `- **Added:** <date>`: append the entry's slug.
 
-Keep the body distinctive too — a real `**Affects:** path` line is what stops two entries
-collapsing into each other.
+Keep the body distinctive too: a real `**Affects:** path` line is what stops two entries collapsing
+into each other.
 
-**Audit any of these files**, and do it after every merge:
+**Audit any of these files** after every merge:
 
 ```bash
 grep -vE '^\s*$' .claude/work/<file>.md | sort | uniq -d
@@ -228,24 +211,23 @@ executable code that runs on everyone else's machine at session start, on their 
 them reading the diff. This is the one part of `.claude/` where "it's just docs" is false.
 
 **3. `/setup` runs once per PROJECT, not once per clone.** It fills in this file's FILL IN blocks
-and writes `project.conf`, so running it again over a configured file would destroy work that was
-agreed once and is relied on since. The first person runs it and commits; **everyone after that
-clones an already-configured repository and starts with `/load`.** Personal settings go in
-`settings.local.json`, which is gitignored and exists exactly for that.
-
-If you are unsure which case you are in, look: FILL IN blocks still present means it has not run.
+and writes `project.conf`; running it again over a configured file destroys what was agreed once and
+relied on since. The first person runs it and commits; **everyone after that clones an
+already-configured repository and starts with `/load`.** Personal settings go in
+`settings.local.json`, which is gitignored and exists for exactly that. Unsure which case you are
+in? FILL IN blocks still present means it has not run.
 
 **4. Verification is per-machine.** `[x]` means *you* saw it verified, on your machine. Never
-promote someone else's `[~]` to `[x]` because their notes read as finished — re-run the
-`Verify by:` or leave it alone.
+promote someone else's `[~]` because their notes read as finished — re-run the `Verify by:` or leave
+it alone.
 
 ## Comment style
 
-**Every comment written or edited in this project follows `.claude/comment_style.md`.** The whole of
-it reduces to one test — *would deleting this make a competent reader, new to this code rather than
-new to the field, more likely to misunderstand or break it?* — plus one habit: **prefer removing the
-comment's reason to exist** over tightening its wording. Read it before a comment-heavy change; the
-rest of the time those two lines are enough.
+**Every comment written or edited in this project follows `.claude/comment_style.md`.** It reduces
+to one test — *would deleting this make a competent reader, new to this code rather than new to the
+field, more likely to misunderstand or break it?* — plus one habit: **prefer removing the comment's
+reason to exist** over tightening its wording. Read it before a comment-heavy change; otherwise
+those two lines are enough.
 
 ## Workflow
 
@@ -306,16 +288,14 @@ from a finished one to the next session.
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
      FILL IN — 3. FILING ISSUES
 
-     Delete if the agent never files issues on your behalf.
+     Delete if the agent never files issues on your behalf. Filing notifies real people and cannot
+     be cleanly undone, so this is about consent and verification more than mechanics. Cover:
 
-     Fill in if it does. Filing notifies real people and cannot be cleanly undone, so this section
-     is mostly about consent and verification, not mechanics. Cover:
+       - **Tracker + tool** — GitHub/`gh`, GitLab/`glab`, Jira/… and any flag needed to resolve the
+         right host. Say who owns the credential, and that the agent invokes the tool but never
+         reads or prints the token.
 
-       - **Tracker + tool.** GitHub/`gh`, GitLab/`glab`, Jira/… and any flag the tool needs to
-         resolve the right host. Note who owns the credential, and that the agent must never read
-         or print the token — only invoke the tool.
-
-       - **The confirmation rule.** Recommended, and the reason this section exists:
+       - **The confirmation rule**, the reason this section exists:
 
              **Confirm before every single file action.** Print the exact title, body, assignee,
              labels and target project, then wait for an OK. One confirmation per issue — never a
@@ -324,40 +304,35 @@ from a finished one to the next session.
        - **Target project**, and whether it varies by component. If it does not, say so once and
          loudly — per-component mapping tables rot.
 
-       - **Labels.** Check whether your tracker CREATES an unknown label as a side effect of using
-         it. Several do. If so, the safe default is to pass none and let the owner triage.
+       - **Labels** — several trackers CREATE an unknown label as a side effect of using it. Where
+         yours does, pass none and let the owner triage.
 
-       - **Verify after filing; don't trust the exit code.** Re-read the issue and confirm the
-         assignee, the label set, and that any collapsed or formatted blocks survived. A filed issue
-         with a mangled body is worse than an unfiled one.
+       - **Verify after filing; don't trust the exit code.** Re-read the issue: assignee, labels,
+         and whether formatted blocks survived. A filed issue with a mangled body is worse than an
+         unfiled one.
 
-       - **The sync obligation.** A staged issue can be rewritten freely; a filed one cannot. Once
-         filed, the tracker is the source of truth — changes go to the tracker in the same session,
-         and `issues.md` must not become a private fork of it.
+       - **The sync obligation** — once filed, the tracker is the source of truth. Changes go there
+         in the same session, and `issues.md` must not become a private fork of it.
 
-     Record any tool quirk you hit here the moment you hit it. These cost an hour each, every time,
-     and they are exactly what a cold session cannot rediscover.
+     Record tool quirks the moment you hit them. They cost an hour each, every time, and are exactly
+     what a cold session cannot rediscover.
      ══════════════════════════════════════════════════════════════════════════════════════════ -->
 
 
 <!-- ══════════════════════════════════════════════════════════════════════════════════════════
      FILL IN — 4. FILES OUTSIDE YOUR SCOPE
 
-     Delete if you own the whole tree.
-
-     Fill in if the working tree carries deliberate edits to other people's components, or if some
-     directories are off-limits. State which paths, and point at `hotfixes.md` for the per-file
-     disposition — because the rules are usually NOT uniform. In the project this came from, one
-     owner's file had to be committed and another had to never be, and only the hotfix entry knew
-     which was which.
+     Delete if you own the whole tree. Fill in if the working tree carries deliberate edits to other
+     people's components, or if some directories are off-limits. Name the paths and point at
+     `hotfixes.md` for the per-file disposition — the rules are usually NOT uniform, and only the
+     hotfix entry knows whether a given file must be committed or must never be.
 
          **Read `hotfixes.md` before editing, staging, or reverting anything under `<paths>`.**
          Every such edit has an entry there with its commit disposition, its canary, and its
          `Remove when:`.
 
-     Also worth stating here: any file with a non-obvious recovery path. If reducing a config means
-     commenting out rather than deleting, or if `git show HEAD:<file>` is NOT a valid restore
-     because the committed revision predates working-tree tuning, say so — an agent will otherwise
+     Also state any file with a non-obvious recovery path — if `git show HEAD:<file>` is NOT a valid
+     restore because the committed revision predates working-tree tuning, say so, or an agent will
      reach for git and lose work that was never committed.
      ══════════════════════════════════════════════════════════════════════════════════════════ -->
 
@@ -371,12 +346,12 @@ from a finished one to the next session.
   with no verification method is how `[~]` items become false `[x]`s later.
 - Absolute dates only, never "today" or "last session".
 - Reference code as `path:line`.
-- **Don't commit or push unless asked** — with exactly three exceptions, and they are a closed list:
-  `/setup` commits its own configuration, and `/save` and `/park` commit and push the live task
-  directory. All three touch **the `.claude/` repository only**, never the project. Anything not on
-  that list needs its own explicit instruction, every time, however obvious it looks. The exceptions
-  exist because each of those skills produces output that is worthless if it never lands: an
-  unpushed handoff fails silently, and you find out on the other machine, usually a day late.
+- **Don't commit or push unless asked** — with exactly three exceptions, a closed list: `/setup`
+  commits its own configuration, and `/save` and `/park` commit and push the live task directory.
+  All three touch **the `.claude/` repository only**, never the project. Anything else needs its own
+  explicit instruction, every time, however obvious it looks. The exceptions exist because each
+  produces output that is worthless if it never lands: an unpushed handoff fails silently, and you
+  find out on the other machine, usually a day late.
 - Flag temporary work as temporary and add it to `hotfixes.md`.
 - Date rules when you change them, and supersede rather than overwrite: strike the old line through
   and add the new one with its date and reason. The reversal trail is worth more than a tidy file.
@@ -393,10 +368,10 @@ temporary code → `hotfixes.md` · someone else's work → `issues.md` · why �
 what happened → `work/current/history.md` · what's next → `work/current/plan.md` · workspace gotchas →
 `traps.md` · how we work → this file.
 
-The reason is not that memory is useless — it is that a second, auto-loading store of the same facts
-drifts out of sync with the files, and a stale memory that presents itself as current is worse than
-no memory at all. That is what happened in the project this template came from: two entries had gone
-wrong while still auto-loading as though true, and the store was deleted.
+Not because memory is useless, but because a second auto-loading store of the same facts drifts out
+of sync with the files, and a stale memory presenting itself as current is worse than none. In the
+project this template came from, two entries had gone wrong while still auto-loading as true, and
+the store was deleted.
 
 <!-- Delete this section if you would rather use the memory store. If you do keep memory, at least
      pick ONE home per fact — the failure is duplication, not memory itself. -->
