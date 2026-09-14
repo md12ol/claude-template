@@ -31,6 +31,8 @@ repository must be marked a *template repository* in its settings, or the button
 `--template` is rejected; in a fresh copy that is already done. **On another host, or none:** clone
 this repository, delete its `.git`, and push the result somewhere new.
 
+`optional/` holds pieces only some projects want, inert until `/setup` copies them into place.
+
 `/setup` reads the repo, asks what it cannot infer, writes `project.conf` and `CLAUDE.md`, wires the
 hooks that apply, adds `.claude/` to the project's `.gitignore`, and removes whatever cannot apply —
 a solo project does not keep the coordination files, and a project that will never run Codex does

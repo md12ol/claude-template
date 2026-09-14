@@ -15,12 +15,15 @@ to paste — each says what it does in its own header, including how to test it.
 | `pull_main.sh` | `SessionStart` | no — but only wire it when `MACHINES="multi"` |
 
 Nothing else here is a hook. The scripts a person or a skill runs by hand live in `../bin/`:
-`task.sh`, `setup_apply.sh`, `add_person.sh`, and the cloud pair `cloud_setup.sh` (run once on a
-fresh container) and `cloud_ready.sh` (a read-only PASS/FAIL gate, safe to run anywhere).
+`task.sh`, `setup_apply.sh`, `add_person.sh`, `comment_audit.sh` (reports the comment shapes
+`../comment_style.md` forbids, in one file), and the cloud trio `cloud_env_setup.sh` (the reviewed
+half of a cloud environment's own setup script), `cloud_setup.sh` (run once on a fresh container)
+and `cloud_ready.sh` (a read-only PASS/FAIL gate, safe to run anywhere).
 
-**`../settings.json` is what wires them up.** It carries no description of its own — JSON has no
-comment syntax, and an unknown key risks a strict validator rejecting the file and silently
-disabling every hook in it — so this README is that documentation.
+**`../settings.json` is what wires them up**, and it also carries the `attribution` block that keeps
+agent trailers and session URLs out of commits and pull requests. It carries no description of its
+own — JSON has no comment syntax, and an unknown key risks a strict validator rejecting the file and
+silently disabling every hook in it — so this README is that documentation.
 
 ## `lib.sh` — read this before editing any of the others
 

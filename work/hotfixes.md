@@ -7,7 +7,9 @@ needs an exit condition or it lives forever. Maintained by `/save`, and `/done` 
 under `## <theme>` headings by what unblocks them, the axis on which they get removed in batches.
 **Where several people share the repo**, an *uncommitted* hotfix exists on one machine only, so read
 `Owner:` and `Machine:` before assuming it is in your tree, and raise someone else's entry in
-`collab.md` rather than deleting it. *(Drop those two fields if you work alone.)*
+`collab.md` rather than deleting it. *(Drop those two fields if you work alone.)* **`/setup`
+removes this file when `TRACKER_FIRST=yes`**, where the marker at the site and the issue that closes
+it replace the entry.
 
 ---
 
