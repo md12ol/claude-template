@@ -13,10 +13,9 @@ Group entries under `## <theme>` headings by what unblocks them — that is the 
 actually get removed, in batches.
 
 **If more than one person uses this repo:** an *uncommitted* hotfix exists on exactly one machine,
-so an entry here does not mean the code is in *your* tree. That is what `Owner:` and `Machine:` are
-for — read them first. Don't delete another owner's entry; raise it in `collab.md`. A **committed**
-hotfix is in everyone's tree and is everybody's problem to remove — say so in `Machine:`.
-*(Drop those two fields if you work alone.)*
+so an entry here does not mean the code is in *your* tree — read `Owner:` and `Machine:` first.
+Don't delete another owner's entry; raise it in `collab.md`. A **committed** hotfix is in everyone's
+tree and everybody's to remove. *(Drop those two fields if you work alone.)*
 
 ---
 

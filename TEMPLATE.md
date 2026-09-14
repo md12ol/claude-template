@@ -22,22 +22,21 @@ git clone <your-copy-url> .claude
 /setup
 ```
 
-**Use a template copy, not a fork**, and make it **private**. Three reasons, and the first two will
-stop you outright:
+**Use a template copy, not a fork**, and make it **private**. The first two reasons stop you
+outright:
 
-- **You cannot fork your own repository into your own account** on GitHub, which is exactly what
+- **You cannot fork your own repository into your own account** on GitHub, which is what
   `<you>/claude-template` → `<you>/myproject-claude` would be.
-- **A fork of a public repository is always public.** This repo will hold your plans, your decisions
-  and your session notes, which is usually not something you want indexed.
-- **A fork's upstream link buys nothing here.** Nothing is expected to flow back — see
-  "Your copy is yours" below.
+- **A fork of a public repository is always public**, and this repo will hold your plans, decisions
+  and session notes.
+- **A fork's upstream link buys nothing here** — nothing is expected to flow back, see below.
 
-**Prerequisite, once:** the source repository must be marked as a *template repository* in its
-settings, or the button does not appear and `--template` is rejected. If you are reading this in a
-fresh copy, that has already been done.
+**Prerequisite, once:** the source repository must be marked a *template repository* in its
+settings, or the button does not appear and `--template` is rejected. In a fresh copy that is
+already done.
 
-**On another host, or no host at all:** clone this repository, delete its `.git`, and push the
-result somewhere new. Nothing below depends on how the copy was made.
+**On another host, or none:** clone this repository, delete its `.git`, and push the result
+somewhere new. Nothing below depends on how the copy was made.
 
 `/setup` reads the repo, asks what it cannot infer, writes `project.conf` and `CLAUDE.md`, wires the
 hooks that apply, adds `.claude/` to the project's `.gitignore`, and removes whatever cannot apply —
@@ -51,7 +50,7 @@ someone joins.
 
 ## Why `.claude/` is a separate repository
 
-- **It never enters your project's history**, so it never ships inside a built artifact, a package,
+- **It never enters your project's history**, so it never ships inside a built artifact, a package
   or a release tarball.
 - **It is never frozen on a branch.** Tracked inside the project, a feature branch's copy of your
   plan is stuck at the moment the branch was cut, and switching branches silently changes what the
@@ -59,14 +58,14 @@ someone joins.
 - **Work is recorded even when the code is not.** `/save` commits and pushes the live task
   directory, so a task started on one machine resumes on another.
 
-The cost, accepted deliberately: commits are not atomic across the two repositories, and "what did
-the plan say when this commit landed" is a timestamp lookup rather than one SHA.
+The deliberate cost: commits are not atomic across the two repositories, and "what did the plan say
+when this commit landed" is a timestamp lookup rather than one SHA.
 
 ## Your copy is yours
 
-Once cloned, it diverges — rewrite a skill, delete one, change the rules, rename files. **Nothing
-here expects changes to come back**, no hook checks the template for updates, and nothing goes stale
-because the template moved on.
+Once cloned it diverges — rewrite a skill, delete one, change the rules, rename files. **Nothing
+here expects changes to come back**, nothing checks for updates, and nothing goes stale because the
+template moved on.
 
 If you ever *want* something from a newer version, it is a merge you choose to run:
 
@@ -88,9 +87,9 @@ Both team shapes, the park round trip, the command tiers, the merge-driver narro
 bridge and the cloud pair. CI runs it on push for GitHub and GitLab both, because the template must
 not assume a host.
 
-**Every case corresponds to a defect that was actually found, or to a claim the README makes.** When
-you fix a bug, add the case that would have caught it — and check that the case fails before the
-fix, since a check that cannot fail is worse than no check.
+**Every case corresponds to a defect actually found, or to a claim the README makes.** When you fix
+a bug, add the case that would have caught it — and check it fails before the fix, since a check
+that cannot fail is worse than none.
 
 ## Licence
 

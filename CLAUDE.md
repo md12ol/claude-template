@@ -346,9 +346,10 @@ from a finished one to the next session.
   with no verification method is how `[~]` items become false `[x]`s later.
 - Absolute dates only, never "today" or "last session".
 - Reference code as `path:line`.
-- **Don't commit or push unless asked** — with exactly three exceptions, a closed list: `/setup`
-  commits its own configuration, and `/save` and `/park` commit and push the live task directory.
-  All three touch **the `.claude/` repository only**, never the project. Anything else needs its own
+- **Don't commit or push unless asked** — with exactly four exceptions, a closed list: `/setup`
+  commits its own configuration; `/save` and `/park` commit and push the live task directory; and
+  `/add-person` commits and pushes the switch to a shared repo, because the new person clones next.
+  All four touch **the `.claude/` repository only**, never the project. Anything else needs its own
   explicit instruction, every time, however obvious it looks. The exceptions exist because each
   produces output that is worthless if it never lands: an unpushed handoff fails silently, and you
   find out on the other machine, usually a day late.

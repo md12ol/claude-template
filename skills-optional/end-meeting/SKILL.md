@@ -11,9 +11,9 @@ make the changes. **This is the only one of the three that touches real files.**
 **It runs after the meeting, not during it, and usually in a fresh session.** The `Response` blocks
 are the contract: everything they call for gets done, nothing they do not does.
 
-**It compiles the action list itself** rather than reading one transcribed during the meeting — a
+**It compiles the action list itself** rather than reading one transcribed during the meeting. A
 list written mid-thought is less clear than one written from the finished answers, and compiling it
-here means it gets shown and confirmed, which is where a misreading gets caught.
+here means it gets shown and confirmed — which is where a misreading gets caught.
 
 ## 0. Set up, and refuse the unsafe cases
 
@@ -26,26 +26,25 @@ any of these holds:**
 
 - **`Status: executed`.** It has already run. Report what it did and stop — a second run duplicates
   decision entries and re-files issues.
-- **Any `Response` block is empty**, still carrying its placeholder or nothing at all. **Stop and
-  ask, every time, whatever the item's status is.** List the empty ones and wait for a ruling on
-  each. An empty block is genuinely ambiguous between *not discussed*, *nothing to do*, and *I
-  thought I wrote that* — and the third is the expensive one, because a `Close` item nobody answered
-  is indistinguishable from a `Close` item everyone agreed to. **Never infer from the status which
-  of the three it is.**
+- **Any `Response` block is empty**, placeholder or blank. **Stop and ask, every time, whatever the
+  item's status.** List the empty ones and wait for a ruling on each: an empty block is genuinely
+  ambiguous between *not discussed*, *nothing to do*, and *I thought I wrote that*. The third is the
+  expensive one — a `Close` nobody answered looks exactly like a `Close` everyone agreed to.
+  **Never infer from the status which it is.**
 - **Every block is empty.** Nothing was written. Say so and stop.
 - **The working tree is dirty in anything this run will edit.** Report what is dirty and stop.
 
 ## 1. Compile the action list, ask, then confirm
 
-Read the whole file — every brief, question and `Response`. The `Response` is the decision; the
-brief and question are the context that makes it legible.
+Read the whole file. The `Response` is the decision; the brief and question are the context that
+makes it legible.
 
 Then produce **one list of concrete actions**, each naming the file it touches and the route it
-takes. Group the clarifying questions into **one round** — not one at a time, and not per item.
-Then show the list and **get one confirmation before doing anything.**
+takes. Group every clarifying question into **one round**, then show the list and **get one
+confirmation before doing anything.**
 
-An action the `Response` blocks do not call for does not go on the list, however obviously good it
-looks. If you think something is missing, say so as a question in the same round.
+An action the `Response` blocks do not call for stays off the list, however good it looks. If you
+think something is missing, ask it in that same round.
 
 ## 2. Execute, routing each change correctly
 
@@ -79,13 +78,12 @@ For each item, according to its `Response`:
 - **Closed** → mark it settled with the reason.
 - **FYI** → nothing.
 
-Then move every item now settled into `collab_settled.md`, and run the audits its preamble
-prescribes — the duplicate-line check and the structural check — **before** committing. Moving items
-is the one operation that can splice two entries together, and neither git nor union merge will tell
-you.
+Then move every settled item into `collab_settled.md` and run the audits its preamble prescribes —
+the duplicate-line and structural checks — **before** committing. Moving items is the one operation
+that can splice two entries together, and neither git nor union merge will tell you.
 
 Process `work/pipeline_backlog.md` in the same pass: apply what was agreed, remove each applied
-entry, and record its disposition in the same entry you are already writing.
+entry, and record its disposition in the entry you are already writing.
 
 ## 4. Stamp and report
 

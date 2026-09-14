@@ -9,16 +9,15 @@ Read `collab.md`, decide what actually needs everyone in a room, and write it ou
 `/start-meeting` can walk. The agenda is a **derived document** — `collab.md` stays the source of
 truth, and **this skill never edits it**.
 
-**This is the judgement-heavy skill of the three.** The value is not in listing the items; it is in
-classifying them correctly and writing questions that can be answered by picking rather than by
-going back to the source. An agenda that statuses a settled item as `Decide` wastes the meeting's
-scarcest resource, and one whose questions cannot be answered without re-reading `collab.md` has
-failed at its only job.
+**The judgement-heavy skill of the three.** The value is not in listing items but in classifying
+them correctly and writing questions answerable by picking rather than by going back to the source.
+An agenda that statuses a settled item as `Decide` wastes the meeting's scarcest resource, and one
+whose questions need `collab.md` open has failed at its only job.
 
 ## 0. Set up
 
-Work where `collab.md` actually lives, and pull first. A stale copy is how a meeting gets prepared
-from a file missing the last three items raised.
+Work where `collab.md` lives, and pull first — a stale copy is how a meeting gets prepared from a
+file missing the last three items raised.
 
 ```bash
 git -C .claude pull --ff-only
@@ -42,12 +41,12 @@ git -C .claude rev-parse --short HEAD    # record this; a rerun diffs against it
 
 ## 2. Sweep what does not need the meeting
 
-Before classifying anything, look for items that are **already settled in their own thread** — the
-question was asked and answered, everyone visibly agreed, and nothing is outstanding. Settle those
-in place and say so in the agenda header rather than putting them in front of people a second time.
+First find items **already settled in their own thread** — asked, answered, everyone visibly agreed,
+nothing outstanding. Settle those in place and say so in the agenda header rather than putting them
+in front of people twice.
 
-This is the only writing this skill does to `collab.md`, and it is a status change, not a rewrite.
-Never change anyone's words.
+This is the only writing this skill does to `collab.md`: a status change, never a rewrite of anyone's
+words.
 
 ## 3. Classify every remaining item
 
@@ -63,8 +62,8 @@ Exactly one status each. Getting this right is the whole skill:
 | **Close** | overtaken, duplicated, or answered elsewhere | "close, or say why not" |
 
 **Order: blockers first**, then Decide → Ratify → Acknowledge → FYI → Close. Deviate only for a
-reason you state in the header, such as a demonstration everyone needs to see before two of the
-ratifications make sense.
+reason stated in the header — a demonstration everyone needs to see before two ratifications make
+sense, say.
 
 ## 4. Write the file
 
@@ -98,9 +97,9 @@ that makes a reader open collab.md anyway.>
 _(fill this in by hand before /end-meeting)_
 ```
 
-**On a rerun:** diff `collab.md` against the SHA in the header, fold in what is new, update the map
-and the SHA, and **touch nothing that already has a written `Response`** or that a human has
-visibly edited. A rerun that overwrites someone's answer costs more than the items it adds.
+**On a rerun:** diff `collab.md` against the header's SHA, fold in what is new, update the map and
+the SHA, and **touch nothing carrying a written `Response`** or visibly edited by a human. A rerun
+that overwrites someone's answer costs more than the items it adds.
 
 ## Constraints
 

@@ -12,10 +12,9 @@ Set a blocked task down without losing it. `/park <slug>` saves the session, the
 shared history. `/park` is for **unfinished** work that cannot proceed right now, and everything it
 moves is expected to come back via `/load <slug>`.
 
-**The alternative it replaces is worse than it looks.** Without it, a blocked task either sits in
-the live directory blocking `/start` — so the next piece of work happens with no plan at all — or
-gets closed with `/done`, which writes an archive README claiming an outcome that did not happen.
-Both are silent.
+**The alternative is worse than it looks.** Without it a blocked task either sits in the live
+directory blocking `/start`, so the next piece of work happens with no plan at all, or is closed
+with `/done`, which writes an archive README claiming an outcome that never happened. Both silent.
 
 ## 0. Resolve where work lives — read it, do not assume it
 
@@ -75,13 +74,12 @@ Add this line, right under the heading:
 ```
 
 **Name an event, not a feeling.** "Waiting on review" is not a blocker; "PR #482 merging, or its
-author saying the API is final" is. The test: could someone else read this line and tell you the
-moment it came true? The session brief prints this line beside every parked slug, so a bad one is
-noise on every session start until the task returns.
+author saying the API is final" is. The test: could someone else read the line and tell you the
+moment it came true? The session brief prints it beside every parked slug, so a bad one is noise at
+every session start until the task returns.
 
-If nothing concrete would unblock it, the task is probably not blocked — it is deprioritized, which
-is a different thing and usually means `/done` with an honest outcome, or an entry in
-`work/deferred.md`.
+If nothing concrete would unblock it, the task is not blocked but deprioritized — which means
+`/done` with an honest outcome, or an entry in `work/deferred.md`.
 
 ## 4. Move it
 
@@ -98,12 +96,12 @@ existed, `mv` will have nested it silently:
 ls "$WORK_PARKED/<slug>"      # expect plan.md and handoff.md, not another directory
 ```
 
-That last `mkdir` is why **`/load <slug>` must `rmdir` before it moves the task back**: unparking
-into an existing directory nests it one level down, and nothing errors. `/load` §0.5 handles it;
-do not hand-roll the reverse of this step.
+That last `mkdir` is why **`/load <slug>` must `rmdir` before moving the task back**: unparking into
+an existing directory nests it one level down, and nothing errors. `/load` §0.5 handles it — don't
+hand-roll the reverse of this step.
 
-Then confirm the live directory is genuinely empty — `/start` refuses to run while it is not, and a
-stray `plan_superseded.md` left behind is the usual culprit:
+Then confirm the live directory is genuinely empty. `/start` refuses to run while it is not, and a
+stray `plan_superseded.md` is the usual culprit:
 
 ```bash
 ls -A "$WORK_CURRENT"
@@ -111,9 +109,9 @@ ls -A "$WORK_CURRENT"
 
 ## 5. Commit and push, if the directory is tracked
 
-Same rule and same narrow exception as `/save` §10: `$WORK_CURRENT` and `$WORK_PARKED` only, and
-only when they are tracked. A park that never reaches `origin` is worse than an unsaved one — the
-task looks parked on this machine and simply missing on the other.
+Same narrow exception as `/save` §10: `$WORK_CURRENT` and `$WORK_PARKED` only, and only when
+tracked. A park that never reaches `origin` is worse than an unsaved one — the task looks parked
+here and simply missing on the other machine.
 
 ```bash
 git -C .claude add -A "$WORK_CURRENT" "$WORK_PARKED"
@@ -130,8 +128,8 @@ Four lines:
 - what else is parked, so the pile is visible before it becomes a surprise
 - that `/start` is now free, and `/load <slug>` brings this one back
 
-Do not start the next task as part of `/park`. Parking and starting are two decisions, and running
-them together is how the next task inherits the last one's framing.
+Do not start the next task as part of `/park`. They are two decisions, and running them together is
+how the next task inherits the last one's framing.
 
 ## Constraints
 
