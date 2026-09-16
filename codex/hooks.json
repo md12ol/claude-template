@@ -32,6 +32,30 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/.claude/hooks/backup_docs.sh\" --force 2>/dev/null || true",
+            "timeout": 30,
+            "statusMessage": "Backing up .claude working docs"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$(git rev-parse --show-toplevel)/.claude/hooks/backup_docs.sh\" 2>/dev/null || true",
+            "timeout": 30,
+            "async": true
+          }
+        ]
+      }
     ]
   }
 }

@@ -1,5 +1,5 @@
 # GitLab equivalent of .github/workflows/test.yml. Both are kept because the template itself must
-# not assume a host — the same reason project.conf carries HOST rather than hardcoding one.
+# not assume a host, the same reason project.conf carries HOST rather than hardcoding one.
 test:
   image: debian:stable-slim
   before_script:

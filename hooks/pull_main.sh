@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# SessionStart — bring the working docs up to date before anything reads them, and fast-forward the
+# SessionStart: bring the working docs up to date before anything reads them, and fast-forward the
 # code repo's default branch when that is what is checked out.
 #
-# Only ever fast-forwards. Where either repo can't — unpushed commits, or a working-tree change the
-# remote's version would overwrite — it prints one line and leaves everything untouched.
+# Only ever fast-forwards. Where either repo can't (unpushed commits, or a working-tree change the
+# remote's version would overwrite) it prints one line and leaves everything untouched.
 #
 # Wired only when project.conf says MACHINES="multi": a stale doc needs two machines, not two
 # people, and a single-machine install pays the network call for nothing.
@@ -32,10 +32,10 @@ ff() {  # ff <label> <repo-dir> <branch>
         if git -C "$dir" merge --ff-only "origin/$branch" --quiet 2>/dev/null; then
             echo "pull_main: $label fast-forwarded to $(git -C "$dir" rev-parse --short HEAD)"
         else
-            echo "pull_main: $label is behind but the fast-forward failed (local changes in the way) — pull by hand"
+            echo "pull_main: $label is behind but the fast-forward failed (local changes in the way); pull by hand"
         fi
     else
-        echo "pull_main: $label has commits origin doesn't — push or resolve by hand"
+        echo "pull_main: $label has commits origin doesn't; push or resolve by hand"
     fi
 }
 
@@ -43,7 +43,7 @@ if [[ -d "$CLAUDE_DIR/.git" ]]; then
     ff ".claude" "$CLAUDE_DIR" "$DOCS_BRANCH"
 else
     # Copied instead of cloned. The session brief's setup guard reports this in more detail.
-    echo "pull_main: .claude/ is not a clone — see .claude/README.md"
+    echo "pull_main: .claude/ is not a clone; see .claude/README.md"
 fi
 
 # --- the code repo, only on its default branch ---------------------------------------------------

@@ -1,4 +1,4 @@
-# Merge and checkout rules for a SHARED .claude/ — copied to .gitattributes by /setup when
+# Merge and checkout rules for a SHARED .claude/, copied to .gitattributes by /setup when
 # project.conf says PEOPLE="shared". Paths are relative to this repository's root, which is the
 # .claude/ clone itself: git reads .gitattributes only from the repository CONTAINING the file.
 #
@@ -7,7 +7,7 @@
 # with no conflict markers. The cost is that it NEVER conflicts: byte-identical lines are
 # deduplicated, two entries interleave into one block that reads as coherent and is not, and two
 # people editing the SAME line get BOTH versions. Hence the unique heading and unique timed closing
-# stamp every entry needs — see CLAUDE.md, "Formatting for union merge", and run its audit.
+# stamp every entry needs: see CLAUDE.md, "Formatting for union merge", and run its audit.
 #
 # NOT the churn lists. In issues.md, hotfixes.md, traps.md and pipeline_backlog.md deleting an
 # entry is normal, and union cannot express a deletion: a delete racing any edit to the same region

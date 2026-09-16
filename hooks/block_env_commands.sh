@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse(Bash) — refuse the commands you run yourself, and warn on the ones that reach outside
+# PreToolUse(Bash): refuse the commands you run yourself, and warn on the ones that reach outside
 # this machine.
 #
 # Prose rules get violated; exit 2 doesn't. The one hook that changes what the agent can do, so also
@@ -9,12 +9,12 @@
 #
 #   ALLOW  checked first, and wins. Read-only lookups that merely resemble a blocked command.
 #   WARN   proceeds, but prints a notice the agent has to read. For what is legitimate when you
-#          asked and a mistake when you didn't — `git push` is why this tier exists. A hard block
+#          asked and a mistake when you didn't; `git push` is why this tier exists. A hard block
 #          is wrong (you do ask for pushes); so is silence (an unasked push is already outside the
 #          repo by the time you notice).
 #   BLOCK  exit 2. The agent cannot proceed and is told why.
 #
-# EDIT THE PATTERNS BELOW. They ship as examples across several ecosystems, not as a policy — every
+# EDIT THE PATTERNS BELOW. They ship as examples across several ecosystems, not as a policy: every
 # project reserves different commands, and a hook that blocks nothing fails silently. /setup asks
 # which commands you run yourself and fills these in.
 #
@@ -50,7 +50,7 @@ ALLOW='(^|[^[:alnum:]_./-])git[[:space:]]+(push[[:space:]]+--dry-run|remote|log|
 ALLOW+='|(^|[^[:alnum:]_./-])(gh|glab)[[:space:]]+[a-z-]+[[:space:]]+(list|view|status)'
 ALLOW+='|(^|[^[:alnum:]_./-])(npm|pnpm|yarn)[[:space:]]+(view|info|ls)'
 # A dry run publishes nothing. Blocking it is a false positive, and false positives are how a hook
-# ends up disabled — which costs you every real block it would have caught.
+# ends up disabled, which costs you every real block it would have caught.
 ALLOW+='|(^|[^[:alnum:]_./-])(npm|cargo|poetry|gem)[[:space:]]+publish[[:space:]]+--dry-run'
 
 # --- WARN: allowed, but never silently ------------------------------------------------------------
@@ -71,7 +71,7 @@ BLOCK+='|(^|[^[:alnum:]_./-])(cargo|poetry|gem)[[:space:]]+publish([^[:alnum:]_-
 BLOCK+='|(^|[^[:alnum:]_./-])twine[[:space:]]+upload'
 BLOCK+='|(^|[^[:alnum:]_./-])(gh|glab)[[:space:]]+release[[:space:]]+(create|delete|upload|edit)'
 
-# 3. YOUR commands — the ones you run yourself, that the agent must not. Deploys, long simulations,
+# 3. YOUR commands: the ones you run yourself, that the agent must not. Deploys, long simulations,
 #    anything that costs money or touches production. These ship as placeholders; replace them.
 BLOCK+='|(^|[^[:alnum:]_./-])(make[[:space:]]+deploy|docker[[:space:]]+compose[[:space:]]+up)([^[:alnum:]_-]|$)'
 BLOCK+='|(^|[^[:alnum:]_./-])(terraform|kubectl)[[:space:]]+(apply|destroy|delete)'

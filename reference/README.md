@@ -1,6 +1,6 @@
 # Reference notes
 
-Longer-form notes on how a **dependency or toolchain** behaves — too long for a `traps.md` entry,
+Longer-form notes on how a **dependency or toolchain** behaves: too long for a `traps.md` entry,
 wrong shape for `decisions.md` because nothing was decided. **Deliberately outside `work/`**, where
 everything is either task state or a churn list, and where such a note would be read as one, pruned
 as one, or picked up by a merge driver meant for something else.

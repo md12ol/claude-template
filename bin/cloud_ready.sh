@@ -4,7 +4,7 @@
 #
 #     .claude/bin/cloud_ready.sh
 #
-# READ-ONLY: builds nothing, installs nothing, writes nothing — which is why it needs no
+# READ-ONLY: builds nothing, installs nothing, writes nothing, which is why it needs no
 # CLAUDE_CODE_REMOTE guard the way cloud_setup.sh does. Safe on a laptop and useful there. When a
 # line FAILs the fix is cloud_setup.sh or an edit to project.conf, never this script.
 #
@@ -32,7 +32,7 @@ check() {  # check <label> <command...>
 identity() {
   resolve_owner
   if is_shared; then
-    [[ -n "$OWNER_DIR" ]] || { echo "unrecognised: ${OWNER_EMAIL:-unset} — add it to work/owners.txt"; return 1; }
+    [[ -n "$OWNER_DIR" ]] || { echo "unrecognised: ${OWNER_EMAIL:-unset}; add it to work/owners.txt"; return 1; }
     echo "${OWNER_NAME:-$OWNER_DIR} (${OWNER_EMAIL})"
   else
     [[ -n "$OWNER_EMAIL" ]] || { echo "git user.email is unset"; return 1; }
@@ -43,7 +43,7 @@ identity() {
 claude_complete() {
   local missing=""
   for d in skills hooks work; do [[ -d "$CLAUDE_DIR/$d" ]] || missing="$missing $d"; done
-  [[ -z "$missing" ]] || { echo "missing:$missing — $(clone_hint)"; return 1; }
+  [[ -z "$missing" ]] || { echo "missing:$missing; $(clone_hint)"; return 1; }
   echo "skills, hooks and work present"
 }
 
@@ -68,7 +68,7 @@ no_crlf() {
 }
 
 docs_clean() {
-  [[ -d "$CLAUDE_DIR/.git" ]] || { echo ".claude/ is not a clone — it should be"; return 1; }
+  [[ -d "$CLAUDE_DIR/.git" ]] || { echo ".claude/ is not a clone; it should be"; return 1; }
   local dirty
   dirty="$(git -C "$CLAUDE_DIR" status --porcelain | wc -l | tr -d ' ')"
   echo "$(git -C "$CLAUDE_DIR" rev-parse --short HEAD), $dirty uncommitted"
@@ -90,7 +90,7 @@ check "line endings"        no_crlf
 check "working docs"        docs_clean
 check "tracker CLI"         tracker
 
-# <!-- FILL IN — project-specific readiness checks.
+# <!-- FILL IN: project-specific readiness checks.
 #
 # The things that must work before the first task is worth starting: a build, a test run, a
 # formatter, a required service. One check() line each, each returning non-zero on failure.

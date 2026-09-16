@@ -1,0 +1,6 @@
+# Requests a review from every owner listed except the author, on every pull request. Copy it to the
+# CODE repository's root (or its .github/) and replace __OWNER_HANDLES__ with the @-handles: @ada @grace.
+# On a PRIVATE repository this is a paid feature and the file does nothing, with no error and no
+# warning, so there name the reviewer when you open the pull request. optional/github/assign-owner.yml
+# covers the assignee on any plan.
+*  __OWNER_HANDLES__

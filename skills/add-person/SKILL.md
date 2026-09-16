@@ -1,6 +1,6 @@
 ---
 name: add-person
-description: Switch a solo working-docs repo to a shared one — restore the coordination files /setup removed, write the owner table, install the union merge driver and move live tasks under an owner. Use when a second person is about to start working on a project that was set up solo.
+description: Switch a solo working-docs repo to a shared one: restore the coordination files /setup removed, write the owner table, install the union merge driver and move live tasks under an owner. Use when a second person is about to start working on a project that was set up solo.
 ---
 
 # Add person
@@ -13,15 +13,15 @@ changes and asks about one thing only: who is joining.
 live tasks at `work/current/` and no owner table; this skill then moves the directory under them,
 and their next `/save` pushes a plan the other session has already moved.
 
-## 1. Collect the addresses — from the people, not from the log
+## 1. Collect the addresses, from the people, not from the log
 
 Ask each person for the git email they commit with and a short directory name. **One line per
 address:** work, personal and host `noreply` addresses are three entries pointing at one directory.
-A missing address stops that person's session dead, which is deliberate — but it should stop them on
+A missing address stops that person's session dead, which is deliberate, but it should stop them on
 day one, not day thirty. What someone commits with is often not what their host reports, so **never
 guess an email**: a wrong entry routes their work into a directory nobody opens.
 
-You need **everyone**, the existing owner included — the table was removed when there was only one
+You need **everyone**, the existing owner included; the table was removed when there was only one
 person, so it has nobody in it.
 
 ## 2. Run the script
@@ -35,10 +35,15 @@ It restores what the solo install removed (`collab.md`, `collab_settled.md`, `ow
 `work/current` and `work/parked` under your own directory, flips `PEOPLE` to `shared`, installs and
 verifies the merge driver, and checks that the paths now resolve. It does not commit.
 
+On `HOST="github"` it also copies `optional/github/assign-owner.yml` into this repository's
+`.github/workflows/`, so every pull request asks the other owner for the review. Its companion
+`optional/github/CODEOWNERS` is for the **code** repo's root, and on plans where CODEOWNERS is a
+paid feature it sits there doing nothing, silently: check before relying on it.
+
 It refuses, changing nothing, when: the install is already `shared` (a third person is one more line
 in `work/owners.txt` and nothing else); the docs tree is dirty; fewer than two people were given; or
 your own git email is not among them. It also refuses when the commit that removed those files is
-not in history — a squashed or re-created repository. In that case take the files from the template
+not in history, a squashed or re-created repository. In that case take the files from the template
 this repo came from and **never write a remembered copy**: a seed that drifts from the real one is
 how two versions of the same rules start disagreeing.
 
@@ -64,7 +69,7 @@ git -C .claude push
 ```
 
 **Push before they clone.** That is the whole ordering this skill exists to get right, and it is a
-deliberate exception to "don't commit or push unless asked" — the `.claude/` repository only.
+deliberate exception to "don't commit or push unless asked": the `.claude/` repository only.
 
 Then report: who was added, where live tasks now live, that the merge driver verified, and the one
-thing they need — the clone command from `project.conf`'s `DOCS_REPO_URL`.
+thing they need: the clone command from `project.conf`'s `DOCS_REPO_URL`.

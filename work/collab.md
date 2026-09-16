@@ -1,4 +1,4 @@
-# Collaboration log — questions, answers, and overrides
+# Collaboration log: questions, answers, and overrides
 
 <!-- DELETE THIS FILE IF YOU WORK ALONE. It earns its place once a second person clones the repo. -->
 
@@ -15,20 +15,20 @@ anyone else's words; move settled items, stamps intact, to **Agreed**. Union-mer
 ## Open
 
 ### 1. <the ask, stated as what it changes for them>
-**Confirm / Decide / FYI** — say which, in the first line.
+**Confirm / Decide / FYI**: say which, in the first line.
 
 What you did, what it overrides, and what you want back.
 
-*#1 · raised <YYYY-MM-DD> <HH:MM> — <name>.*
+*#1 · raised <YYYY-MM-DD> <HH:MM> - <name>.*
 
 > **Answer:** replies go here, inside the item, each with its own stamp.
-> *#1 · answered <YYYY-MM-DD> <HH:MM> — <other name>.*
+> *#1 · answered <YYYY-MM-DD> <HH:MM> - <other name>.*
 
 ## Agreed
 
-### <the item> — accepted (<YYYY-MM-DD>)
+### <the item> - accepted (<YYYY-MM-DD>)
 
 What was settled, and any consequence that outlived it: a doc now stale, a follow-up owed. Agreed
-items are never deleted — the trail is what stops the same argument recurring.
+items are never deleted: the trail is what stops the same argument recurring.
 
-*#<n> · settled <YYYY-MM-DD> <HH:MM> — <name>.*
+*#<n> · settled <YYYY-MM-DD> <HH:MM> - <name>.*

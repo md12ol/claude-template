@@ -34,6 +34,11 @@ load_conf() {
     TRACKER_REPO=""
     PEOPLE="solo"
     MACHINES="single"
+    TRACKER_FIRST="no"
+    NEEDS_RULING_LABEL="needs-ruling"
+    BRANCH_PATTERN="<owner>_<slug>"
+    LABELS_DERIVED="no"
+    KIND_LABELS="bug enhancement task investigation"
 
     if [[ -f "$CLAUDE_DIR/project.conf" ]]; then
         # shellcheck disable=SC1091
@@ -41,11 +46,15 @@ load_conf() {
     fi
 
     export PROJECT_NAME DOCS_REPO_NAME DOCS_REPO_URL DOCS_BRANCH \
-           HOST TRACKER_CLI TRACKER_REPO PEOPLE MACHINES
+           HOST TRACKER_CLI TRACKER_REPO PEOPLE MACHINES \
+           TRACKER_FIRST NEEDS_RULING_LABEL BRANCH_PATTERN LABELS_DERIVED KIND_LABELS
 }
 
 is_shared() { [[ "${PEOPLE:-solo}" == "shared" ]]; }
 is_multi_machine() { [[ "${MACHINES:-single}" == "multi" ]]; }
+# Findings live on the tracker rather than in work/issues.md, and temporary code is a marker at the
+# site rather than an entry in work/hotfixes.md. Only meaningful when TRACKER_CLI names a CLI.
+is_tracker_first() { [[ "${TRACKER_FIRST:-no}" == "yes" ]]; }
 
 # The command to hand someone whose .claude/ is missing or incomplete. Falls back to naming the
 # file to read rather than inventing a URL, because a wrong clone command is worse than none.
@@ -67,7 +76,7 @@ clone_hint() {
 #   WORK_CURRENT path to the live task dir, relative to CLAUDE_DIR
 #   WORK_PARKED  path to the parked task dir, relative to CLAUDE_DIR
 #
-# On a solo install there is no table and no owner in the path — the whole difference, handled here
+# On a solo install there is no table and no owner in the path: the whole difference, handled here
 # so no caller has to branch on it.
 resolve_owner() {
     [[ -n "${CLAUDE_DIR:-}" ]] || claude_paths
@@ -112,7 +121,7 @@ resolve_owner() {
 }
 
 # Every person in the table but the current one, as "dir<TAB>name" lines. Reports other owners'
-# parked work without hardcoding how many people there are — two is not special.
+# parked work without hardcoding how many people there are; two is not special.
 other_owners() {
     [[ -n "${CLAUDE_DIR:-}" ]] || claude_paths
     is_shared || return 0
@@ -143,7 +152,24 @@ die() { printf '%s\n' "$*" >&2; exit 1; }
 require_owner() {
     [[ -n "${WORK_CURRENT+x}" ]] || resolve_owner
     [[ -n "$WORK_CURRENT" ]] && return 0
-    die "unknown git user.email '${OWNER_EMAIL:-unset}' — add it to work/owners.txt; never guess"
+    die "unknown git user.email '${OWNER_EMAIL:-unset}': add it to work/owners.txt, never guess"
+}
+
+# optional/github/ ships disabled. Both /setup and /add-person install the workflow the same way, so
+# the copy lives here rather than in two scripts. Never overwrites: a project may have edited it.
+install_gh_workflow() {
+    local src="$CLAUDE_DIR/optional/github/assign-owner.yml"
+    local dst="$CLAUDE_DIR/.github/workflows/assign-owner.yml"
+    if [[ ! -f "$src" ]]; then
+        echo "github: optional/github/assign-owner.yml is missing, nothing installed"
+    elif [[ -f "$dst" ]]; then
+        echo "github: .github/workflows/assign-owner.yml already exists, left alone"
+    elif mkdir -p "$(dirname "$dst")" && cp "$src" "$dst"; then
+        echo "github: installed .github/workflows/assign-owner.yml; replace __OWNER_LOGINS__ in it"
+    else
+        echo "github: could not write .github/workflows/assign-owner.yml"
+    fi
+    echo "github: optional/github/CODEOWNERS goes at the CODE repo's root; a private repo on a free plan ignores it silently"
 }
 
 # handoff.md's stamp: which machine wrote the save, when, and the CODE repo's HEAD at the time.

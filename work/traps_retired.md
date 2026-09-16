@@ -1,4 +1,4 @@
-# Retired traps — no longer bite, kept for the reasoning
+# Retired traps: no longer bite, kept for the reasoning
 
 Entries moved out of `traps.md` once the failure they describe is fixed, kept rather than deleted
 because **each names the fix that removed it**: reverting that fix brings the trap back exactly as
@@ -15,4 +15,4 @@ removed, the tool dropped). The test is "could this come back", not "has anyone 
 - **What happened:** <the symptom, as it actually appeared.>
 - **Fixed by:** <the change that removed it, with a commit or a date. This is the part that matters.>
 
-*Retired <YYYY-MM-DD> — <author> · <slug>.*
+*Retired <YYYY-MM-DD> - <author> · <slug>.*

@@ -1,0 +1,59 @@
+# Assigns a new pull request to whichever owner did not open it, so nobody has to remember. Copy it
+# to .github/workflows/ in the repository it should run in, and replace __OWNER_LOGINS__ with the
+# GitHub logins, quoted and comma-separated: 'ada', 'grace'. /setup does both when HOST="github".
+#
+# It sets the ASSIGNEE. The reviewer is CODEOWNERS' job, and CODEOWNERS is a paid feature on private
+# repositories: on a free plan the file sits there doing nothing, with no error and no warning, so a
+# private repo names its reviewer when the pull request is opened. Actions do run there, which is
+# why this half works everywhere. optional/github/CODEOWNERS says the same from the other side.
+#
+# A pull request opened by anyone not in the list is left alone.
+
+name: assign the other owner
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+# addAssignees is the issues endpoint even for a pull request, so both scopes are needed.
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  assign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owners = [__OWNER_LOGINS__];
+            const pr = context.payload.pull_request;
+            const author = pr.user.login;
+
+            // Not one of them: leave it alone.
+            if (!owners.includes(author)) {
+              core.info(`author ${author} is not an owner, nothing to assign`);
+              return;
+            }
+
+            const other = owners.find(o => o !== author);
+            if (!other) {
+              core.info('nobody else to assign');
+              return;
+            }
+
+            const already = (pr.assignees || []).map(a => a.login);
+            if (already.includes(other)) {
+              core.info(`${other} is already assigned`);
+              return;
+            }
+
+            await github.rest.issues.addAssignees({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              assignees: [other],
+            });
+            core.info(`assigned ${other}`);

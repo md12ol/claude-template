@@ -1,5 +1,5 @@
-# Personal, per-machine settings. `settings.json` is shared and reviewed — it executes on anyone
-# else's machine at session start — while this file is yours alone and never leaves the laptop.
+# Personal, per-machine settings. `settings.json` is shared and reviewed (it executes on anyone
+# else's machine at session start) while this file is yours alone and never leaves the laptop.
 # `/setup` writes it, and cloning this repo must never overwrite it.
 settings.local.json
 

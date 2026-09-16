@@ -11,7 +11,7 @@
 # RE-RUN AFTER A RESUME OR A COMPACT. Containers commonly rewrite their own name and email back
 # into ~/.gitconfig, so an identity set at session start does not survive one.
 #
-# It deliberately installs no toolchain and builds nothing — that differs per project and belongs
+# It deliberately installs no toolchain and builds nothing: that differs per project and belongs
 # in the FILL IN block at the bottom.
 #
 # Test:  CLAUDE_CODE_REMOTE= .claude/bin/cloud_setup.sh   # refuses off a container, exit 3
@@ -63,7 +63,13 @@ else
   name="$(awk '{$1=""; $2=""; sub(/^  */,""); print}' <<<"$line")"
   git config --global user.email "$email"
   git config --global user.name "${name:-$want}"
-  say "identity" "set to ${name:-$want} <$email>"
+  # A per-repo value shadows the global one and is exactly what an earlier session may have left
+  # behind, so clear it in both repositories rather than setting three copies that can disagree.
+  for r in "$PROJECT_DIR" "$CLAUDE_DIR"; do
+    git -C "$r" config --unset user.name  2>/dev/null || true
+    git -C "$r" config --unset user.email 2>/dev/null || true
+  done
+  say "identity" "set globally to ${name:-$want} <$email>"
 fi
 
 # 2. Commit signing off, globally. A container has no access to your signing key, and a repo
@@ -76,14 +82,14 @@ else
   say "commit signing" "already off"
 fi
 
-# 3. The working-docs repo. This script lives inside .claude/, so it cannot clone it for you — but
+# 3. The working-docs repo. This script lives inside .claude/, so it cannot clone it for you, but
 #    it can say so precisely, which is otherwise a whole session of conventions nobody loaded.
 if [ -d "$CLAUDE_DIR/.git" ]; then
   say "working docs" "clone present ($(git -C "$CLAUDE_DIR" rev-parse --short HEAD 2>/dev/null || echo 'no commits'))"
 elif [ -n "${DOCS_REPO_URL:-}" ]; then
-  say "working docs" "NOT a clone — run: $(clone_hint)"
+  say "working docs" "NOT a clone; run: $(clone_hint)"
 else
-  say "working docs" "NOT a clone — .claude/ should be one; see .claude/README.md"
+  say "working docs" "NOT a clone; .claude/ should be one, see .claude/README.md"
 fi
 
 # 4. A checkout that lost the executable bit turns every hook into a silent no-op, which looks
@@ -91,11 +97,11 @@ fi
 chmod +x "$CLAUDE_DIR"/hooks/*.sh "$CLAUDE_DIR"/bin/*.sh 2>/dev/null || true
 say "hooks and bin" "executable"
 
-# <!-- FILL IN — project-specific container setup, if any.
+# <!-- FILL IN: project-specific container setup, if any.
 #
 # Anything a fresh container needs that a laptop already has: a toolchain, a dependency restore, a
 # submodule init, an env var pointing at a scratch directory. Keep each step idempotent and quiet
-# when there is nothing to do, and never put a secret here — this file is committed.
+# when there is nothing to do, and never put a secret here: this file is committed.
 #
 # Example shape:
 #   if ! command -v <tool> >/dev/null; then <install it>; say "<tool>" "installed"; else say "<tool>" "present"; fi
